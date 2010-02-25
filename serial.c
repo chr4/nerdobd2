@@ -222,8 +222,6 @@ kw1281_send_ack ()
   read (fd, &c, 1);
   if (c != 0x03)
     printf ("echo error (0x03 != 0x%02x)\n", c);
-  else
-    printf ("received 0x03 end block\n");
 }
 
 
@@ -261,11 +259,8 @@ main (int arc, char **argv)
     }
 
 
-  //newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
-  //newtio.c_cflag = B4800 | CS8 | CLOCAL | CREAD;     
-  //newtio.c_cflag = B19200 | CS8 | CLOCAL | CREAD;
+  // we need B38400, so our custom setting above will work
   newtio.c_cflag = B38400 | CLOCAL | CREAD;
-
   newtio.c_iflag = IGNPAR | ICRNL;
   newtio.c_oflag = 0;
   newtio.c_cc[VMIN] = 1;
@@ -296,6 +291,12 @@ main (int arc, char **argv)
   kw1281_send_ack ();
 
   kw1281_recv_block ();		/* dealer part # */
+  kw1281_send_ack ();
+	
+  kw1281_recv_block ();		/* VSS... part */
+  kw1281_send_ack ();
+	
+  kw1281_recv_block ();		/* VWZ... part */
   kw1281_send_ack ();
 
   printf ("main loop\n");
