@@ -115,8 +115,8 @@ void kw1281_init(int address)
 	read(fd, &c, 1);
 	printf("read 0x%02x\n", c);
 
-	read(fd, &c, 1);
-	printf("read 0x%02x\n", c);
+	c = kw1281_recv_byte_ack();
+	prinf("read 0x%02x (and sent ack)\n");
 
 	counter = 1;
 }
@@ -287,15 +287,6 @@ int main(int arc, char **argv)
 
 	printf("init\n");	/* ECU: 0x01, INSTR: 0x17 */
 	kw1281_init(0x01);	/* send 5baud address, read sync byte + key word */
-
-	printf("send initial 0x75\n");
-
-	c = 0x75;
-	usleep(10000);
-	write(fd, &c, 1);
-	read(fd, &d, 1);
-	if (c != d)
-		printf("initial 0x75: echo error (0x%02x != 0x%02x)\n", c, d);
 
 	printf("receive blocks\n");
 	while (!ready) {
