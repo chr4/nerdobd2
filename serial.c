@@ -10,12 +10,15 @@
 #include <linux/termios.h>
 #include <linux/serial.h>
 
-#define WRITE_DELAY 	10000
+#define WRITE_DELAY	10000
 #define INIT_DELAY	200000
 
 int fd;
 int counter;			/* kw1281 protocol block counter */
 int ready = 0;
+
+float	speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
+
 
 /* manually set serial lines */
 
@@ -175,12 +178,12 @@ void kw1281_send_block(unsigned char n)
 
 /* receive a complete block */
 
-void kw1281_recv_block()
+void kw1281_recv_block(unsigned char n)
 {
 	int i;
 	unsigned char c, l, t;
 	unsigned char buf[256];
-
+	
 	/* block length */
 	l = kw1281_recv_byte_ack();
 
@@ -228,11 +231,61 @@ void kw1281_recv_block()
 	buf[i] = 0;
 	if (t == 0xf6)
 		printf("= \"%s\"\n", buf);
+	
 	if (t == 0xe7) {
-		printf("\nrpm: %d*%d*0.2\n", buf[1], buf[2]);
-		printf("load: 100*%d/%d\n", buf[5], buf[4]);
-		printf("inj: %d*%d*0.01\n", buf[7], buf[8]);
-		printf("oil: %d*%d*0.04\n", buf[11], buf[10]);
+		
+		// look at field headers 0, 3, 6, 9
+		for (i = 0; i <= 9; i += 3)
+		{
+			switch (buf[i])
+			{
+				case 0x01: // rpm
+					if (i == 0)
+						rpm = 0.2 * buf[i+1] * buf[i+2];
+					break;
+					 
+				case 0x21: // load
+					if (i == 0)
+					{
+						if (buf[4] > 0)
+							load = (100*buf[i+2]) / buf[i+1];
+						else
+							load = 100;
+					}
+					break;
+					 
+				case 0x0f: // injection time
+					inj_time = 0.01 * buf[i+1] * buf[i+2];
+					break;
+					 
+				case 0x12: // absolute pressure
+					oil_press = 0.04 * buf[i+1] * buf[i+2];
+					break;
+					
+				case 0x05: // temperature
+					if (i == 6)
+						temp1 = buf[i+1] * (buf[i+2] - 100) * 0.1;
+					if (i == 9)
+						temp2 = buf[i+1] * (buf[i+2] - 100) * 0.1;
+					break;
+					
+				case 0x07: // speed
+					speed = 0.01 * buf[i+1] * buf[i+2];
+					break;
+					
+				case 0x15: // battery voltage
+					voltage = 0.001 * buf[i+1] * buf[i+2];
+					break;
+					
+				default:
+					printf("unknown value: 0x%02x: a = %d, b = %d\n", buf[i], buf[i+1], buf[i+2]);
+					break;
+			 }
+				
+				
+				
+		}
+		
 	} else
 		printf("\n");
 
@@ -280,7 +333,7 @@ int main(int arc, char **argv)
 	//newtio.c_cflag = B19200 | CS8 | CLOCAL | CREAD;
 	newtio.c_cflag = B38400 | CLOCAL | CREAD;
 
-	newtio.c_iflag = IGNPAR | ICRNL;
+	newtio.c_iflag = IGNPAR; // ICRNL provokes bogus replys after block 12
 	newtio.c_oflag = 0;
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 0;
@@ -292,7 +345,7 @@ int main(int arc, char **argv)
 
 	printf("receive blocks\n");
 	while (!ready) {
-		kw1281_recv_block();
+		kw1281_recv_block(0x00);
 		if (!ready)
 			kw1281_send_ack();
 	}
@@ -300,12 +353,22 @@ int main(int arc, char **argv)
 	printf("\n\ninit done.\n");
 	while (1) {
 		kw1281_send_block(0x02);
-		kw1281_recv_block();
+		kw1281_recv_block(0x02);
 		kw1281_send_block(0x04);
-		kw1281_recv_block();
+		kw1281_recv_block(0x04);
 		kw1281_send_block(0x05);
-		kw1281_recv_block();
-		usleep (100000);
+		kw1281_recv_block(0x05);
+		
+		printf("----------------------------------------\n");
+		printf("speed\t\t%f km/h\n", speed);
+		printf("rpm\t\t%f rpm\n", rpm);
+		printf("inj on time\t%f\n", inj_time);
+		printf("temp1\t\t%f °C\n", temp1);
+		printf("temp2\t\t%f °C\n", temp2);
+		printf("voltage\t\t%f V\n", voltage);
+		printf("load\t\t%f\n", load);
+		printf("absolute press\t%f\n", oil_press);
+		printf("\n");		
 	}
 
 	/* tcsetattr (fd, TCSANOW, &oldtio); */
