@@ -5,15 +5,15 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
+//#include <sys/ioctl.h>
 
-#include <termios.h>
-//#include <linux/termios.h>
+#include <linux/termios.h>
 #include <linux/serial.h>
 
 
 int fd;
 int counter;			/* kw1281 protocol block counter */
+int ready = 0;
 
 /* manually set serial lines */
 
@@ -45,16 +45,13 @@ kw1281_recv_byte_ack ()
 
   read (fd, &c, 1);
   d = 0xff - c;
-  printf ("    kw1281_recv_byte_ack: recv: 0x%02x -> writing ack: 0x%02x\n",
-	  c, d);
   usleep (10000);
   write (fd, &d, 1);
   read (fd, &d, 1);
   if (0xff - c != d)
     printf ("    kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n",
 	    d, 0xff - c);
-  else
-    printf ("    kw1281_recv_byte_ack: recv: 0x%02x\n", d);
+
   return c;
 }
 
@@ -72,7 +69,8 @@ kw1281_send_byte_ack (unsigned char c)
     printf ("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c, d);
   read (fd, &d, 1);
   if (0xff - c != d)
-    printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n", 0xff - c, d);
+    printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n", 0xff - c,
+	    d);
 }
 
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
@@ -131,6 +129,58 @@ kw1281_init (int address)
   counter = 1;
 }
 
+/* send an ACK block */
+
+void
+kw1281_send_ack ()
+{
+  unsigned char c;
+
+  printf ("send ACK block %d\n", counter);
+
+  /* block length */
+  kw1281_send_byte_ack (0x03);
+
+  kw1281_send_byte_ack (counter++);
+
+  /* ack command */
+  kw1281_send_byte_ack (0x09);
+
+  /* block end */
+  c = 0x03;
+  usleep (10000);
+  write (fd, &c, 1);
+  read (fd, &c, 1);
+  if (c != 0x03)
+    printf ("echo error (0x03 != 0x%02x)\n", c);
+
+}
+
+void
+kw1281_send_block (unsigned char n)
+{
+  unsigned char c;
+
+  printf ("send group reading block %d\n", counter);
+
+  /* block length */
+  kw1281_send_byte_ack (0x04);
+  /* counter */
+  kw1281_send_byte_ack (counter++);
+  /*  type group reading */
+  kw1281_send_byte_ack (0x29);
+  /* which group block */
+  kw1281_send_byte_ack (0x02);
+
+  /* block end */
+  c = 0x03;
+  usleep (10000);
+  write (fd, &c, 1);
+  read (fd, &c, 1);
+  if (c != 0x03)
+    printf ("echo error (0x03 != 0x%02x)\n", c);
+}
+
 /* receive a complete block */
 
 void
@@ -172,9 +222,13 @@ kw1281_recv_block ()
     case 0x09:
       printf ("got ACK block %d\n", counter);
       break;
+    case 0xe7:
+      printf ("got group reading answer block %d\n", counter);
+      break;
     default:
       printf ("block title: 0x%02x (block %d)\n", t, counter);
     }
+
   l -= 2;
 
   i = 0;
@@ -187,6 +241,17 @@ kw1281_recv_block ()
   buf[i] = 0;
   if (t == 0xf6)
     printf ("= \"%s\"\n", buf);
+  if (t == 0xe7)
+    {
+      printf ("\nrpm: %d\n", buf[1] * buf[2] * 0.2);
+      if (buf[4])
+	printf ("load: %d\n", 100 * buf[5] / buf[4]);
+      else
+	printf ("load: 100\n");
+
+      printf ("inj: %d\n", buf[7] * buf[8] * 0.01);
+      printf ("oil: %d\n", buf[11] * buf[10] * 0.04);
+    }
   else
     printf ("\n");
 
@@ -196,32 +261,11 @@ kw1281_recv_block ()
     printf ("block end error (0x03 != 0x%02x)\n", c);
 
   counter++;
-}
 
-/* send an ACK block */
-
-void
-kw1281_send_ack ()
-{
-  unsigned char c;
-
-  printf ("send ACK block %d\n", counter);
-
-  /* block length */
-  kw1281_send_byte_ack (0x03);
-
-  kw1281_send_byte_ack (counter++);
-
-  /* ack command */
-  kw1281_send_byte_ack (0x09);
-
-  /* block end */
-  c = 0x03;
-  usleep (10000);
-  write (fd, &c, 1);
-  read (fd, &c, 1);
-  if (c != 0x03)
-    printf ("echo error (0x03 != 0x%02x)\n", c);
+  if (t == 0x09)
+    {
+      ready = 1;
+    }
 }
 
 
@@ -259,8 +303,11 @@ main (int arc, char **argv)
     }
 
 
-  // we need B38400, so our custom setting above will work
+  //newtio.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+  //newtio.c_cflag = B4800 | CS8 | CLOCAL | CREAD;     
+  //newtio.c_cflag = B19200 | CS8 | CLOCAL | CREAD;
   newtio.c_cflag = B38400 | CLOCAL | CREAD;
+
   newtio.c_iflag = IGNPAR | ICRNL;
   newtio.c_oflag = 0;
   newtio.c_cc[VMIN] = 1;
@@ -281,31 +328,22 @@ main (int arc, char **argv)
     printf ("initial 0x75: echo error (0x%02x != 0x%02x)\n", c, d);
 
   printf ("receive blocks\n");
-  kw1281_recv_block ();		/* controller ID */
-  kw1281_send_ack ();
-
-  kw1281_recv_block ();		/* component # */
-  kw1281_send_ack ();
-
-  kw1281_recv_block ();		/* software coding */
-  kw1281_send_ack ();
-
-  kw1281_recv_block ();		/* dealer part # */
-  kw1281_send_ack ();
-	
-  kw1281_recv_block ();		/* VSS... part */
-  kw1281_send_ack ();
-	
-  kw1281_recv_block ();		/* VWZ... part */
-  kw1281_send_ack ();
+  while (!ready)
+    {
+      kw1281_recv_block ();
+      if (!ready)
+	kw1281_send_ack ();
+    }
 
   printf ("main loop\n");
   while (1)
     {
+      kw1281_send_block (0x02);
+
       kw1281_recv_block ();
       usleep (100000);
-      kw1281_send_ack ();
     }
 
   /* tcsetattr (fd, TCSANOW, &oldtio); */
+  return 0;
 }
