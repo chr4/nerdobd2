@@ -10,6 +10,9 @@
 #include <linux/termios.h>
 #include <linux/serial.h>
 
+#define WRITE_DELAY 	50000
+#define INIT_DELAY	200000
+
 int fd;
 int counter;			/* kw1281 protocol block counter */
 int ready = 0;
@@ -39,7 +42,7 @@ unsigned char kw1281_recv_byte_ack()
 
 	read(fd, &c, 1);
 	d = 0xff - c;
-	usleep(10000);
+	usleep(WRITE_DELAY);
 	write(fd, &d, 1);
 	read(fd, &d, 1);
 	if (0xff - c != d)
@@ -56,7 +59,7 @@ void kw1281_send_byte_ack(unsigned char c)
 {
 	unsigned char d;
 
-	usleep(10000);
+	usleep(WRITE_DELAY);
 	write(fd, &c, 1);
 	read(fd, &d, 1);
 	if (c != d)
@@ -81,21 +84,21 @@ void kw1281_init(int address)
 	ioctl(fd, TIOCMGET, &flags);
 	flags &= ~(TIOCM_DTR | TIOCM_RTS);
 	ioctl(fd, TIOCMSET, &flags);
-	usleep(200000);
+	usleep(INIT_DELAY);
 
 	_set_bit(0);		/* start bit */
-	usleep(200000);		/* 5 baud */
+	usleep(INIT_DELAY);		/* 5 baud */
 	p = 1;
 	for (i = 0; i < 7; i++) {	/* address bits, lsb first */
 		int bit = (address >> i) & 0x1;
 		_set_bit(bit);
 		p = p ^ bit;
-		usleep(200000);
+		usleep(INIT_DELAY);
 	}
 	_set_bit(p);		/* odd parity */
-	usleep(200000);
+	usleep(INIT_DELAY);
 	_set_bit(1);		/* stop bit */
-	usleep(200000);
+	usleep(INIT_DELAY);
 
 	/* set dtr */
 	ioctl(fd, TIOCMGET, &flags);
@@ -116,7 +119,7 @@ void kw1281_init(int address)
 	printf("read 0x%02x\n", c);
 
 	c = kw1281_recv_byte_ack();
-	prinf("read 0x%02x (and sent ack)\n");
+	printf("read 0x%02x (and sent ack)\n", c);
 
 	counter = 1;
 }
@@ -139,7 +142,7 @@ void kw1281_send_ack()
 
 	/* block end */
 	c = 0x03;
-	usleep(10000);
+	usleep(WRITE_DELAY);
 	write(fd, &c, 1);
 	read(fd, &c, 1);
 	if (c != 0x03)
@@ -163,7 +166,7 @@ void kw1281_send_block(unsigned char n)
 
 	/* block end */
 	c = 0x03;
-	usleep(10000);
+	usleep(WRITE_DELAY);
 	write(fd, &c, 1);
 	read(fd, &c, 1);
 	if (c != 0x03)
@@ -247,7 +250,6 @@ void kw1281_recv_block()
 
 int main(int arc, char **argv)
 {
-	unsigned char c, d;
 	struct termios oldtio, newtio;
 	struct serial_struct st, ot;
 
@@ -303,7 +305,7 @@ int main(int arc, char **argv)
 		kw1281_recv_block();
 		kw1281_send_block(0x05);
 		kw1281_recv_block();
-		usleep (1000000);
+		usleep (100000);
 	}
 
 	/* tcsetattr (fd, TCSANOW, &oldtio); */
