@@ -176,7 +176,7 @@ void kw1281_recv_block()
 {
 	int i;
 	unsigned char c, l, t;
-	char buf[256];
+	unsigned char buf[256];
 
 	/* block length */
 	l = kw1281_recv_byte_ack();
@@ -247,7 +247,6 @@ void kw1281_recv_block()
 
 int main(int arc, char **argv)
 {
-
 	unsigned char c, d;
 	struct termios oldtio, newtio;
 	struct serial_struct st, ot;
