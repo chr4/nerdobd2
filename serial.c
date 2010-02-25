@@ -144,7 +144,6 @@ void kw1281_send_ack()
 	read(fd, &c, 1);
 	if (c != 0x03)
 		printf("echo error (0x03 != 0x%02x)\n", c);
-
 }
 
 void kw1281_send_block(unsigned char n)
@@ -160,7 +159,7 @@ void kw1281_send_block(unsigned char n)
 	/*  type group reading */
 	kw1281_send_byte_ack(0x29);
 	/* which group block */
-	kw1281_send_byte_ack(0x02);
+	kw1281_send_byte_ack(n);
 
 	/* block end */
 	c = 0x03;
@@ -227,14 +226,10 @@ void kw1281_recv_block()
 	if (t == 0xf6)
 		printf("= \"%s\"\n", buf);
 	if (t == 0xe7) {
-		printf("\nrpm: %f\n", buf[1] * buf[2] * 0.2);
-		if (buf[4])
-			printf("load: %d\n", 100 * buf[5] / buf[4]);
-		else
-			printf("load: 100\n");
-
-		printf("inj: %f\n", buf[7] * buf[8] * 0.01);
-		printf("oil: %f\n", buf[11] * buf[10] * 0.04);
+		printf("\nrpm: %d*%d*0.2\n", buf[1], buf[2]);
+		printf("load: 100*%d/%d\n", buf[5], buf[4]);
+		printf("inj: %d*%d*0.01\n", buf[7], buf[8]);
+		printf("oil: %d*%d*0.04\n", buf[11], buf[10]);
 	} else
 		printf("\n");
 
@@ -245,7 +240,7 @@ void kw1281_recv_block()
 
 	counter++;
 
-	if (t == 0x09) {
+	if (t == 0x09 && !ready) {
 		ready = 1;
 	}
 }
@@ -310,11 +305,19 @@ int main(int arc, char **argv)
 			kw1281_send_ack();
 	}
 
-	printf("main loop\n");
+	printf("\n\ninit done.\n");
 	while (1) {
+		kw1281_send_ack();
+		kw1281_recv_block();
+/*
 		kw1281_send_block(0x02);
 		kw1281_recv_block();
-		// usleep (100000);
+		kw1281_send_block(0x04);
+		kw1281_recv_block();
+		kw1281_send_block(0x05);
+		kw1281_recv_block();
++*/
+		usleep (1000000);
 	}
 
 	/* tcsetattr (fd, TCSANOW, &oldtio); */
