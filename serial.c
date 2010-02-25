@@ -10,7 +10,7 @@
 #include <linux/termios.h>
 #include <linux/serial.h>
 
-#define WRITE_DELAY 	50000
+#define WRITE_DELAY 	10000
 #define INIT_DELAY	200000
 
 int fd;
