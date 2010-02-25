@@ -307,16 +307,12 @@ int main(int arc, char **argv)
 
 	printf("\n\ninit done.\n");
 	while (1) {
-		kw1281_send_ack();
-		kw1281_recv_block();
-/*
 		kw1281_send_block(0x02);
 		kw1281_recv_block();
 		kw1281_send_block(0x04);
 		kw1281_recv_block();
 		kw1281_send_block(0x05);
 		kw1281_recv_block();
-+*/
 		usleep (1000000);
 	}
 
