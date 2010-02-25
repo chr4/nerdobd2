@@ -112,17 +112,17 @@ void kw1281_init(int address)
 	ioctl(fd, FIONREAD, &in);
 	while (in--) {
 		read(fd, &c, 1);
-		printf("ignore 0x%02x\n", c);
+		//printf("ignore 0x%02x\n", c);
 	}
 
 	read(fd, &c, 1);
-	printf("read 0x%02x\n", c);
+	//printf("read 0x%02x\n", c);
 
 	read(fd, &c, 1);
-	printf("read 0x%02x\n", c);
+	//printf("read 0x%02x\n", c);
 
 	c = kw1281_recv_byte_ack();
-	printf("read 0x%02x (and sent ack)\n", c);
+	//printf("read 0x%02x (and sent ack)\n", c);
 
 	counter = 1;
 }
@@ -133,7 +133,7 @@ void kw1281_send_ack()
 {
 	unsigned char c;
 
-	printf("send ACK block %d\n", counter);
+	//printf("send ACK block %d\n", counter);
 
 	/* block length */
 	kw1281_send_byte_ack(0x03);
@@ -156,7 +156,7 @@ void kw1281_send_block(unsigned char n)
 {
 	unsigned char c;
 
-	printf("send group reading block %d\n", counter);
+	//printf("send group reading block %d\n", counter);
 
 	/* block length */
 	kw1281_send_byte_ack(0x04);
@@ -196,28 +196,29 @@ void kw1281_recv_block(unsigned char n)
 		printf("     0x%02x\t(ack)\n", 0xff - l);
 		printf("0x%02x\t\t(counter)\n", c);
 		printf("     0x%02x\t(ack)\n", 0xff - c);
-
+/*
 		while (1) {
 			c = kw1281_recv_byte_ack();
 			printf("0x%02x\t\t(data)\n", c);
 			printf("     0x%02x\t(ack)\n", 0xff - c);
 		}
-
+*/
 	}
 
 	t = kw1281_recv_byte_ack();
 	switch (t) {
 	case 0xf6:
-		printf("got ASCII block %d\n", counter);
+		//printf("got ASCII block %d\n", counter);
 		break;
 	case 0x09:
-		printf("got ACK block %d\n", counter);
+		//printf("got ACK block %d\n", counter);
 		break;
 	case 0xe7:
-		printf("got group reading answer block %d\n", counter);
+		//printf("got group reading answer block %d\n", counter);
 		break;
 	default:
-		printf("block title: 0x%02x (block %d)\n", t, counter);
+		//printf("block title: 0x%02x (block %d)\n", t, counter);
+		break;
 	}
 
 	l -= 2;
@@ -226,11 +227,11 @@ void kw1281_recv_block(unsigned char n)
 	while (--l) {
 		c = kw1281_recv_byte_ack();
 		buf[i++] = c;
-		printf("0x%02x ", c);
+		//printf("0x%02x ", c);
 	}
 	buf[i] = 0;
-	if (t == 0xf6)
-		printf("= \"%s\"\n", buf);
+	//if (t == 0xf6)
+	//	printf("= \"%s\"\n", buf);
 	
 	if (t == 0xe7) {
 		
@@ -278,7 +279,7 @@ void kw1281_recv_block(unsigned char n)
 					break;
 					
 				default:
-					printf("unknown value: 0x%02x: a = %d, b = %d\n", buf[i], buf[i+1], buf[i+2]);
+					//printf("unknown value: 0x%02x: a = %d, b = %d\n", buf[i], buf[i+1], buf[i+2]);
 					break;
 			 }
 				
@@ -286,8 +287,9 @@ void kw1281_recv_block(unsigned char n)
 				
 		}
 		
-	} else
-		printf("\n");
+	} 
+	//else
+	//	printf("\n");
 
 	/* read block end */
 	read(fd, &c, 1);
@@ -343,14 +345,14 @@ int main(int arc, char **argv)
 	printf("init\n");	/* ECU: 0x01, INSTR: 0x17 */
 	kw1281_init(0x01);	/* send 5baud address, read sync byte + key word */
 
-	printf("receive blocks\n");
+	//printf("receive blocks\n");
 	while (!ready) {
 		kw1281_recv_block(0x00);
 		if (!ready)
 			kw1281_send_ack();
 	}
 
-	printf("\n\ninit done.\n");
+	printf("init done.\n");
 	while (1) {
 		kw1281_send_block(0x02);
 		kw1281_recv_block(0x02);
