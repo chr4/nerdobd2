@@ -13,7 +13,7 @@
 #define WRITE_DELAY	5700
 #define INIT_DELAY	200000
 
-#define DEBUG
+//c#define DEBUG
 
 static void _set_bit(int);
 void kw1281_handle_error();
@@ -57,6 +57,8 @@ void kw1281_handle_error()
 	 then send 0x75 (complement)
 	 reset counter = 1
 	 continue with block readings
+
+	 or just exit -1 and start program in a loop
 	 */
 	
 	unsigned char c;
@@ -211,6 +213,9 @@ void kw1281_send_ack()
 	if (error)
 		return;
 
+	if (counter == 255)
+		counter = 1;
+
 	kw1281_send_byte_ack(counter++);
 	if (error)
 		return;
@@ -249,6 +254,9 @@ void kw1281_send_block(unsigned char n)
 		return;
 	
 	/* counter */
+        if (counter == 255)
+                counter = 1;
+
 	kw1281_send_byte_ack(counter++);
 	if (error)
 		return;
@@ -432,6 +440,9 @@ void kw1281_recv_block(unsigned char n)
 		kw1281_handle_error();
 		return;
 	}
+
+        if (counter == 255)
+                counter = 1;
 	
 	counter++;
 
@@ -521,14 +532,14 @@ int main(int arc, char **argv)
 		kw1281_recv_block(0x05);
 		
 		printf("----------------------------------------\n");
-		printf("speed\t\t%f km/h\n", speed);
-		printf("rpm\t\t%f rpm\n", rpm);
-		printf("inj on time\t%f\n", inj_time);
-		printf("temp1\t\t%f °C\n", temp1);
-		printf("temp2\t\t%f °C\n", temp2);
-		printf("voltage\t\t%f V\n", voltage);
-		printf("load\t\t%f\n", load);
-		printf("absolute press\t%f\n", oil_press);
+		printf("speed\t\t%.1f km/h\n", speed);
+		printf("rpm\t\t%.0f RPM\n", rpm);
+		printf("inj on time\t%.2f ms\n", inj_time);
+		printf("temp1\t\t%.1f °C\n", temp1);
+		printf("temp2\t\t%.1f °C\n", temp2);
+		printf("voltage\t\t%.2f V\n", voltage);
+		printf("load\t\t%.0f %%\n", load);
+		printf("absolute press\t%.0f mbar\n", oil_press);
 		printf("\n");	
 		
 		usleep(100000);
