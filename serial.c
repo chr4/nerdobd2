@@ -13,7 +13,7 @@
 #define WRITE_DELAY	5700
 #define INIT_DELAY	200000
 
-//c#define DEBUG
+//#define DEBUG
 
 static void _set_bit(int);
 void kw1281_handle_error();
@@ -23,12 +23,12 @@ void kw1281_init(int);
 void kw1281_send_ack();
 void kw1281_send_block(unsigned char);
 void kw1281_recv_block(unsigned char);
+void inc_counter();
 
 
 int fd;
 int counter;			/* kw1281 protocol block counter */
 int ready = 0;
-int error = 0;
 
 float	speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
 
@@ -60,45 +60,17 @@ void kw1281_handle_error()
 
 	 or just exit -1 and start program in a loop
 	 */
-	
-	unsigned char c;
-	
-	printf("trying to reset connection...\n");
 
-	// wait for 0x8a
-	do {
-		read(fd, &c, 1);
-#ifdef DEBUG
-		printf("0x%20x ", c);
-#endif
-	} while (c != 0x8a);
-		
-	// send complement
-#ifdef DEBUG
-	printf("sending 0x75\n");
-#endif
-	c = 0x75;
-	usleep(WRITE_DELAY);
-	write(fd, &c, 1);
-		
-	// reset counter
-	counter = 1;
-	
-	// reset ready flag
-	ready = 0;
-	
-	// receive the ASCII blocks
-	while (!ready) {
-		kw1281_recv_block(0x00);
-		if (!ready)
-			kw1281_send_ack();
-	}
-	
-	// we had an error
-	error = 1;
-	
-	// continue
-	return;
+	exit(-1);
+}
+
+// increment the counter
+void inc_counter()
+{
+	if (counter == 255)
+		counter = 1;
+	else
+		counter++;
 }
 
 /* receive one byte and acknowledge it */
@@ -115,7 +87,6 @@ unsigned char kw1281_recv_byte_ack()
 	{
 		printf("kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n", d, 0xff - c);
 		kw1281_handle_error();
-		return c;
 	}
 	return c;
 }
@@ -133,7 +104,6 @@ void kw1281_send_byte_ack(unsigned char c)
 	{
 		printf("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c, d);
 		kw1281_handle_error();
-		return;
 	}
 	
 	read(fd, &d, 1);
@@ -141,7 +111,6 @@ void kw1281_send_byte_ack(unsigned char c)
 	{
 		printf("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n", 0xff - c, d);
 		kw1281_handle_error();
-		return;
 	}
 }
 
@@ -210,20 +179,12 @@ void kw1281_send_ack()
 
 	/* block length */
 	kw1281_send_byte_ack(0x03);
-	if (error)
-		return;
 
-	if (counter == 255)
-		counter = 1;
-
-	kw1281_send_byte_ack(counter++);
-	if (error)
-		return;
+	kw1281_send_byte_ack(counter);
+	inc_counter();
 
 	/* ack command */
 	kw1281_send_byte_ack(0x09);
-	if (error)
-		return;
 
 	/* block end */
 	c = 0x03;
@@ -234,7 +195,6 @@ void kw1281_send_ack()
 	{
 		printf("echo error (0x03 != 0x%02x)\n", c);
 		kw1281_handle_error();
-		return;
 	}
 	
 	return;
@@ -245,33 +205,24 @@ void kw1281_send_ack()
 void kw1281_send_block(unsigned char n)
 {
 	unsigned char c;
-
-	//printf("send group reading block %d\n", counter);
-
+	
+#ifdef DEBUG
+	printf("send group reading block %d\n", counter);
+#endif
+	
 	/* block length */
 	kw1281_send_byte_ack(0x04);
-	if (error)
-		return;
-	
-	/* counter */
-        if (counter == 255)
-                counter = 1;
 
-	kw1281_send_byte_ack(counter++);
-	if (error)
-		return;
+	// counter
+	kw1281_send_byte_ack(counter);
+	inc_counter();
 	
 	/*  type group reading */
 	kw1281_send_byte_ack(0x29);
-	if (error)
-		return;
 	
 	/* which group block */
 	kw1281_send_byte_ack(n);
-	if (error)
-		return;
 	
-
 	/* block end */
 	c = 0x03;
 	usleep(WRITE_DELAY);
@@ -281,7 +232,6 @@ void kw1281_send_block(unsigned char n)
 	{
 		printf("echo error (0x03 != 0x%02x)\n", c);
 		kw1281_handle_error();
-		return;
 	}
 	return;
 }
@@ -296,13 +246,9 @@ void kw1281_recv_block(unsigned char n)
 	
 	/* block length */
 	l = kw1281_recv_byte_ack();
-	if (error)
-		return;
 
 	c = kw1281_recv_byte_ack();
-	if (error)
-		return;
-	
+
 	if (c != counter) {
 		printf("counter error (%d != %d)\n", counter, c);
 
@@ -322,12 +268,9 @@ void kw1281_recv_block(unsigned char n)
 #endif 
 		
 		kw1281_handle_error();
-		return;
 	}
 
 	t = kw1281_recv_byte_ack();
-	if (error)
-		return;
 	
 #ifdef DEBUG	
 	switch (t) {
@@ -353,8 +296,6 @@ void kw1281_recv_block(unsigned char n)
 	i = 0;
 	while (--l) {
 		c = kw1281_recv_byte_ack();
-		if (error)
-			return;
 		
 		buf[i++] = c;
 		
@@ -438,13 +379,9 @@ void kw1281_recv_block(unsigned char n)
 	{
 		printf("block end error (0x03 != 0x%02x)\n", c);
 		kw1281_handle_error();
-		return;
 	}
 
-        if (counter == 255)
-                counter = 1;
-	
-	counter++;
+	inc_counter();
 
 	
 	// set ready flag when receiving ack block
@@ -510,25 +447,12 @@ int main(int arc, char **argv)
 	printf("init done.\n");
 	while (1) {
 		kw1281_send_block(0x02);
-		if (error)
-		{
-			error = 0;
-			continue;
-		}
 		kw1281_recv_block(0x02);
+		
 		kw1281_send_block(0x04);
-		if (error)
-		{
-			error = 0;
-			continue;
-		}
 		kw1281_recv_block(0x04);
+		
 		kw1281_send_block(0x05);
-		if (error)
-		{
-			error = 0;
-			continue;
-		}
 		kw1281_recv_block(0x05);
 		
 		printf("----------------------------------------\n");
