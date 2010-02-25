@@ -10,7 +10,7 @@
 #include <linux/termios.h>
 #include <linux/serial.h>
 
-#define WRITE_DELAY	10000
+#define WRITE_DELAY	5600
 #define INIT_DELAY	200000
 
 int fd;
@@ -368,7 +368,9 @@ int main(int arc, char **argv)
 		printf("voltage\t\t%f V\n", voltage);
 		printf("load\t\t%f\n", load);
 		printf("absolute press\t%f\n", oil_press);
-		printf("\n");		
+		printf("\n");	
+		
+		usleep(100000);
 	}
 
 	/* tcsetattr (fd, TCSANOW, &oldtio); */
