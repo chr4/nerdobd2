@@ -10,10 +10,20 @@
 #include <linux/termios.h>
 #include <linux/serial.h>
 
-#define WRITE_DELAY	5600
+#define WRITE_DELAY	5700
 #define INIT_DELAY	200000
 
 #define DEBUG
+
+static void _set_bit(int);
+void kw1281_handle_error();
+unsigned char kw1281_recv_byte_ack();
+void kw1281_send_byte_ack(unsigned char);
+void kw1281_init(int);
+void kw1281_send_ack();
+void kw1281_send_block(unsigned char);
+void kw1281_recv_block(unsigned char);
+
 
 int fd;
 int counter;			/* kw1281 protocol block counter */
