@@ -1,9 +1,34 @@
+/*
+ * execv() instead of system()
+ * 
+ * consumption calculation kinda fails
+ * 
+ * automate rrdtool database creation
+ * create own folter for databases
+ *
+ * frontend: javascript update for .png images
+ * <script language=javascript>
+ *   document.write('<img src=temp/temperatur.png?' + Date.parse(new Date()) + '>');
+ * </script>
+ *
+ * plain values update?
+ *
+ * custom baudrate 5db instead of usleep?
+ *
+ * A5/5A proto initialization?
+ *
+ */
+ 
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/signal.h>
 #include <sys/types.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h> 
 #include <unistd.h>
 //#include <sys/ioctl.h>
 
@@ -30,7 +55,12 @@ int fd;
 int counter;			/* kw1281 protocol block counter */
 int ready = 0;
 
-float	speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
+float speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
+float const_multiplier1 = 0.0089;
+float const_multiplier2 = 10000;
+float const_inj_subtract = 0.1;
+float l_per_h;
+float l_per_100km;
 
 
 /* manually set serial lines */
@@ -401,7 +431,9 @@ int main(int arc, char **argv)
 {
 	struct termios oldtio, newtio;
 	struct serial_struct st, ot;
-
+	time_t t;
+	char sysbuf[256];
+	
 	fd = open("/dev/ttyUSB0", O_SYNC | O_RDWR | O_NOCTTY);
 	if (fd < 0) {
 		printf("couldn't open device..\n");
@@ -448,14 +480,69 @@ int main(int arc, char **argv)
 	while (1) {
 		kw1281_send_block(0x02);
 		kw1281_recv_block(0x02);
+		// we have rpm, inj_time, oil_press, load
 		
-		kw1281_send_block(0x04);
-		kw1281_recv_block(0x04);
+		if (inj_time > const_inj_subtract)
+			l_per_h = 60 * 4 * const_multiplier1 * const_multiplier1 * rpm * (inj_time - const_inj_subtract);
+		else
+			l_per_h = 0;
+
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update rpm.rrd %d:%.0f",
+				 (int) time(&t), rpm);
+		system(sysbuf);
+
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update con_h.rrd %d:%.2f",
+				 (int) time(&t), l_per_h);
+		system(sysbuf);		
+		
 		
 		kw1281_send_block(0x05);
 		kw1281_recv_block(0x05);
+		// we have speed
+
+		if (speed > 0)
+			l_per_100km = l_per_h / speed;
+		else
+			l_per_100km = -1;
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update speed.rrd %d:%.1f",
+				 (int) time(&t), speed);
+		system(sysbuf);
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update con_km.rrd %d:%.2f",
+				 (int) time(&t), l_per_100km);
+		system(sysbuf);		
+		
+		// function with execv("speed", 
+		
+		kw1281_send_block(0x04);
+		kw1281_recv_block(0x04);
+		// we have both temperatures and voltage
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update temp1.rrd %d:%.1f",
+				 (int) time(&t), temp1);
+		system(sysbuf);
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update temp2.rrd %d:%.1f",
+				 (int) time(&t), temp2);
+		system(sysbuf);
+		
+		snprintf(sysbuf, sizeof(sysbuf),
+				 "rrdtool update voltage.rrd %d:%.2f",
+				 (int) time(&t), voltage);
+		system(sysbuf);
+		
 		
 		printf("----------------------------------------\n");
+		printf("l/h\t\t%.2f\n", l_per_h);
+		printf("l/100km\t\t%.2f\n", l_per_100km);
 		printf("speed\t\t%.1f km/h\n", speed);
 		printf("rpm\t\t%.0f RPM\n", rpm);
 		printf("inj on time\t%.2f ms\n", inj_time);
@@ -464,9 +551,8 @@ int main(int arc, char **argv)
 		printf("voltage\t\t%.2f V\n", voltage);
 		printf("load\t\t%.0f %%\n", load);
 		printf("absolute press\t%.0f mbar\n", oil_press);
-		printf("\n");	
-		
-		usleep(100000);
+		printf("counter\t\t%d\n", counter);
+		printf("\n");
 	}
 
 	/* tcsetattr (fd, TCSANOW, &oldtio); */
