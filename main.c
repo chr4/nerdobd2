@@ -1,14 +1,17 @@
 #include "serial.h"
 
+#define NO_DEV
+
 int
 main (int arc, char **argv)
 {
 	pthread_t thread1, thread2;
-		
+	
+#ifndef NO_DEV
     if (kw1281_open("/dev/ttyUSB0") == -1)
 		return -1;
-
-	// create databases, if they not exist
+#endif
+	// create databases, unless they exist
 	rrdtool_create("rpm");
 	rrdtool_create("con_h");
 	rrdtool_create("con_km");
@@ -24,18 +27,19 @@ main (int arc, char **argv)
      * another fork for generating rrdtool images
      */
 
-    printf ("init\n");		// ECU: 0x01, INSTR: 0x17
-    kw1281_init (0x01);		// send 5baud address, read sync byte + key word
-
 	for ( ; ; )
 	{
+#ifndef NO_DEV
+		printf ("init\n");		// ECU: 0x01, INSTR: 0x17
+		kw1281_init (0x01);		// send 5baud address, read sync byte + key word
+#endif
 		pthread_create( &thread2, NULL, kw1281_mainloop, NULL);
 		// wait for thread2
 		pthread_join( thread2, NULL);
-		printf("pthread killed. restarting...\n");
 	}
 	
-	pthread_kill( thread1, NULL);
+	// shut down ajax http server
+	pthread_kill( thread1, SIGTERM);
 	
 	printf("exiting main\n");
     return 0;
