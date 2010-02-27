@@ -20,17 +20,21 @@
 #include <pthread.h>
 
 
-#define SERIAL_ATTACHED
+// #define SERIAL_ATTACHED
 // #define DEBUG
 
-void	rrdtool_create (char *);
-void	rrdtool_create_consumption(void);
+#define BAUDRATE        10400
+#define WRITE_DELAY     5700
+#define INIT_DELAY      200000
+
+void    rrdtool_create (char *);
+void    rrdtool_create_consumption (void);
 
 int     kw1281_open (char *device);
 void    kw1281_init (int);
-void *  kw1281_mainloop ();
+void   *kw1281_mainloop ();
 
-void *  ajax_socket (void *);
+void   *ajax_socket (void *);
 
 
 float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
