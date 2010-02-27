@@ -20,7 +20,9 @@
 #include <pthread.h>
 
 
+#define SERIAL_ATTACHED
 // #define DEBUG
+
 void	rrdtool_create (char *);
 void	rrdtool_create_consumption(void);
 
