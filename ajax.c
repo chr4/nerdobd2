@@ -111,6 +111,7 @@ handle_client (int connfd)
 		{
 			send (connfd, line, strlen (line), 0);
 		}
+		close(fd);
     }
 	
     else if (strstr (recv_buf, "GET /speed.png"))
@@ -136,6 +137,7 @@ handle_client (int connfd)
 			(void)write(connfd, buffer, ret);
 			
 		}
+                close(file_fd);
     }	
     else if (strstr (recv_buf, "GET /consumption.png"))
     {
@@ -161,6 +163,7 @@ handle_client (int connfd)
 			(void)write(connfd, buffer, ret);
 			
 		}
+		close(file_fd);
     }	
 	
     else if (!strcmp (recv_buf, "POST /update_con_km HTTP/1.1"))

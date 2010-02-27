@@ -245,7 +245,8 @@ kw1281_handle_error (void)
      *
      *  or just exit -1 and start program in a loop
      */
-	
+
+    close(fd);	
     pthread_exit(NULL);
 }
 
@@ -671,6 +672,16 @@ kw1281_print (void)
 void *
 kw1281_mainloop ()
 {
+
+#ifdef SERIAL_ATTACHED
+    if (kw1281_open("/dev/ttyUSB0") == -1)
+    	pthread_exit(NULL); 
+
+    printf ("init\n");              // ECU: 0x01, INSTR: 0x17
+    kw1281_init (0x01);             // send 5baud address, read sync byte + key word
+#endif
+
+
 #ifdef DEBUG
     printf ("receive blocks\n");
 #endif
@@ -679,7 +690,7 @@ kw1281_mainloop ()
 	 * when the car is too far to test
 	 * the html interface / ajax server
 	 */
-#ifndef NO_DEV
+#ifndef SERIAL_ATTACHED
 	printf("incrementing values for testing purposes...\n");
 	speed = 10;
 	con_km = 0.1;
