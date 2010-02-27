@@ -31,6 +31,7 @@ void
 rrdtool_update (char *name, float val)
 {
 	pid_t	pid;
+	int		status;
     time_t  t;
 	
     if ((pid = fork ()) == 0)
@@ -44,6 +45,8 @@ rrdtool_update (char *name, float val)
 		execlp ("rrdtool", "rrdtool", "update", rrd, cmd, NULL);
 		exit (-1);
     }
+	
+	waitpid(pid, &status, 0);
 	
 	if ((pid = fork ()) == 0)
     {
@@ -66,6 +69,8 @@ rrdtool_update (char *name, float val)
 		exit(-1);
 	}
 	
+	waitpid(pid, &status, 0);
+	
     return;
 }
 
@@ -73,6 +78,7 @@ void
 rrdtool_create(char *name)
 {
 	pid_t	pid;
+	int		status;
     time_t  t;
 	char    cmd[256];
 	FILE *fp;
@@ -110,6 +116,8 @@ rrdtool_create(char *name)
 				ds, "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:6:300", "RRA:AVERAGE:0.5:9:900", NULL);
 		exit (-1);
     }
+	
+	waitpid(pid, &status, 0);
 	
 	return;
 }
@@ -150,7 +158,7 @@ kw1281_handle_error (void)
      *  or just exit -1 and start program in a loop
      */
 	
-    exit (-1);
+    pthread_exit(NULL);
 }
 
 // increment the counter
@@ -579,8 +587,12 @@ kw1281_mainloop ()
     printf ("receive blocks\n");
 #endif
 	
-	/* debugging and testing 
-	printf("incrementing speed and con_km\n");
+	/* this block is for testing purposes
+	 * when the car is too far to test
+	 * the html interface / ajax server
+	 */
+#ifndef NO_DEV
+	printf("incrementing values for testing purposes...\n");
 	speed = 10;
 	con_km = 0.1;
 	load = 0;
@@ -598,9 +610,10 @@ kw1281_mainloop ()
 		voltage += 0.15;
 		load+=3;
 		usleep(2000000);
+		rrdtool_update ("speed", speed);
+		rrdtool_update ("con_km", con_km);		
 	}
-	
-	/* end testing */
+#endif
 	
 	
     while (!ready)
