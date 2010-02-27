@@ -1,6 +1,6 @@
 #include "serial.h"
 
-#define NO_DEV
+// #define NO_DEV
 
 int
 main (int arc, char **argv)
@@ -12,13 +12,15 @@ main (int arc, char **argv)
 		return -1;
 #endif
 	// create databases, unless they exist
-	rrdtool_create("rpm");
-	rrdtool_create("con_h");
-	rrdtool_create("con_km");
+	rrdtool_create_consumption();
 	rrdtool_create("speed");
+	
+	/*
+	rrdtool_create("rpm");
 	rrdtool_create("temp1");
 	rrdtool_create("temp2");
 	rrdtool_create("voltage");	
+	*/
 	
 	// create ajax socket in new thread for handling http connections
 	pthread_create( &thread1, NULL, ajax_socket, (void *) 80);

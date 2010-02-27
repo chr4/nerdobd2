@@ -1,5 +1,7 @@
 #include "serial.h"
 
+#define HEADER_PLAIN "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+
 int     tcp_listen (int);
 int handle_client (int);
 void    cut_crlf (char *);
@@ -135,7 +137,7 @@ handle_client (int connfd)
 			
 		}
     }	
-    else if (strstr (recv_buf, "GET /con_km.png"))
+    else if (strstr (recv_buf, "GET /consumption.png"))
     {
 		int file_fd;
 		int ret;
@@ -145,7 +147,7 @@ handle_client (int connfd)
 		if (ignore_headers(connfd) == -1)
 			return 0;
 		
-		if(( file_fd = open("con_km.png", O_RDONLY)) == -1)
+		if(( file_fd = open("consumption.png", O_RDONLY)) == -1)
 		{
 			perror("couldnt open png file\n");
 			return -1;
@@ -169,6 +171,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.02f", con_km);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }
     else if (!strcmp (recv_buf, "POST /update_speed HTTP/1.1"))
@@ -179,6 +182,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.01f", speed);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }
     else if (!strcmp (recv_buf, "POST /update_rpm HTTP/1.1"))
@@ -189,6 +193,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.00f", rpm);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else if (!strcmp (recv_buf, "POST /update_con_h HTTP/1.1"))
@@ -199,6 +204,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.02f", con_h);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else if (!strcmp (recv_buf, "POST /update_load HTTP/1.1"))
@@ -209,6 +215,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.00f", load);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else if (!strcmp (recv_buf, "POST /update_temp1 HTTP/1.1"))
@@ -219,6 +226,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.01f", temp1);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else if (!strcmp (recv_buf, "POST /update_temp2 HTTP/1.1"))
@@ -229,6 +237,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.01f", temp2);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else if (!strcmp (recv_buf, "POST /update_voltage HTTP/1.1"))
@@ -239,6 +248,7 @@ handle_client (int connfd)
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.02f", voltage);
+		send (connfd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
 		send (connfd, buf, strlen (buf), 0);
     }	
     else

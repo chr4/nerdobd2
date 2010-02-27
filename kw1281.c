@@ -5,6 +5,7 @@
 
 static void _set_bit (int);
 void    rrdtool_update (char *, float);
+void	rrdtool_update_consumption(float, float);
 
 void    kw1281_handle_error (void);
 void    kw1281_send_byte_ack (unsigned char);
@@ -22,6 +23,47 @@ int     fd;
 int     counter;		/* kw1281 protocol block counter */
 int     ready = 0;
 
+
+
+void
+rrdtool_update_consumption(float km, float h)
+{
+	pid_t	pid;
+	int		status;
+    time_t  t;
+	
+    if ((pid = fork ()) == 0)
+    {
+		char    cmd[256];
+
+		snprintf (cmd, sizeof (cmd), "%d:%.2f:%.2f", (int) time (&t), km, h);
+		execlp ("rrdtool", "rrdtool", "update", "consumption.rrd", cmd, NULL);
+		exit (-1);
+    }
+	
+	waitpid(pid, &status, 0);
+	
+	if ((pid = fork ()) == 0)
+    {
+		char starttime[256];
+		char endtime[256];
+		
+		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t) - 300);
+		snprintf(endtime, sizeof(endtime), "%d", (int) time (&t));
+		
+		execlp ("rrdtool", "rrdtool", "graph", "consumption.png",
+				"--start", starttime, "--end", endtime, 
+				"DEF:con_km=consumption.rrd:km:AVERAGE", "AREA:con_km#990000:l/100km",
+				"DEF:con_h=consumption.rrd:h:AVERAGE", "LINE3:con_h#009999:l/h",
+				NULL);
+		
+		exit(-1);
+	}
+	
+	waitpid(pid, &status, 0);
+	
+    return;
+}
 
 /* execute the rddtool command
  * name = rdd file to write val to
@@ -60,7 +102,7 @@ rrdtool_update (char *name, float val)
 		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t) - 300);
 		snprintf(endtime, sizeof(endtime), "%d", (int) time (&t));
 		snprintf(def, sizeof(def), "DEF:my%s=%s.rrd:%s:AVERAGE", name, name, name);
-		snprintf(line, sizeof(line), "LINE2:my%s#0000FF", name);
+		snprintf(line, sizeof(line), "LINE2:my%s#0000FF:%s", name, name);
 
 		execlp ("rrdtool", "rrdtool", "graph", png,
 				"--start", starttime, "--end", endtime, 
@@ -72,6 +114,51 @@ rrdtool_update (char *name, float val)
 	waitpid(pid, &status, 0);
 	
     return;
+}
+
+void
+rrdtool_create_consumption(void)
+{
+	pid_t	pid;
+	int		status;
+    time_t  t;
+	FILE *fp;
+	
+	fp = fopen("consumption.rrd","rw");
+	if( fp ) {
+		fclose(fp);
+		return;
+	} 
+	
+	printf("creating consumption rrd file\n");
+	
+	/*
+	 // remove old file
+	 if (unlink(cmd) == -1)
+	 perror("could not delete old .rrd file");
+	 */
+	
+    if ((pid = fork ()) == 0)
+    {
+		char starttime[256];
+		
+		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t));
+		
+		// after 15secs: unknown value
+		// 1. RRA last 5 mins
+		// 2. RRA last 30mins
+		// 3. RRA one value (average consumption last 30mins)
+		execlp ("rrdtool", "rrdtool", "create", "consumption.rrd", 
+				"--start", starttime, "--step", "1",
+				"DS:km:GAUGE:15:U:U", "DS:h:GAUGE:15:U:U",
+				"RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",
+				NULL);
+		exit (-1);
+    }
+	
+	waitpid(pid, &status, 0);
+	
+	return;
 }
 
 void
@@ -107,13 +194,14 @@ rrdtool_create(char *name)
 		
 		snprintf(rrd, sizeof(rrd), "%s.rrd", name);
 		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t));
-		snprintf(ds, sizeof(ds), "DS:%s:GAUGE:10:U:U", name);
+		snprintf(ds, sizeof(ds), "DS:%s:GAUGE:15:U:U", name);
 
 		
 		// rrdtool create
 		execlp ("rrdtool", "rrdtool", "create", rrd, 
 				"--start", starttime, "--step", "1",
-				ds, "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:6:300", "RRA:AVERAGE:0.5:9:900", NULL);
+				ds, "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360", 
+				"RRA:AVERAGE:0.5:50:288", "RRA:AVERAGE:0.5:1800:1", NULL);
 		exit (-1);
     }
 	
@@ -605,13 +693,13 @@ kw1281_mainloop ()
 	{
 		speed++;;
 		con_km += 0.1;
-		con_h += 0.01;
+		con_h += 0.03;
 		temp1++; temp2++;
 		voltage += 0.15;
 		load+=3;
 		usleep(2000000);
 		rrdtool_update ("speed", speed);
-		rrdtool_update ("con_km", con_km);		
+		rrdtool_update_consumption(con_km, con_h);		
 	}
 #endif
 	
@@ -637,8 +725,7 @@ kw1281_mainloop ()
 		else
 			con_h = 0;
 		
-		rrdtool_update ("rpm", rpm);
-		rrdtool_update ("con_h", con_h);
+		// rrdtool_update ("rpm", rpm);
 		
 		// request block 0x05
 		kw1281_send_block (0x05);
@@ -652,16 +739,18 @@ kw1281_mainloop ()
 		
 		// update rrdtool databases
 		rrdtool_update ("speed", speed);
-		rrdtool_update ("con_km", con_km);
+		rrdtool_update_consumption(con_km, con_h);
 		
 		// request block 0x04
 		kw1281_send_block (0x04);
 		kw1281_recv_block (0x04);	// temperatures + voltage
 		
 		// update rrdtool databases
+		/*
 		rrdtool_update ("temp1", temp1);
 		rrdtool_update ("temp2", temp2);
 		rrdtool_update ("voltage", voltage);
+		*/
 		
 		// output values
 		kw1281_print ();
