@@ -25,9 +25,9 @@ main (int arc, char **argv)
 
     for (;;)
     {
-	pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
-	// wait for thread2
-	pthread_join (thread2, NULL);
+        pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
+        // wait for thread2
+        pthread_join (thread2, NULL);
     }
 
     // shut down ajax http server
