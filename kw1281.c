@@ -32,21 +32,85 @@ rrdtool_update (char *name, float val)
 {
 	pid_t	pid;
     time_t  t;
-    int     status;
-    char    cmd[256];
-	
 	
     if ((pid = fork ()) == 0)
     {
+		char    cmd[256];
+
+		// rrdtool update
 		snprintf (cmd, sizeof (cmd), "%d:%.2f", (int) time (&t), val);
-		
 		execlp ("rrdtool", "rrdtool", "update", name, cmd, NULL);
 		exit (-1);
     }
 	
+	if ((pid = fork ()) == 0)
+    {
+		char png[256];
+		char starttime[256];
+		char endtime[256];
+		char def[256];
+		char line[256];
+		
+		snprintf(png, sizeof(png), "%s.png", name);
+		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t));
+		snprintf(endtime, sizeof(endtime), "%d", (int) time (&t) - 300);
+		snprintf(def, sizeof(def), "DEF:my%s=%s.rrd:%s:AVERAGE", name, name, name);
+		snprintf(line, sizeof(line), "LINE2:my%s#0000FF", name);
+
+		execlp ("rrdtool", "rrdtool", "graph", png,
+				"--start", starttime, "--end", endtime, 
+				def, line, NULL);
+		
+		exit(-1);
+	}
+	
     return;
 }
 
+void
+rrdtool_create(char *name)
+{
+	pid_t	pid;
+    time_t  t;
+	char    cmd[256];
+	FILE *fp;
+	
+	snprintf(cmd, sizeof(cmd), "%s.rrd", name);
+	
+	fp = fopen(cmd,"rw");
+	if( fp ) {
+		fclose(fp);
+		return;
+	} 
+	
+	printf("creating %s\n", cmd);
+	
+	/*
+	// remove old file
+	if (unlink(cmd) == -1)
+		perror("could not delete old .rrd file");
+	*/
+	
+    if ((pid = fork ()) == 0)
+    {
+		char rrd[256];
+		char starttime[256];
+		char ds[256];
+		
+		snprintf(rrd, sizeof(rrd), "%s.rrd", name);
+		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t));
+		snprintf(ds, sizeof(ds), "DS:%s:GAUGE:10:U:U", name);
+
+		
+		// rrdtool create
+		execlp ("rrdtool", "rrdtool", "create", rrd, 
+				"--start", starttime, "--step", "1",
+				ds, "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:6:300", "RRA:AVERAGE:0.5:9:900", NULL);
+		exit (-1);
+    }
+	
+	return;
+}
 
 
 /* manually set serial lines */
@@ -374,10 +438,10 @@ kw1281_recv_block (unsigned char n)
 				case 0x21:	// load
 					if (i == 0)
 					{
-						if (buf[4] > 0)
-							load = (100 * buf[i + 2]) / buf[i + 1];
-						else
+						if (buf[i + 1] == 0)
 							load = 100;
+						else
+							load = 100 * buf[i + 2] / buf[i + 1];
 					}
 					break;
 					
@@ -506,8 +570,8 @@ kw1281_print (void)
     return;
 }
 
-void
-kw1281_mainloop (void)
+void *
+kw1281_mainloop ()
 {
 #ifdef DEBUG
     printf ("receive blocks\n");

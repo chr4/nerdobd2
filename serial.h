@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <time.h>
 #include <linux/termios.h>
@@ -20,12 +21,13 @@
 
 
 // #define DEBUG
+void	rrdtool_create(char *);
 
 int     kw1281_open (char *device);
 void    kw1281_init (int);
-void    kw1281_mainloop (void);
+void *  kw1281_mainloop ();
 
-int     ajax_socket (int);
+void *  ajax_socket (void *);
 
 
 float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
