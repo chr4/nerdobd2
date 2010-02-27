@@ -5,8 +5,8 @@ main (int arc, char **argv)
 {
 	pthread_t thread1, thread2;
 		
-    //if (kw1281_open("/dev/ttyUSB0") == -1)
-	//	return -1;
+    if (kw1281_open("/dev/ttyUSB0") == -1)
+		return -1;
 
 	// create databases, if they not exist
 	rrdtool_create("rpm");
@@ -27,10 +27,16 @@ main (int arc, char **argv)
     printf ("init\n");		// ECU: 0x01, INSTR: 0x17
     kw1281_init (0x01);		// send 5baud address, read sync byte + key word
 
-	pthread_create( &thread2, NULL, kw1281_mainloop, NULL);
-
-	// wait for thread2
-	pthread_join( thread2, NULL); 
+	for ( ; ; )
+	{
+		pthread_create( &thread2, NULL, kw1281_mainloop, NULL);
+		// wait for thread2
+		pthread_join( thread2, NULL);
+		printf("pthread killed. restarting...\n");
+	}
 	
+	pthread_kill( thread1, NULL);
+	
+	printf("exiting main\n");
     return 0;
 }

@@ -1,11 +1,12 @@
 #include "serial.h"
 
 int     tcp_listen (int);
-void * handle_client (void *);
+int handle_client (int);
 void    cut_crlf (char *);
 ssize_t readline (int, void *, size_t);
 char   *get_line (FILE *);
-FILE   *open_html (char *);
+FILE   *open_file (char *);
+int	ignore_headers(int);
 
 
 void *
@@ -13,8 +14,9 @@ ajax_socket (void *pport)
 {
     int     cli, srv;
 	int		port;
+	int		status;
     int     clisize;
-	
+	pid_t	pid;
 	port = (int) pport;
 	
     struct sockaddr_in cliaddr;
@@ -24,13 +26,21 @@ ajax_socket (void *pport)
 	
     for (;;)
     {
-		pthread_t th_client;
+		// pthread_t th_client;
 		
 		clisize = sizeof (cliaddr);
 		if ((cli = accept (srv, (struct sockaddr *) &cliaddr, (socklen_t *) &clisize)) == -1)
 			continue;
+				
+		if ((pid = fork()) == 0) {
+			close(srv);
+			handle_client(cli);
+			exit(0);
+		}
 		
-		pthread_create( &th_client, NULL, handle_client, (void *) cli);
+		waitpid(pid, &status, 0);
+		// pthread throws strange errors after a while...
+		// pthread_create( &th_client, NULL, handle_client, (void *) cli);
 
 		close (cli);
     }
@@ -72,19 +82,15 @@ tcp_listen (int port)
     return sock;
 }
 
-void *
-handle_client (void *cli)
+int
+handle_client (int connfd)
 {
     char    recv_buf[1024];
     FILE   *fd;
     char   *line;
-	int		connfd;
-	
-	connfd = (int) cli;
-	
 	
     if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-		return (void *) NULL;
+		return -1;
 	
     cut_crlf (recv_buf);
 	
@@ -92,16 +98,11 @@ handle_client (void *cli)
     {
 		printf ("GET ");
 		// read and ignore all http headers
-		while (strcmp (recv_buf, ""))
-		{
-			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return (void *) NULL;
-			
-			cut_crlf (recv_buf);
-		}
+		if (ignore_headers(connfd) == -1)
+			return 0;
 		
 		// send the html file
-		fd = open_html ("ajax.html");
+		fd = open_file ("ajax.html");
 		
 		printf ("ajax.html\n");
 		while ((line = get_line (fd)) != NULL)
@@ -110,48 +111,159 @@ handle_client (void *cli)
 		}
     }
 	
-    else if (!strcmp (recv_buf, "POST /update_consumption HTTP/1.1"))
+    else if (strstr (recv_buf, "GET /speed.png"))
     {
-		//printf("POST ");
+		int file_fd;
+		int ret;
+		static char buffer[1024+1]; /* static so zero filled */
+
+		// read and ignore all http headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
 		
-		// read and ignore headers
-		while (strcmp (recv_buf, ""))
+		if(( file_fd = open("speed.png", O_RDONLY)) == -1)
 		{
-			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return (void *) NULL;
+			perror("couldnt open png file\n");
+			return -1;
+		}
+		write (connfd, "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n",
+			  strlen("HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"));
+		
+		while ( (ret = read(file_fd, buffer, 1024)) > 0 ) {
 			
-			cut_crlf (recv_buf);
+			(void)write(connfd, buffer, ret);
+			
+		}
+    }	
+    else if (strstr (recv_buf, "GET /con_km.png"))
+    {
+		int file_fd;
+		int ret;
+		static char buffer[1024+1]; /* static so zero filled */
+		
+		// read and ignore all http headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		if(( file_fd = open("con_km.png", O_RDONLY)) == -1)
+		{
+			perror("couldnt open png file\n");
+			return -1;
 		}
 		
+		write (connfd, "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n",
+			   strlen("HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"));
+		
+		while ( (ret = read(file_fd, buffer, 1024)) > 0 ) {
+			
+			(void)write(connfd, buffer, ret);
+			
+		}
+    }	
+	
+    else if (!strcmp (recv_buf, "POST /update_con_km HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
 		char    buf[256];
-		snprintf (buf, sizeof (buf), "%.02f", l_per_100km);
-		//printf("%s\n", buf);
+		snprintf (buf, sizeof (buf), "%.02f", con_km);
 		send (connfd, buf, strlen (buf), 0);
     }
     else if (!strcmp (recv_buf, "POST /update_speed HTTP/1.1"))
     {
-		// printf("POST ");
-		
 		// read and ignore headers
-		while (strcmp (recv_buf, ""))
-		{
-			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return (void *) NULL;
-			
-			cut_crlf (recv_buf);
-		}
+		if (ignore_headers(connfd) == -1)
+			return 0;
 		
 		char    buf[256];
 		snprintf (buf, sizeof (buf), "%.01f", speed);
-		//printf("%s\n", buf);
 		send (connfd, buf, strlen (buf), 0);
     }
-    else
+    else if (!strcmp (recv_buf, "POST /update_rpm HTTP/1.1"))
     {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.00f", rpm);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else if (!strcmp (recv_buf, "POST /update_con_h HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.02f", con_h);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else if (!strcmp (recv_buf, "POST /update_load HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.00f", load);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else if (!strcmp (recv_buf, "POST /update_temp1 HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.01f", temp1);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else if (!strcmp (recv_buf, "POST /update_temp2 HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.01f", temp2);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else if (!strcmp (recv_buf, "POST /update_voltage HTTP/1.1"))
+    {
+		// read and ignore headers
+		if (ignore_headers(connfd) == -1)
+			return 0;
+		
+		char    buf[256];
+		snprintf (buf, sizeof (buf), "%.02f", voltage);
+		send (connfd, buf, strlen (buf), 0);
+    }	
+    else
 		printf ("got something else (%s)\n", recv_buf);
-    }
+
 	
-    return (void *) NULL;
+    return 0;
+}
+
+// read and ignore headers
+int
+ignore_headers(int fd)
+{
+	char recv_buf[1024];
+	
+	do
+	{
+		if (readline (fd, recv_buf, sizeof (recv_buf)) <= 0)
+			return -1;
+		
+		cut_crlf (recv_buf);
+		
+	} while (strcmp (recv_buf, ""));
+		
+	return 0;
 }
 
 void
@@ -226,7 +338,7 @@ get_line (FILE * fz)
 
 
 FILE   *
-open_html (char *file)
+open_file (char *file)
 {
 	
     FILE   *fd;
