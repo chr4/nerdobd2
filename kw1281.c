@@ -36,10 +36,12 @@ rrdtool_update (char *name, float val)
     if ((pid = fork ()) == 0)
     {
 		char    cmd[256];
+		char	rrd[256];
 
 		// rrdtool update
+		snprintf (rrd, sizeof (rrd), "%s.rrd", name);
 		snprintf (cmd, sizeof (cmd), "%d:%.2f", (int) time (&t), val);
-		execlp ("rrdtool", "rrdtool", "update", name, cmd, NULL);
+		execlp ("rrdtool", "rrdtool", "update", rrd, cmd, NULL);
 		exit (-1);
     }
 	
@@ -52,8 +54,8 @@ rrdtool_update (char *name, float val)
 		char line[256];
 		
 		snprintf(png, sizeof(png), "%s.png", name);
-		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t));
-		snprintf(endtime, sizeof(endtime), "%d", (int) time (&t) - 300);
+		snprintf(starttime, sizeof(starttime), "%d", (int) time (&t) - 300);
+		snprintf(endtime, sizeof(endtime), "%d", (int) time (&t));
 		snprintf(def, sizeof(def), "DEF:my%s=%s.rrd:%s:AVERAGE", name, name, name);
 		snprintf(line, sizeof(line), "LINE2:my%s#0000FF", name);
 
@@ -622,8 +624,8 @@ kw1281_mainloop ()
 		else
 			con_h = 0;
 		
-		rrdtool_update ("rpm.rrd", rpm);
-		rrdtool_update ("con_h.rrd", con_h);
+		rrdtool_update ("rpm", rpm);
+		rrdtool_update ("con_h", con_h);
 		
 		// request block 0x05
 		kw1281_send_block (0x05);
@@ -636,17 +638,17 @@ kw1281_mainloop ()
 			con_km = -1;
 		
 		// update rrdtool databases
-		rrdtool_update ("speed.rrd", speed);
-		rrdtool_update ("con_km.rrd", con_km);
+		rrdtool_update ("speed", speed);
+		rrdtool_update ("con_km", con_km);
 		
 		// request block 0x04
 		kw1281_send_block (0x04);
 		kw1281_recv_block (0x04);	// temperatures + voltage
 		
 		// update rrdtool databases
-		rrdtool_update ("temp1.rrd", temp1);
-		rrdtool_update ("temp2.rrd", temp2);
-		rrdtool_update ("voltage.rrd", voltage);
+		rrdtool_update ("temp1", temp1);
+		rrdtool_update ("temp2", temp2);
+		rrdtool_update ("voltage", voltage);
 		
 		// output values
 		kw1281_print ();
