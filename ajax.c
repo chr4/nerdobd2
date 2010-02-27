@@ -1,18 +1,21 @@
 #include "serial.h"
 
 int     tcp_listen (int);
-int     handle_client (int);
+void * handle_client (void *);
 void    cut_crlf (char *);
 ssize_t readline (int, void *, size_t);
 char   *get_line (FILE *);
 FILE   *open_html (char *);
 
 
-int
-ajax_socket (int port)
+void *
+ajax_socket (void *pport)
 {
     int     cli, srv;
+	int		port;
     int     clisize;
+	
+	port = (int) pport;
 	
     struct sockaddr_in cliaddr;
 	
@@ -24,15 +27,13 @@ ajax_socket (int port)
 		pthread_t th_client;
 		
 		clisize = sizeof (cliaddr);
-		if ((cli = accept (srv, &cliaddr, &clisize)) == -1)
+		if ((cli = accept (srv, (struct sockaddr *) &cliaddr, (socklen_t *) &clisize)) == -1)
 			continue;
 		
-		pthread_create( &th_client, NULL, handle_client, cli);
+		pthread_create( &th_client, NULL, handle_client, (void *) cli);
 
 		close (cli);
     }
-	
-    return 0;
 }
 
 int
@@ -56,7 +57,7 @@ tcp_listen (int port)
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons (port);
 	
-    if (bind (sock, &servaddr, sizeof (servaddr)) == -1)
+    if (bind (sock, (struct sockaddr*) &servaddr, sizeof (servaddr)) == -1)
     {
 		perror ("bind() failed");
 		exit (-1);
@@ -71,18 +72,19 @@ tcp_listen (int port)
     return sock;
 }
 
-int
-handle_client (int connfd)
+void *
+handle_client (void *cli)
 {
     char    recv_buf[1024];
-    char    send_buf[1024];
-	
     FILE   *fd;
     char   *line;
+	int		connfd;
+	
+	connfd = (int) cli;
 	
 	
     if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-		return 0;
+		return (void *) NULL;
 	
     cut_crlf (recv_buf);
 	
@@ -93,7 +95,7 @@ handle_client (int connfd)
 		while (strcmp (recv_buf, ""))
 		{
 			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return 0;
+				return (void *) NULL;
 			
 			cut_crlf (recv_buf);
 		}
@@ -116,7 +118,7 @@ handle_client (int connfd)
 		while (strcmp (recv_buf, ""))
 		{
 			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return 0;
+				return (void *) NULL;
 			
 			cut_crlf (recv_buf);
 		}
@@ -134,7 +136,7 @@ handle_client (int connfd)
 		while (strcmp (recv_buf, ""))
 		{
 			if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
-				return 0;
+				return (void *) NULL;
 			
 			cut_crlf (recv_buf);
 		}
@@ -149,7 +151,7 @@ handle_client (int connfd)
 		printf ("got something else (%s)\n", recv_buf);
     }
 	
-    return 0;
+    return (void *) NULL;
 }
 
 void
