@@ -26,7 +26,7 @@
 
 static void _set_bit (int);
 
-int     kw1281_setup (char *device);
+int     kw1281_open (char *device);
 void    kw1281_init (int);
 void    kw1281_mainloop (void);
 void    kw1281_handle_error (void);
@@ -482,9 +482,9 @@ kw1281_recv_block (unsigned char n)
 
 
 int
-kw1281_setup (char *device)
+kw1281_open (char *device)
 {
-    struct termios oldtio, newtio;
+    struct termios newtio;
     struct serial_struct st, ot;
 
     // open the serial device
@@ -495,7 +495,6 @@ kw1281_setup (char *device)
 	return -1;
     }
 
-    tcgetattr (fd, &oldtio);
     if (ioctl (fd, TIOCGSERIAL, &ot) < 0)
     {
 	printf ("getting tio failed\n");
@@ -512,7 +511,6 @@ kw1281_setup (char *device)
 	printf ("TIOCSSERIAL failed\n");
 	return -1;
     }
-
     newtio.c_cflag = B38400 | CLOCAL | CREAD;	// 38400 baud, so custom baud rate above works
     newtio.c_iflag = IGNPAR;	// ICRNL provokes bogus replys after block 12
     newtio.c_oflag = 0;
@@ -521,7 +519,7 @@ kw1281_setup (char *device)
     tcflush (fd, TCIFLUSH);
     tcsetattr (fd, TCSANOW, &newtio);
 
-    /* tcsetattr (fd, TCSANOW, &oldtio); */
+    return 0;
 }
 
 /* this function prints the collected values */
@@ -610,8 +608,8 @@ main (int arc, char **argv)
     pid_t   pid1;
     pid_t   pid2;
 
-    if (kw1281_setup ("/dev/ttyUSB0") == -1)
-	return -1;
+    if (kw1281_open("/dev/ttyUSB0") == -1)
+		return -1;
 
     if ((pid1 = fork ()) == 0)
     {
