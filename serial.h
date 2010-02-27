@@ -31,5 +31,5 @@ void *  ajax_socket (void *);
 
 
 float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
-float   l_per_h;
-float   l_per_100km;
+float   con_h;
+float   con_km;

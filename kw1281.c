@@ -554,8 +554,8 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
-    printf ("l/h\t\t%.2f\n", l_per_h);
-    printf ("l/100km\t\t%.2f\n", l_per_100km);
+    printf ("l/h\t\t%.2f\n", con_h);
+    printf ("l/100km\t\t%.2f\n", con_km);
     printf ("speed\t\t%.1f km/h\n", speed);
     printf ("rpm\t\t%.0f RPM\n", rpm);
     printf ("inj on time\t%.2f ms\n", inj_time);
@@ -577,6 +577,30 @@ kw1281_mainloop ()
     printf ("receive blocks\n");
 #endif
 	
+	/* debugging and testing 
+	printf("incrementing speed and con_km\n");
+	speed = 10;
+	con_km = 0.1;
+	load = 0;
+	con_h = 0.01;
+	temp1 = 20;
+	temp2 = 0;
+	voltage = 3.00;
+	
+	for (; ;)
+	{
+		speed++;;
+		con_km += 0.1;
+		con_h += 0.01;
+		temp1++; temp2++;
+		voltage += 0.15;
+		load+=3;
+		usleep(2000000);
+	}
+	
+	/* end testing */
+	
+	
     while (!ready)
     {
 		kw1281_recv_block (0x00);
@@ -593,13 +617,13 @@ kw1281_mainloop ()
 		
 		// calculate consumption per hour
 		if (inj_time > const_inj_subtract)
-			l_per_h = 60 * 4 * const_multiplier *
+			con_h = 60 * 4 * const_multiplier *
 			rpm * (inj_time - const_inj_subtract);
 		else
-			l_per_h = 0;
+			con_h = 0;
 		
 		rrdtool_update ("rpm.rrd", rpm);
-		rrdtool_update ("con_h.rrd", l_per_h);
+		rrdtool_update ("con_h.rrd", con_h);
 		
 		// request block 0x05
 		kw1281_send_block (0x05);
@@ -607,13 +631,13 @@ kw1281_mainloop ()
 		
 		// calculate consumption per hour
 		if (speed > 0)
-			l_per_100km = (l_per_h / speed) * 100;
+			con_km = (con_h / speed) * 100;
 		else
-			l_per_100km = -1;
+			con_km = -1;
 		
 		// update rrdtool databases
 		rrdtool_update ("speed.rrd", speed);
-		rrdtool_update ("con_km.rrd", l_per_100km);
+		rrdtool_update ("con_km.rrd", con_km);
 		
 		// request block 0x04
 		kw1281_send_block (0x04);
