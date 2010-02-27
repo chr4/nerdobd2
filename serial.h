@@ -21,7 +21,8 @@
 
 
 // #define DEBUG
-void	rrdtool_create(char *);
+void	rrdtool_create (char *);
+void	rrdtool_create_consumption(void);
 
 int     kw1281_open (char *device);
 void    kw1281_init (int);
