@@ -3,7 +3,8 @@
 int
 main (int arc, char **argv)
 {
-    pthread_t thread1, thread2;
+    pthread_t thread1;
+    pthread_t thread2;
 
     // create databases, unless they exist
     rrdtool_create_consumption ();
@@ -12,7 +13,6 @@ main (int arc, char **argv)
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) 80);
 
-    /*
     for (;;)
     {
         pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
@@ -21,9 +21,6 @@ main (int arc, char **argv)
         pthread_join (thread2, NULL);
         usleep(INIT_DELAY);
     }
-     */
-    
-    kw1281_mainloop();
 
     return 0;
 }
