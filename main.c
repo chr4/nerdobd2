@@ -7,21 +7,10 @@ main (int arc, char **argv)
 
     // create databases, unless they exist
     rrdtool_create_consumption ();
-    rrdtool_create ("speed");
-
-    /*
-       rrdtool_create("rpm");
-       rrdtool_create("temp1");
-       rrdtool_create("temp2");
-       rrdtool_create("voltage");   
-     */
+    rrdtool_create_speed ();
 
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) 80);
-
-    /* 
-     * another fork for generating rrdtool images
-     */
 
     for (;;)
     {
@@ -29,7 +18,7 @@ main (int arc, char **argv)
         
         // wait for mainloop
         pthread_join (thread2, NULL);
-        usleep(1000000);
+        usleep(INIT_DELAY);
     }
 
     // shut down ajax http server

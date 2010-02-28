@@ -85,7 +85,7 @@ rrdtool_create_consumption (void)
         return;
     }
 
-    printf ("creating consumption rrd file\n");
+    printf ("creating consumption rrd database\n");
 
     /*
        // remove old file
@@ -117,24 +117,21 @@ rrdtool_create_consumption (void)
 }
 
 void
-rrdtool_create (char *name)
+rrdtool_create_speed (void)
 {
     pid_t   pid;
     int     status;
     time_t  t;
-    char    cmd[256];
     FILE   *fp;
 
-    snprintf (cmd, sizeof (cmd), "%s.rrd", name);
-
-    fp = fopen (cmd, "rw");
+    fp = fopen ("speed.rrd", "rw");
     if (fp)
     {
         fclose (fp);
         return;
     }
 
-    printf ("creating %s\n", cmd);
+    printf ("creating speed rrd database\n");
 
     /*
        // remove old file
@@ -144,19 +141,15 @@ rrdtool_create (char *name)
 
     if ((pid = fork ()) == 0)
     {
-        char    rrd[256];
         char    starttime[256];
-        char    ds[256];
-
-        snprintf (rrd, sizeof (rrd), "%s.rrd", name);
+        
         snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
-        snprintf (ds, sizeof (ds), "DS:%s:GAUGE:15:0:200", name);
-
 
         // rrdtool create
-        execlp ("rrdtool", "rrdtool", "create", rrd,
+        execlp ("rrdtool", "rrdtool", "create", "speed.rrd",
                 "--start", starttime, "--step", "1",
-                ds, "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
+                "DS:speed:GAUGE:15:0:200", 
+                "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
                 "RRA:AVERAGE:0.5:50:288", "RRA:AVERAGE:0.5:1800:1", NULL);
         exit (-1);
     }
