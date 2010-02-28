@@ -20,7 +20,7 @@
 #define SERIAL_ATTACHED
 #define DEBUG
 
-#define DEVICE		"/dev/ttyUSB0"
+#define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
 #define WRITE_DELAY     5700
 #define INIT_DELAY      200000

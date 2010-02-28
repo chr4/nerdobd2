@@ -1,6 +1,7 @@
 #include "serial.h"
 
-#define HEADER_PLAIN "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+#define HEADER_PLAIN    "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+#define HEADER_PNG      "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"
 
 int     tcp_listen (int);
 int     handle_client (int);
@@ -35,6 +36,9 @@ ajax_socket (void *pport)
                      (socklen_t *) & clisize)) == -1)
             continue;
 
+        // pthread throws strange errors after a while, thus using fork()
+        // pthread_create( &th_client, NULL, handle_client, (void *) cli);
+        
         if ((pid = fork ()) == 0)
         {
             close (srv);
@@ -44,8 +48,6 @@ ajax_socket (void *pport)
         }
 
         waitpid (pid, &status, 0);
-        // pthread throws strange errors after a while...
-        // pthread_create( &th_client, NULL, handle_client, (void *) cli);
 
         close (cli);
     }
@@ -131,13 +133,12 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
-        if ((file_fd = open ("speed.png", O_RDONLY)) == -1)
+        if ((file_fd = open("speed.png", O_RDONLY)) == -1)
         {
             perror ("couldnt open png file\n");
             return -1;
         }
-        write (connfd, "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n",
-               strlen ("HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"));
+        write (connfd, HEADER_PNG, strlen(HEADER_PNG));
 
         while ((ret = read (file_fd, buffer, 1024)) > 0)
         {
@@ -163,8 +164,7 @@ handle_client (int connfd)
             return -1;
         }
 
-        write (connfd, "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n",
-               strlen ("HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"));
+        write (connfd, HEADER_PNG, strlen (HEADER_PNG));
 
         while ((ret = read (file_fd, buffer, 1024)) > 0)
         {

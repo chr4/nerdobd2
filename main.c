@@ -12,6 +12,7 @@ main (int arc, char **argv)
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) 80);
 
+    /*
     for (;;)
     {
         pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
@@ -20,10 +21,9 @@ main (int arc, char **argv)
         pthread_join (thread2, NULL);
         usleep(INIT_DELAY);
     }
+     */
+    
+    kw1281_mainloop();
 
-    // shut down ajax http server
-    pthread_kill (thread1, SIGTERM);
-
-    printf ("exiting main\n");
     return 0;
 }
