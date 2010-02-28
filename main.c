@@ -4,7 +4,13 @@ int
 main (int arc, char **argv)
 {
     pthread_t thread1;
-    pthread_t thread2;
+
+#ifdef SERIAL_ATTACHED
+    // kw1281_open() somehow has to be started
+    // before any threading stuff.
+    if (kw1281_open (DEVICE) == -1)
+       return -1;
+#endif
 
     // create databases, unless they exist
     rrdtool_create_consumption ();
@@ -13,14 +19,22 @@ main (int arc, char **argv)
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) 80);
 
-    for (;;)
+    for ( ; ; )
     {
-        pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
+#ifdef SERIAL_ATTACHED
+        printf ("init\n");                
         
-        // wait for mainloop
-        pthread_join (thread2, NULL);
-        usleep(INIT_DELAY);
-    }
+        // ECU: 0x01, INSTR: 0x17
+        // send 5baud address, read sync byte + key word
+        if (kw1281_init (0x01) == -1)
+        {
+            printf("init failed. trying again...\n");
+            continue;
+        }
+#endif
 
+        kw1281_mainloop();
+    }
+    
     return 0;
 }

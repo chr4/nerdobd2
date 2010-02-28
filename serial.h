@@ -18,7 +18,7 @@
 
 
 #define SERIAL_ATTACHED
-#define DEBUG
+//#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
@@ -29,8 +29,8 @@ void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
 
 int     kw1281_open (char *device);
-void    kw1281_init (int);
-void   *kw1281_mainloop ();
+int    kw1281_init (int);
+int    kw1281_mainloop (void);
 
 void   *ajax_socket (void *);
 
