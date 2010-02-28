@@ -1,8 +1,8 @@
 #include "serial.h"
 
 static void _set_bit (int);
-void    rrdtool_update (char *, float);
-void    rrdtool_update_consumption (float, float);
+void   *rrdtool_update_speed ();
+void   *rrdtool_update_consumption ();
 
 void    kw1281_handle_error (void);
 void    kw1281_send_byte_ack (unsigned char);
@@ -22,100 +22,49 @@ int     ready = 0;
 
 
 
-void
-rrdtool_update_consumption (float km, float h)
+void *
+rrdtool_update_consumption ()
 {
-    pid_t   pid;
+    char    cmd[256];
     time_t  t;
-    int     status;
 
-    if (fork () == 0)
-    {        
-        char    cmd[256];
+    if (con_km < 0)
+        snprintf (cmd, sizeof (cmd), "rrdtool update consumption.rrd %d::%.2f &", 
+                  (int) time (&t), con_h);
+    else
+        snprintf (cmd, sizeof (cmd), "rrdtool update consumption.rrd %d:%.2f:%.2f &", 
+                  (int) time (&t), con_km, con_h);
 
-        if (km < 0)
-            snprintf (cmd, sizeof (cmd), "%d::%.2f", (int) time (&t), h);
-        else
-            snprintf (cmd, sizeof (cmd), "%d:%.2f:%.2f", (int) time (&t), km, h);
+    system(cmd);
 
-        execlp ("rrdtool", "rrdtool", "update", "consumption.rrd", cmd, NULL);
-        exit (-1);
-    }
+    
+    snprintf (cmd, sizeof (cmd), 
+              "rrdtool graph consumption.png --start %d --end %d DEF:con_km=consumption.rrd:km:AVERAGE AREA:con_km#990000:l/100km DEF:con_h=consumption.rrd:h:AVERAGE LINE3:con_h#009999:l/h &> /dev/null &", 
+              (int) time (&t) - 300, (int) time (&t) );
+    
+    system(cmd);
 
-    waitpid (pid, &status, 0);
-
-    if (fork () == 0)
-    {
-        char    starttime[256];
-        char    endtime[256];
-
-        snprintf (starttime, sizeof (starttime), "%d", (int) time (&t) - 300);
-        snprintf (endtime, sizeof (endtime), "%d", (int) time (&t));
-
-        execlp ("rrdtool", "rrdtool", "graph", "consumption.png",
-                "--start", starttime, "--end", endtime,
-                "DEF:con_km=consumption.rrd:km:AVERAGE",
-                "AREA:con_km#990000:l/100km",
-                "DEF:con_h=consumption.rrd:h:AVERAGE",
-                "LINE3:con_h#009999:l/h", NULL);
-
-        exit (-1);
-    }
-
-    waitpid (pid, &status, 0);
-
-    return;
+    return (void *) NULL;
 }
 
-/* execute the rddtool command
- * name = rdd file to write val to
- * val = value
- */
-void
-rrdtool_update (char *name, float val)
+void *
+rrdtool_update_speed ()
 {
-    pid_t   pid;
-    int     status;
+    char    cmd[256];
     time_t  t;
 
-    if ((pid = fork ()) == 0)
-    {        
-        char    cmd[256];
-        char    rrd[256];
+    snprintf (cmd, sizeof (cmd), "rrdtool update speed.rrd %d:%.1f &", 
+              (int) time (&t), speed);
 
-        // rrdtool update
-        snprintf (rrd, sizeof (rrd), "%s.rrd", name);
-        snprintf (cmd, sizeof (cmd), "%d:%.2f", (int) time (&t), val);
-        execlp ("rrdtool", "rrdtool", "update", rrd, cmd, NULL);
-        exit (-1);
-    }
+    system(cmd);
 
-    waitpid (pid, &status, 0);
+    snprintf (cmd, sizeof (cmd), 
+              "rrdtool graph speed.png --start %d --end %d DEF:myspeed=speed.rrd:speed:AVERAGE LINE2:myspeed#0000FF:speed &> /dev/null &",
+              (int) time (&t) - 300, (int) time (&t) );
 
-    if ((pid = fork ()) == 0)
-    {
-        char    png[256];
-        char    starttime[256];
-        char    endtime[256];
-        char    def[256];
-        char    line[256];
+    system(cmd);
 
-        snprintf (png, sizeof (png), "%s.png", name);
-        snprintf (starttime, sizeof (starttime), "%d", (int) time (&t) - 300);
-        snprintf (endtime, sizeof (endtime), "%d", (int) time (&t));
-        snprintf (def, sizeof (def), "DEF:my%s=%s.rrd:%s:AVERAGE", name, name,
-                  name);
-        snprintf (line, sizeof (line), "LINE2:my%s#0000FF:%s", name, name);
-
-        execlp ("rrdtool", "rrdtool", "graph", png,
-                "--start", starttime, "--end", endtime, def, line, NULL);
-
-        exit (-1);
-    }
-
-    waitpid (pid, &status, 0);
-
-    return;
+    return (void *) NULL;
 }
 
 void
@@ -159,7 +108,7 @@ rrdtool_create_consumption (void)
         exit (-1);
     }
 
-    waitpid (pid, &status, WNOHANG);
+    waitpid (pid, &status, 0);
 
     return;
 }
@@ -209,7 +158,7 @@ rrdtool_create (char *name)
         exit (-1);
     }
 
-    waitpid (pid, &status, WNOHANG);
+    waitpid (pid, &status, 0);
 
     return;
 }
@@ -676,7 +625,7 @@ kw1281_print (void)
 void   *
 kw1281_mainloop ()
 {
-    int status;
+    pthread_t pth_consumption, pth_speed;
     
 #ifdef SERIAL_ATTACHED
     if (kw1281_open (DEVICE) == -1)
@@ -718,8 +667,9 @@ kw1281_mainloop ()
         voltage += 0.15;
         load += 3;
         usleep (2000000);
-        rrdtool_update ("speed", speed);
-        rrdtool_update_consumption (con_km, con_h);
+        
+        pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
+        pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
     }
 #endif
 
@@ -758,27 +708,15 @@ kw1281_mainloop ()
             con_km = -1;
 
         // update rrdtool databases
-        
-        /*** HERE MAY BE THE TIMING PROBLEM
-        rrdtool_update ("speed", speed);
-        rrdtool_update_consumption (con_km, con_h);
-        ***/ 
+        pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
+        pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);        
+
          
         // request block 0x04
         kw1281_send_block (0x04);
         kw1281_recv_block (0x04);        // temperatures + voltage
 
-        // update rrdtool databases
-        /*
-           rrdtool_update ("temp1", temp1);
-           rrdtool_update ("temp2", temp2);
-           rrdtool_update ("voltage", voltage);
-         */
-
         // output values
         kw1281_print ();
-        
-        // prevent too many defunct processes
-        waitpid (0, &status, 0);
     }
 }
