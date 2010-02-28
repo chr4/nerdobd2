@@ -26,7 +26,8 @@ main (int arc, char **argv)
     for (;;)
     {
         pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
-        // wait for thread2
+        
+        // wait for mainloop
         pthread_join (thread2, NULL);
         usleep(5000000);
     }

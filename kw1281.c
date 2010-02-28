@@ -20,6 +20,9 @@ int     fd;
 int     counter;                // kw1281 protocol block counter
 int     ready = 0;
 
+// safe old values
+struct termios       oldtio;
+struct serial_struct ot;
 
 
 void *
@@ -200,6 +203,13 @@ kw1281_handle_error (void)
      */
 
     close (fd);
+    
+    if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
+        printf ("TIOCSSERIAL failed\n");
+
+    if (tcsetattr (fd, TCSANOW, &oldtio) == -1)
+        printf ("tcsetattr() failed\n");
+    
     pthread_exit (NULL);
 }
 
@@ -564,8 +574,8 @@ kw1281_recv_block (unsigned char n)
 int
 kw1281_open (char *device)
 {
-    struct termios newtio;
-    struct serial_struct st, ot;
+    struct termios       newtio;
+    struct serial_struct st;
 
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
@@ -590,8 +600,11 @@ kw1281_open (char *device)
         printf ("TIOCSSERIAL failed\n");
         return -1;
     }
-    newtio.c_cflag = B38400 | CLOCAL | CREAD;        // 38400 baud, so custom baud rate above works
-    newtio.c_iflag = IGNPAR;        // ICRNL provokes bogus replys after block 12
+    
+    tcgetattr (fd, &oldtio);
+    
+    newtio.c_cflag = B38400 | CLOCAL | CREAD;   // 38400 baud, so custom baud rate above works
+    newtio.c_iflag = IGNPAR;                    // ICRNL provokes bogus replys after block 12
     newtio.c_oflag = 0;
     newtio.c_cc[VMIN] = 1;
     newtio.c_cc[VTIME] = 0;
