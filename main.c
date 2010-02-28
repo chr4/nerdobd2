@@ -17,7 +17,7 @@ main (int arc, char **argv)
     rrdtool_create_speed ();
 
     // create ajax socket in new thread for handling http connections
-    pthread_create (&thread1, NULL, ajax_socket, (void *) 80);
+    pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
 
     for ( ; ; )
     {
@@ -33,7 +33,13 @@ main (int arc, char **argv)
         }
 #endif
 
-        kw1281_mainloop();
+        if (kw1281_mainloop() == -1)
+        {
+            printf("errors. exiting...\n");
+            pthread_kill(thread1, SIGTERM);
+            pthread_join(thread1, NULL);
+            return -1;
+        }
     }
     
     return 0;

@@ -25,12 +25,14 @@
 #define WRITE_DELAY     5700
 #define INIT_DELAY      200000
 
+#define PORT		8080
+
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
 
 int     kw1281_open (char *device);
-int    kw1281_init (int);
-int    kw1281_mainloop (void);
+int     kw1281_init (int);
+int     kw1281_mainloop (void);
 
 void   *ajax_socket (void *);
 
