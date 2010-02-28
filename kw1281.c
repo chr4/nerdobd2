@@ -281,7 +281,7 @@ kw1281_init (int address)
     ioctl (fd, TIOCMSET, &flags);
     usleep (INIT_DELAY);
 
-    _set_bit (0);                // start bit
+    _set_bit (0);               // start bit
     usleep (INIT_DELAY);        // 5 baud
     p = 1;
     for (i = 0; i < 7; i++)
@@ -292,9 +292,9 @@ kw1281_init (int address)
         p = p ^ bit;
         usleep (INIT_DELAY);
     }
-    _set_bit (p);                // odd parity
+    _set_bit (p);               // odd parity
     usleep (INIT_DELAY);
-    _set_bit (1);                // stop bit
+    _set_bit (1);               // stop bit
     usleep (INIT_DELAY);
 
     // set dtr
@@ -566,7 +566,7 @@ kw1281_recv_block (unsigned char n)
 int
 kw1281_open (char *device)
 {
-    struct termios       newtio;
+    struct termios newtio;
     struct serial_struct st;
 
     // open the serial device
@@ -632,6 +632,7 @@ kw1281_mainloop ()
 {
     pthread_t pth_consumption, pth_speed;
     
+    /*
 #ifdef SERIAL_ATTACHED
     if (kw1281_open (DEVICE) == -1)
        pthread_exit(NULL); 
@@ -641,6 +642,7 @@ kw1281_mainloop ()
     printf ("init\n");                // ECU: 0x01, INSTR: 0x17
     kw1281_init (0x01);               // send 5baud address, read sync byte + key word
 #endif
+    */
 
 #ifdef DEBUG
     printf ("receive blocks\n");
