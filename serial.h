@@ -9,7 +9,8 @@
 #include <string.h>
 
 #include <time.h>
-#include <linux/termios.h>
+#include <termios.h>
+//#include <linux/termios.h>
 #include <linux/serial.h>
 
 #include <netinet/in.h>
@@ -19,7 +20,7 @@
 #include <pthread.h>
 
 
-//#define SERIAL_ATTACHED
+#define SERIAL_ATTACHED
 #define DEBUG
 
 #define DEVICE		"/dev/ttyUSB0"
