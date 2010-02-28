@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
@@ -20,9 +19,10 @@
 #include <pthread.h>
 
 
-// #define SERIAL_ATTACHED
-// #define DEBUG
+//#define SERIAL_ATTACHED
+#define DEBUG
 
+#define DEVICE		"/dev/ttyUSB0"
 #define BAUDRATE        10400
 #define WRITE_DELAY     5700
 #define INIT_DELAY      200000
