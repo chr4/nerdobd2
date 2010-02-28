@@ -28,6 +28,7 @@ main (int arc, char **argv)
         pthread_create (&thread2, NULL, kw1281_mainloop, NULL);
         // wait for thread2
         pthread_join (thread2, NULL);
+        usleep(5000000);
     }
 
     // shut down ajax http server

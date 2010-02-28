@@ -26,21 +26,25 @@ void
 rrdtool_update_consumption (float km, float h)
 {
     pid_t   pid;
-    int     status;
     time_t  t;
+    int     status;
 
-    if ((pid = fork ()) == 0)
-    {
+    if (fork () == 0)
+    {        
         char    cmd[256];
 
-        snprintf (cmd, sizeof (cmd), "%d:%.2f:%.2f", (int) time (&t), km, h);
+        if (km < 0)
+            snprintf (cmd, sizeof (cmd), "%d::%.2f", (int) time (&t), h);
+        else
+            snprintf (cmd, sizeof (cmd), "%d:%.2f:%.2f", (int) time (&t), km, h);
+
         execlp ("rrdtool", "rrdtool", "update", "consumption.rrd", cmd, NULL);
         exit (-1);
     }
 
     waitpid (pid, &status, 0);
 
-    if ((pid = fork ()) == 0)
+    if (fork () == 0)
     {
         char    starttime[256];
         char    endtime[256];
@@ -75,7 +79,7 @@ rrdtool_update (char *name, float val)
     time_t  t;
 
     if ((pid = fork ()) == 0)
-    {
+    {        
         char    cmd[256];
         char    rrd[256];
 
@@ -149,13 +153,13 @@ rrdtool_create_consumption (void)
         // 3. RRA one value (average consumption last 30mins)
         execlp ("rrdtool", "rrdtool", "create", "consumption.rrd",
                 "--start", starttime, "--step", "1",
-                "DS:km:GAUGE:15:U:U", "DS:h:GAUGE:15:U:U",
+                "DS:km:GAUGE:15:U:U", "DS:h:GAUGE:15:0:U",
                 "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
                 "RRA:AVERAGE:0.5:1800:1", NULL);
         exit (-1);
     }
 
-    waitpid (pid, &status, 0);
+    waitpid (pid, &status, WNOHANG);
 
     return;
 }
@@ -194,7 +198,7 @@ rrdtool_create (char *name)
 
         snprintf (rrd, sizeof (rrd), "%s.rrd", name);
         snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
-        snprintf (ds, sizeof (ds), "DS:%s:GAUGE:15:U:U", name);
+        snprintf (ds, sizeof (ds), "DS:%s:GAUGE:15:0:200", name);
 
 
         // rrdtool create
@@ -205,7 +209,7 @@ rrdtool_create (char *name)
         exit (-1);
     }
 
-    waitpid (pid, &status, 0);
+    waitpid (pid, &status, WNOHANG);
 
     return;
 }
@@ -672,20 +676,21 @@ kw1281_print (void)
 void   *
 kw1281_mainloop ()
 {
-
+    int status;
+    
 #ifdef SERIAL_ATTACHED
-    if (kw1281_open ("/dev/ttyUSB0") == -1)
-        pthread_exit (NULL);
-
-    printf ("init\n");                // ECU: 0x01, INSTR: 0x17
-    kw1281_init (0x01);                // send 5baud address, read sync byte + key word
+    if (kw1281_open (DEVICE) == -1)
+       pthread_exit(NULL); 
 #endif
 
+#ifdef SERIAL_ATTACHED
+    printf ("init\n");                // ECU: 0x01, INSTR: 0x17
+    kw1281_init (0x01);               // send 5baud address, read sync byte + key word
+#endif
 
 #ifdef DEBUG
     printf ("receive blocks\n");
 #endif
-
 
 #ifndef SERIAL_ATTACHED
     /* 
@@ -753,9 +758,12 @@ kw1281_mainloop ()
             con_km = -1;
 
         // update rrdtool databases
+        
+        /*** HERE MAY BE THE TIMING PROBLEM
         rrdtool_update ("speed", speed);
         rrdtool_update_consumption (con_km, con_h);
-
+        ***/ 
+         
         // request block 0x04
         kw1281_send_block (0x04);
         kw1281_recv_block (0x04);        // temperatures + voltage
@@ -769,5 +777,8 @@ kw1281_mainloop ()
 
         // output values
         kw1281_print ();
+        
+        // prevent too many defunct processes
+        waitpid (0, &status, 0);
     }
 }
