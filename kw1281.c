@@ -4,14 +4,15 @@ static void _set_bit (int);
 void   *rrdtool_update_speed ();
 void   *rrdtool_update_consumption ();
 
-void    kw1281_handle_error (void);
-void    kw1281_send_byte_ack (unsigned char);
-void    kw1281_send_ack (void);
-void    kw1281_send_block (unsigned char);
-void    kw1281_recv_block (unsigned char);
+int     kw1281_send_byte_ack (unsigned char);
+int     kw1281_send_ack (void);
+int     kw1281_send_block (unsigned char);
+int     kw1281_recv_block (unsigned char);
+int     kw1281_recv_byte_ack (void);
+int     kw1281_inc_counter (void);
+int     kw1281_get_block (unsigned char);
 void    kw1281_print (void);
-int     kw1281_inc_counter ();
-unsigned char kw1281_recv_byte_ack (void);
+
 
 float   const_multiplier = 0.00000089;
 float   const_inj_subtract = 0.1;
@@ -182,29 +183,6 @@ _set_bit (int bit)
     ioctl (fd, TIOCMSET, &flags);
 }
 
-/* function in case an error occures */
-void
-kw1281_handle_error (void)
-{
-    /*
-     * recv() until 0x8a
-     * then send 0x75 (complement)
-     * reset counter = 1
-     * continue with block readings
-     *
-     *  or just exit -1 and start program in a loop
-     */
-    
-    if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
-        printf ("TIOCSSERIAL failed\n");
-
-    if (tcsetattr (fd, TCSANOW, &oldtio) == -1)
-        printf ("tcsetattr() failed\n");
-    
-    close (fd);
-    pthread_exit (NULL);
-}
-
 // increment the counter
 int
 kw1281_inc_counter (void)
@@ -221,119 +199,87 @@ kw1281_inc_counter (void)
 }
 
 /* receive one byte and acknowledge it */
-unsigned char
+int
 kw1281_recv_byte_ack (void)
 {
     unsigned char c, d;
 
-    read (fd, &c, 1);
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_recv_byte_ack: read() error\n");
+        return -1;
+    }
+    
     d = 0xff - c;
     usleep (WRITE_DELAY);
-    write (fd, &d, 1);
-    read (fd, &d, 1);
+    
+    if (write (fd, &d, 1) <= 0)
+    {
+        printf("kw1281_recv_byte_ack: write() error\n");
+        return -1;
+    }
+    
+    if (read (fd, &d, 1) == -1)
+    {
+        printf("kw1281_recv_byte_ack: read() error\n");
+        return -1;
+    }
+    
     if (0xff - c != d)
     {
         printf ("kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n",
                 d, 0xff - c);
 
-        kw1281_handle_error ();
+        return -1;
     }
     return c;
 }
 
 /* send one byte and wait for acknowledgement */
-void
+int
 kw1281_send_byte_ack (unsigned char c)
 {
     unsigned char d;
 
     usleep (WRITE_DELAY);
-    write (fd, &c, 1);
-    read (fd, &d, 1);
+    
+    if (write (fd, &c, 1) <= 0)
+    {
+        printf("kw1281_send_byte_ack: write() error\n");
+        return -1;
+    }
+    
+    if (read (fd, &d, 1) == -1)
+    {
+        printf("kw1281_send_byte_ack: read() error\n");
+        return -1;
+    }
+    
     if (c != d)
     {
         printf ("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c,
                 d);
-        kw1281_handle_error ();
+        return -1;
     }
 
-    read (fd, &d, 1);
+    if (read (fd, &d, 1) == -1)
+    {
+        printf("kw1281_send_byte_ack: read() error\n");
+        return -1;
+    }
+    
     if (0xff - c != d)
     {
         printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n",
                 0xff - c, d);
-        kw1281_handle_error ();
+        return -1;
     }
-}
-
-/* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
-void
-kw1281_init (int address)
-{
-    int     i, p, flags;
-    unsigned char c;
-
-    int     in;
-
-    // prepare to send (clear dtr and rts)
-    ioctl (fd, TIOCMGET, &flags);
-    flags &= ~(TIOCM_DTR | TIOCM_RTS);
-    ioctl (fd, TIOCMSET, &flags);
-    usleep (INIT_DELAY);
-
-    _set_bit (0);               // start bit
-    usleep (INIT_DELAY);        // 5 baud
-    p = 1;
-    for (i = 0; i < 7; i++)
-    {
-        // address bits, lsb first
-        int     bit = (address >> i) & 0x1;
-        _set_bit (bit);
-        p = p ^ bit;
-        usleep (INIT_DELAY);
-    }
-    _set_bit (p);               // odd parity
-    usleep (INIT_DELAY);
-    _set_bit (1);               // stop bit
-    usleep (INIT_DELAY);
-
-    // set dtr
-    ioctl (fd, TIOCMGET, &flags);
-    flags |= TIOCM_DTR;
-    ioctl (fd, TIOCMSET, &flags);
-
-    // read bogus values, if any
-    ioctl (fd, FIONREAD, &in);
-    while (in--)
-    {
-        read (fd, &c, 1);
-#ifdef DEBUG
-        printf ("ignore 0x%02x\n", c);
-#endif
-    }
-
-    read (fd, &c, 1);
-#ifdef DEBUG
-    printf ("read 0x%02x\n", c);
-#endif
-
-    read (fd, &c, 1);
-#ifdef DEBUG
-    printf ("read 0x%02x\n", c);
-#endif
-
-    c = kw1281_recv_byte_ack ();
-#ifdef DEBUG
-    printf ("read 0x%02x (and sent ack)\n", c);
-#endif
-
-    counter = 1;
-
-    return;
+    
+    return 0;
 }
 
 /* send an ACK block */
-void
+int
 kw1281_send_ack ()
 {
     unsigned char c;
@@ -343,29 +289,43 @@ kw1281_send_ack ()
 #endif
 
     /* block length */
-    kw1281_send_byte_ack (0x03);
+    if (kw1281_send_byte_ack (0x03) == -1)
+        return -1;
 
-    kw1281_send_byte_ack (kw1281_inc_counter ());
+    if (kw1281_send_byte_ack (kw1281_inc_counter ()) == -1)
+        return -1;
 
     /* ack command */
-    kw1281_send_byte_ack (0x09);
+    if (kw1281_send_byte_ack (0x09) == -1)
+        return -1;
 
     /* block end */
     c = 0x03;
     usleep (WRITE_DELAY);
-    write (fd, &c, 1);
-    read (fd, &c, 1);
+    
+    if (write (fd, &c, 1) <= 0)
+    {
+        printf("kw1281_send_ack: write() error\n");
+        return -1;
+    }
+    
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_send_ack: read() error\n");
+        return -1;
+    }
+    
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
-        kw1281_handle_error ();
+        return -1;
     }
 
-    return;
+    return 0;
 }
 
 /* send group reading block */
-void
+int
 kw1281_send_block (unsigned char n)
 {
     unsigned char c;
@@ -375,32 +335,48 @@ kw1281_send_block (unsigned char n)
 #endif
 
     /* block length */
-    kw1281_send_byte_ack (0x04);
+    if (kw1281_send_byte_ack (0x04) == -1)
+        return -1;
 
     // counter
-    kw1281_send_byte_ack (kw1281_inc_counter ());
+    if (kw1281_send_byte_ack (kw1281_inc_counter ()) == -1)
+        return -1;
 
     /*  type group reading */
-    kw1281_send_byte_ack (0x29);
+    if (kw1281_send_byte_ack (0x29) == -1)
+        return -1;
 
     /* which group block */
-    kw1281_send_byte_ack (n);
+    if (kw1281_send_byte_ack (n) == -1)
+        return -1;
 
     /* block end */
     c = 0x03;
     usleep (WRITE_DELAY);
-    write (fd, &c, 1);
-    read (fd, &c, 1);
+    
+    if (write (fd, &c, 1) <= 0)
+    {
+        printf("kw1281_send_block: write() error\n");
+        return -1;
+    }
+    
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_send_block: read() error\n");
+        return -1;
+    }
+    
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
-        kw1281_handle_error ();
+        return -1;
     }
-    return;
+    
+    return 0;
 }
 
 /* receive a complete block */
-void
+int
 kw1281_recv_block (unsigned char n)
 {
     int     i;
@@ -408,9 +384,11 @@ kw1281_recv_block (unsigned char n)
     unsigned char buf[256];
 
     /* block length */
-    l = kw1281_recv_byte_ack ();
+    if ( (l = kw1281_recv_byte_ack ()) == -1)
+        return -1;
 
-    c = kw1281_recv_byte_ack ();
+    if ( (c = kw1281_recv_byte_ack ()) == -1)
+        return -1;
 
     if (c != counter)
     {
@@ -431,10 +409,11 @@ kw1281_recv_block (unsigned char n)
          */
 #endif
 
-        kw1281_handle_error ();
+        return -1;
     }
 
-    t = kw1281_recv_byte_ack ();
+    if ( (t = kw1281_recv_byte_ack ()) == -1)
+        return -1;
 
 #ifdef DEBUG
     switch (t)
@@ -461,7 +440,8 @@ kw1281_recv_block (unsigned char n)
     i = 0;
     while (--l)
     {
-        c = kw1281_recv_byte_ack ();
+        if ( (c = kw1281_recv_byte_ack ()) == -1)
+            return -1;
 
         buf[i++] = c;
 
@@ -540,11 +520,15 @@ kw1281_recv_block (unsigned char n)
 #endif
 
     /* read block end */
-    read (fd, &c, 1);
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_recv_block: read() error\n");
+        return -1;
+    }
     if (c != 0x03)
     {
         printf ("block end error (0x03 != 0x%02x)\n", c);
-        kw1281_handle_error ();
+        return -1;
     }
 
     kw1281_inc_counter ();
@@ -559,7 +543,20 @@ kw1281_recv_block (unsigned char n)
     {
         ready = 1;
     }
+    
+    return 0;
+}
 
+int
+kw1281_get_block (unsigned char n)
+{
+    if (kw1281_send_block(n) == -1)
+        return -1;
+    
+    if (kw1281_recv_block(n) == -1)
+        return -1;
+    
+    return 0;
 }
 
 
@@ -606,42 +603,91 @@ kw1281_open (char *device)
     return 0;
 }
 
-/* this function prints the collected values */
-void
-kw1281_print (void)
+/* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
+int
+kw1281_init (int address)
 {
-    printf ("----------------------------------------\n");
-    printf ("l/h\t\t%.2f\n", con_h);
-    printf ("l/100km\t\t%.2f\n", con_km);
-    printf ("speed\t\t%.1f km/h\n", speed);
-    printf ("rpm\t\t%.0f RPM\n", rpm);
-    printf ("inj on time\t%.2f ms\n", inj_time);
-    printf ("temp1\t\t%.1f °C\n", temp1);
-    printf ("temp2\t\t%.1f °C\n", temp2);
-    printf ("voltage\t\t%.2f V\n", voltage);
-    printf ("load\t\t%.0f %%\n", load);
-    printf ("absolute press\t%.0f mbar\n", oil_press);
-    printf ("counter\t\t%d\n", counter);
-    printf ("\n");
-
-    return;
+    int     i, p, flags;
+    unsigned char c;
+    
+    int     in;
+    
+    // prepare to send (clear dtr and rts)
+    ioctl (fd, TIOCMGET, &flags);
+    flags &= ~(TIOCM_DTR | TIOCM_RTS);
+    ioctl (fd, TIOCMSET, &flags);
+    usleep (INIT_DELAY);
+    
+    _set_bit (0);               // start bit
+    usleep (INIT_DELAY);        // 5 baud
+    p = 1;
+    for (i = 0; i < 7; i++)
+    {
+        // address bits, lsb first
+        int     bit = (address >> i) & 0x1;
+        _set_bit (bit);
+        p = p ^ bit;
+        usleep (INIT_DELAY);
+    }
+    _set_bit (p);               // odd parity
+    usleep (INIT_DELAY);
+    _set_bit (1);               // stop bit
+    usleep (INIT_DELAY);
+    
+    // set dtr
+    ioctl (fd, TIOCMGET, &flags);
+    flags |= TIOCM_DTR;
+    ioctl (fd, TIOCMSET, &flags);
+    
+    // read bogus values, if any
+    ioctl (fd, FIONREAD, &in);
+    while (in--)
+    {
+        if (read (fd, &c, 1) == -1)
+        {
+            printf("kw1281_init: read() error\n");
+            return -1;
+        }
+#ifdef DEBUG
+        printf ("ignore 0x%02x\n", c);
+#endif
+    }
+    
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_init: read() error\n");
+        return -1;
+    }
+#ifdef DEBUG
+    printf ("read 0x%02x\n", c);
+#endif
+    
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_init: read() error\n");
+        return -1;
+    }
+#ifdef DEBUG
+    printf ("read 0x%02x\n", c);
+#endif
+    
+    if ( (c = kw1281_recv_byte_ack ()) == -1)
+        return -1;
+    
+#ifdef DEBUG
+    printf ("read 0x%02x (and sent ack)\n", c);
+#endif
+    
+    counter = 1;
+    
+    return 0;
 }
 
-void   *
-kw1281_mainloop ()
+int
+kw1281_mainloop (void)
 {
     pthread_t pth_consumption, pth_speed;
    
-#ifdef SERIAL_ATTACHED
-    if (kw1281_open (DEVICE) == -1)
-       pthread_exit(NULL); 
-#endif
-
-#ifdef SERIAL_ATTACHED
-    printf ("init\n");                // ECU: 0x01, INSTR: 0x17
-    kw1281_init (0x01);               // send 5baud address, read sync byte + key word
-#endif
-
 #ifdef DEBUG
     printf ("receive blocks\n");
 #endif
@@ -681,17 +727,21 @@ kw1281_mainloop ()
 
     while (!ready)
     {
-        kw1281_recv_block (0x00);
+        if (kw1281_recv_block (0x00) == -1)
+            return -1;
+        
         if (!ready)
-            kw1281_send_ack ();
+            if (kw1281_send_ack () == -1)
+                return -1;
     }
 
     printf ("init done.\n");
-    for (;;)
+    for ( ; ; )
     {
         // request block 0x02
-        kw1281_send_block (0x02);
-        kw1281_recv_block (0x02);        // inj_time, rpm, load, oil_press
+        // (inj_time, rpm, load, oil_press)
+        if (kw1281_get_block(0x02) == -1)
+            return -1;
 
         // calculate consumption per hour
         if (inj_time > const_inj_subtract)
@@ -703,8 +753,9 @@ kw1281_mainloop ()
         // rrdtool_update ("rpm", rpm);
 
         // request block 0x05
-        kw1281_send_block (0x05);
-        kw1281_recv_block (0x05);        // in this block is speed
+        // (speed)
+        if (kw1281_get_block(0x05) == -1)
+            return -1;
 
         // calculate consumption per hour
         if (speed > 0)
@@ -718,10 +769,34 @@ kw1281_mainloop ()
 
          
         // request block 0x04
-        kw1281_send_block (0x04);
-        kw1281_recv_block (0x04);        // temperatures + voltage
-
+        // (temperatures + voltage)
+        if (kw1281_get_block(0x04) == -1)
+            return -1;
+        
         // output values
         kw1281_print ();
     }
+    
+    return 0;
+}
+
+/* this function prints the collected values */
+void
+kw1281_print (void)
+{
+    printf ("----------------------------------------\n");
+    printf ("l/h\t\t%.2f\n", con_h);
+    printf ("l/100km\t\t%.2f\n", con_km);
+    printf ("speed\t\t%.1f km/h\n", speed);
+    printf ("rpm\t\t%.0f RPM\n", rpm);
+    printf ("inj on time\t%.2f ms\n", inj_time);
+    printf ("temp1\t\t%.1f °C\n", temp1);
+    printf ("temp2\t\t%.1f °C\n", temp2);
+    printf ("voltage\t\t%.2f V\n", voltage);
+    printf ("load\t\t%.0f %%\n", load);
+    printf ("absolute press\t%.0f mbar\n", oil_press);
+    printf ("counter\t\t%d\n", counter);
+    printf ("\n");
+    
+    return;
 }
