@@ -20,8 +20,8 @@ int     fd;
 int     counter;                // kw1281 protocol block counter
 int     ready = 0;
 
-// safe old values
-struct termios       oldtio;
+// save old values
+struct termios oldtio;
 struct serial_struct ot;
 
 
@@ -631,8 +631,7 @@ void   *
 kw1281_mainloop ()
 {
     pthread_t pth_consumption, pth_speed;
-    
-    /*
+   
 #ifdef SERIAL_ATTACHED
     if (kw1281_open (DEVICE) == -1)
        pthread_exit(NULL); 
@@ -642,7 +641,6 @@ kw1281_mainloop ()
     printf ("init\n");                // ECU: 0x01, INSTR: 0x17
     kw1281_init (0x01);               // send 5baud address, read sync byte + key word
 #endif
-    */
 
 #ifdef DEBUG
     printf ("receive blocks\n");
