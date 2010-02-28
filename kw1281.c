@@ -201,8 +201,6 @@ kw1281_handle_error (void)
      *
      *  or just exit -1 and start program in a loop
      */
-
-    close (fd);
     
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
         printf ("TIOCSSERIAL failed\n");
@@ -210,6 +208,7 @@ kw1281_handle_error (void)
     if (tcsetattr (fd, TCSANOW, &oldtio) == -1)
         printf ("tcsetattr() failed\n");
     
+    close (fd);
     pthread_exit (NULL);
 }
 
