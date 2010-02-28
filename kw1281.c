@@ -109,7 +109,7 @@ rrdtool_create_consumption (void)
                 "DS:km:GAUGE:15:U:U", "DS:h:GAUGE:15:0:U",
                 "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
                 "RRA:AVERAGE:0.5:1800:1", NULL);
-        exit (-1);
+        exit (0);
     }
 
     waitpid (pid, &status, 0);
@@ -152,7 +152,7 @@ rrdtool_create_speed (void)
                 "DS:speed:GAUGE:15:0:200", 
                 "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
                 "RRA:AVERAGE:0.5:50:288", "RRA:AVERAGE:0.5:1800:1", NULL);
-        exit (-1);
+        exit (0);
     }
 
     waitpid (pid, &status, 0);
@@ -598,7 +598,11 @@ kw1281_open (char *device)
     newtio.c_cc[VMIN] = 1;
     newtio.c_cc[VTIME] = 0;
     tcflush (fd, TCIFLUSH);
-    tcsetattr (fd, TCSANOW, &newtio);
+    if (tcsetattr (fd, TCSANOW, &newtio) == -1)
+    {
+        printf("tcsetattr() failed.\n");
+        return -1;
+    }
 
     return 0;
 }
@@ -613,9 +617,19 @@ kw1281_init (int address)
     int     in;
     
     // prepare to send (clear dtr and rts)
-    ioctl (fd, TIOCMGET, &flags);
+    if (ioctl (fd, TIOCMGET, &flags) < 0)
+    {
+        printf("TIOCMGET failed.\n");
+        return -1;
+    }
     flags &= ~(TIOCM_DTR | TIOCM_RTS);
-    ioctl (fd, TIOCMSET, &flags);
+
+    if (ioctl (fd, TIOCMSET, &flags) < 0)
+    {
+        printf("TIOCMSET failed.\n");
+        return -1;
+    }
+
     usleep (INIT_DELAY);
     
     _set_bit (0);               // start bit
@@ -635,12 +649,26 @@ kw1281_init (int address)
     usleep (INIT_DELAY);
     
     // set dtr
-    ioctl (fd, TIOCMGET, &flags);
-    flags |= TIOCM_DTR;
-    ioctl (fd, TIOCMSET, &flags);
-    
+    if (ioctl (fd, TIOCMGET, &flags) < 0)
+    {
+        printf("TIOCMGET failed.\n");
+        return -1;
+    }
+
+     flags |= TIOCM_DTR;
+    if (ioctl (fd, TIOCMSET, &flags) < 0)
+    {
+        printf("TIOCMSET failed.\n");
+        return -1;
+    }
+ 
     // read bogus values, if any
-    ioctl (fd, FIONREAD, &in);
+    if (ioctl (fd, FIONREAD, &in) < 0)
+    {
+        printf("FIONREAD failed.\n");
+        return -1;
+    }
+
     while (in--)
     {
         if (read (fd, &c, 1) == -1)
@@ -688,10 +716,6 @@ kw1281_mainloop (void)
 {
     pthread_t pth_consumption, pth_speed;
    
-#ifdef DEBUG
-    printf ("receive blocks\n");
-#endif
-
 #ifndef SERIAL_ATTACHED
     /* 
      * this block is for testing purposes
@@ -724,6 +748,10 @@ kw1281_mainloop (void)
     }
 #endif
 
+
+#ifdef DEBUG
+    printf ("receive blocks\n");
+#endif
 
     while (!ready)
     {
