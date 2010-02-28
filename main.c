@@ -29,7 +29,7 @@ main (int arc, char **argv)
         
         // wait for mainloop
         pthread_join (thread2, NULL);
-        usleep(5000000);
+        usleep(1000000);
     }
 
     // shut down ajax http server

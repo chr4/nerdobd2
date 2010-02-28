@@ -9,8 +9,8 @@
 #include <string.h>
 
 #include <time.h>
-#include <termios.h>
-//#include <linux/termios.h>
+#include <linux/termios.h>
+//#include <termios.h>
 #include <linux/serial.h>
 
 #include <netinet/in.h>
