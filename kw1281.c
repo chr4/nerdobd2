@@ -339,19 +339,32 @@ kw1281_send_block (unsigned char n)
 
     /* block length */
     if (kw1281_send_byte_ack (0x04) == -1)
+    {
+        printf("kw1281_send_block() error\n");
         return -1;
+    }
 
     // counter
     if (kw1281_send_byte_ack (kw1281_inc_counter ()) == -1)
+    {
+        printf("kw1281_send_block() error\n");
         return -1;
+    }
 
     /*  type group reading */
     if (kw1281_send_byte_ack (0x29) == -1)
+    {
+        printf("kw1281_send_block() error\n");
         return -1;
+    }
 
     /* which group block */
     if (kw1281_send_byte_ack (n) == -1)
+    {
+        printf("kw1281_send_block() error\n");
         return -1;
+    }
+
 
     /* block end */
     c = 0x03;
@@ -388,10 +401,16 @@ kw1281_recv_block (unsigned char n)
 
     /* block length */
     if ( (l = kw1281_recv_byte_ack ()) == -1)
+    {
+        printf("kw1281_recv_block() error\n");
         return -1;
+    }
 
     if ( (c = kw1281_recv_byte_ack ()) == -1)
+    {
+        printf("kw1281_recv_block() error\n");
         return -1;
+    }
 
     if (c != counter)
     {
@@ -416,7 +435,10 @@ kw1281_recv_block (unsigned char n)
     }
 
     if ( (t = kw1281_recv_byte_ack ()) == -1)
+    {
+        printf("kw1281_recv_block() error\n");
         return -1;
+    }
 
 #ifdef DEBUG
     switch (t)
@@ -444,7 +466,10 @@ kw1281_recv_block (unsigned char n)
     while (--l)
     {
         if ( (c = kw1281_recv_byte_ack ()) == -1)
-            return -1;
+    {
+        printf("kw1281_recv_block() error\n");
+        return -1;
+    }
 
         buf[i++] = c;
 
@@ -554,10 +579,16 @@ int
 kw1281_get_block (unsigned char n)
 {
     if (kw1281_send_block(n) == -1)
+    {
+        printf("kw1281_get_block() error\n");
         return -1;
+    }
     
     if (kw1281_recv_block(n) == -1)
+    {
+        printf("kw1281_get_block() error\n");
         return -1;
+    }
     
     return 0;
 }
