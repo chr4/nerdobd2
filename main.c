@@ -8,6 +8,12 @@
  *
  * ajax.html WAY faster
  *
+ * better would be:
+ * /request_variable
+ * then send varname
+ * parse varname and reply with value
+ *
+ *
  * system() stops to create rrdtool images after a while..
  */
 

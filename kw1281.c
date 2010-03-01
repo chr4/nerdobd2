@@ -772,7 +772,7 @@ kw1281_mainloop (void)
 
     printf ("incrementing values for testing purposes...\n");
     speed = 10;
-    con_km = 0.1;
+    con_km = -1;
     load = 0;
     con_h = 0.01;
     temp1 = 20;
@@ -781,8 +781,8 @@ kw1281_mainloop (void)
 
     for (;;)
     {
-        speed++;;
-        con_km += 0.1;
+        speed++;
+        con_km = con_km * (-1) ;
         con_h += 0.03;
         temp1++;
         temp2++;
@@ -792,8 +792,7 @@ kw1281_mainloop (void)
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
 
-        sleep(5);
-        return -1;
+        sleep(1);
     }
 #endif
 
