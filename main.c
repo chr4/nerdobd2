@@ -6,6 +6,7 @@
  * create timer for sensing heartbeat
  * kill on problems
  *
+ * loop for bind problems with sleep
  */
 
 int
