@@ -45,9 +45,10 @@ main (int arc, char **argv)
         if (kw1281_mainloop() == -1)
         {
             printf("errors. exiting...\n");
+            ajax_shutdown();
             pthread_kill(thread1, SIGTERM);
             pthread_join(thread1, NULL);
-            return -1;
+            exit(1);
         }
         
     }

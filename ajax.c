@@ -14,16 +14,15 @@ int     ignore_headers (int);
 void   *
 ajax_socket (void *pport)
 {
-    int     cli, srv;
     int     port;
     int     status;
     int     clisize;
     pid_t   pid;
     port = (int) pport;
-
+    int     cli;
     struct sockaddr_in cliaddr;
     
-    srv = tcp_listen (port);
+    tcp_listen (port);
 
     for (;;)
     {
@@ -52,39 +51,58 @@ ajax_socket (void *pport)
 }
 
 int
+ajax_shutdown(void)
+{
+    /*
+     * we need to shutdown the socket to prevent
+     * bind errors on direct relaunch
+     */
+     
+    printf("shutting down socket... ");
+    if ( shutdown(srv, SHUT_RDWR) == -1)
+    {
+        perror("shutdown() failed:");
+        return -1;
+    }
+    printf("done.\n");
+    
+    return 0;
+}
+
+int
 tcp_listen (int port)
 {
 
     int     on = 1;
-    int     sock;
 
     struct sockaddr_in servaddr;
 
-    if ((sock = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((srv = socket (AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror ("socket() failed");
         pthread_exit (NULL);
     }
 
-    setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on));
+    setsockopt (srv, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on));
 
     servaddr.sin_addr.s_addr = INADDR_ANY;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons (port);
 
-    if (bind (sock, (struct sockaddr *) &servaddr, sizeof (servaddr)) == -1)
+    while (bind (srv, (struct sockaddr *) &servaddr, sizeof (servaddr)) == -1)
     {
         perror ("bind() failed");
-        pthread_exit (NULL);
+        usleep(50000);
+        printf("retrying...\n");        
     }
 
-    if (listen (sock, 3) == -1)
+    if (listen (srv, 3) == -1)
     {
         perror ("listen() failed");
         pthread_exit (NULL);
     }
 
-    return sock;
+    return 0;
 }
 
 int
