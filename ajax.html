@@ -1,9 +1,10 @@
-<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">
-<html>
-<head>
-<title>AJAX test</title>
-</head>
-<script type="text/javascript">
+<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">
+
+<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">
+  <head>
+    <title>$nerdobd2</title>
+    
+    <script type="text/javascript">
 
 function update_variable(varname)
 {
@@ -11,7 +12,7 @@ function update_variable(varname)
     
     // we only need support firefox / konqueror
 	req = new XMLHttpRequest();
-
+    
 	req.open("POST", "update_" + varname, true);
     req.onreadystatechange = function()
     {
@@ -19,20 +20,43 @@ function update_variable(varname)
         {
             // check if variable is valid (if not, don't update
             if (req.responseText)
-                document.getElementById(varname).innerHTML = req.responseText;
+            {
+                // set color back to normal
+                document.getElementById(varname).style.color = "#5795d4";
+                    
+                if (varname == "con_km")
+                {
+                    // automatically switch to l/h on con_km == -1
+                    if (req.responseText == -1)
+                    {
+                        document.getElementById("con_km").innerHTML = document.getElementById("con_h").innerHTML;
+                        document.getElementById("con_km_unit").innerHTML = "l/h";
+                    }
+                    else
+                    {
+                        document.getElementById("con_km").innerHTML = req.responseText;
+                        document.getElementById("con_km_unit").innerHTML = "l/km";
+                    }
+                        
+                }
+                else
+                {
+                    document.getElementById(varname).innerHTML = req.responseText;
+                }
+            }
             else
-                // put code here to grey out not updated value
-                ;
+                document.getElementById(varname).style.color = "#888888";
         }
     }
     // send newline to request variable
     req.send('\n');
 }
 
+
 // show image tmp in img after it is completely loaded
 function image_loaded(tmp, img)
 {
-
+    
     if (tmp.complete)
     {
         // show image
@@ -51,7 +75,7 @@ function update_image(imagename)
 {
     tmp = new Image();
     tmp.style.visibility = 'hidden';
-
+    
     tmp.src = "/" + imagename + ".png?" + Date.parse(new Date());
     
     image_loaded(tmp, imagename);
@@ -60,10 +84,9 @@ function update_image(imagename)
 
 function update_all()
 {
+    update_variable("con_h");
     update_variable("con_km");
     update_variable("speed");
-    update_variable("load");
-    update_variable("con_h");
     update_variable("temp1");
     update_variable("temp2");
     update_variable("voltage");
@@ -74,83 +97,212 @@ function update_all()
     // restart timer
     setTimeout ( "update_all()", 500 );
 }
+    
+    </script>
+    
+    <style type="text/css" media="all">
 
-/*
- * better would be:
- * /request_variable
- * then send varname
- * parse varname and reply with value
- */
-
-</script>
-
-
-
-
-
-
-
-
-<style type="text/css">
-#con_km {
-	font-family: Arial;
-	font-size: 70px;
-	line-height: 18px;
-	color: #ff0000;
+body, html
+{
+    background-color:#222222;
+    padding:0px;
+    margin:1px;
 }
-#speed {
-	font-family: Arial;
-	font-size: 70px;
-	line-height: 18px;
-	color: #003862;
+
+.left_box
+{
+    float:left;
+    width:490px;
+    background-color:#ffaabb;
 }
-.small {
+
+.graphics
+{
+    padding-top:0px;
+    padding-left:5px;
+}
+
+.rrdimage
+{
+    margin-top:0px;
+    margin-bottom:5px;
+    margin-left:0px;
+    margin-right:10px;
+    height:140px;
+    background-color:#fff333;
+}
+
+
+.right_box
+{
+    float:right;
+    width:285px;
+}
+
+.plain_values
+{
+    text-align:right;
+    margin:10px;
+}
+
+#con_km
+{
+    font-family:helvetica;
+    font-size:70px;
+    color:#5795d4;
+}
+
+#con_km_unit
+{
+    font-family:helvetica;
+    font-size:14px;
+    color:#aaaaaa;
+    padding-left:5px;    
+}
+
+#speed
+{
+    font-family:helvetica;
+    font-size:70px;
+    color:#5795d4;
+}
+
+#speed_unit
+{
+    font-family:helvetica;
+    font-size:14px;
+    color:#aaaaaa;
+    padding-left:5px;
+}
+
+#con_h, #temp1, #temp2, #voltage
+{
+    font-family:helvetica;
+    font-size:24px;
+    color:#5795d4;
+}
+
+.other_unit
+{
+    font-family:helvetica;
+    font-size:16px;
+    color:#aaaaaa;
+    padding-left:5px;    
+}
+
+
+.footer
+{
+    text-align:right;
     position:absolute;
-    top:200px;
-    left:20px;
-	font-family: Arial;
-	font-size: 18px;
-	color: #009900;
-
-}
-.graph_consumption {
-    position:absolute;
-    top:20;
-    left:300px;
-}
-.graph_speed {
-    position:absolute;
-    top:200;
-    left:300px;
+    bottom:0px;
+    right:0px;
+    margin-right:15px;
+    margin-bottom:5px;
 }
 
-</style>
+#debug
+{
+    font-family:courier;
+    font-size:14px;
+    margin-top:15px;
+    padding:5px;
+    padding:5px;
+    width:270px;
+    height:47px;
+    color:#888888;
+    background-color:#444444;
+}
 
+#version
+{
+    margin-top:5px;
+    color:#aaaaaa;
+}
 
-<body onload="update_all();">
+    </style>
 
-<span id="debug">---</span>
-<br/><br/><br/>
-<div style="font-size:28px">
-<span id="con_km">-.--</span>l/100km<br/><br/>
-<span id="speed">-.-</span>km/h
-</div>
-<div class="small">
-  <span id="load">-</span> %<br>
-  <span id="con_h">-.--</span> l/h<br>
-  <span id="temp1">-.-</span> C<br>
-  <span id="temp2">-.-</span> C<br>
-  <span id="voltage">-.--</span> V<br>
-</div>
+  </head>
 
-<div class="graph_consumption">
-  <img id="img_consumption" src="consumption.png"/>
-</div>
+  <body onload="update_all()">
 
-<div class="graph_speed">
-  <img id="img_speed" src="speed.png"/>
-</div>
+    <div class="left_box">
+      <div class="graphics">
+        <div class="rrdimage">
+          <img id="img_consumption" src="consumption.png"/>
+        </div>
+        <div class="rrdimage">
+          <img id="img_speed" src="speed.png"/>
+        </div>  
+        <div class="rrdimage">
+          <img id="img_speed_longterm" src="speed_longterm.png"/>
+        </div>  
+      </div>
+    </div>
+    
+    <div class="right_box">
+      <div class="plain_values">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="right" width="200" valign="baseline">
+              <span id="con_km">6.55</span>
+            </td>
+            <td align="left" width="55" valign="baseline">
+              <span id="con_km_unit">l/km</span>
+            </td>
+          </tr>
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="speed">30.6</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span id="speed_unit">km/h</span>
+            </td>
+          </tr>
+          
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="con_h">1.2</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span class="other_unit">l/h</span>
+            </td>
+          </tr>
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="temp1">78.0</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span class="other_unit">C</span>
+            </td>
+          </tr>
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="temp2">34.1</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span class="other_unit">C</span>
+            </td>
+          </tr>
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="voltage">14.11</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span class="other_unit">V</span>
+            </td>
+          </tr>
+        </table>
 
-<br/><br/>
-</body>
+        
+        <div class="footer">
+          <div id="debug">-- DEBUGGING MESSAGES GO HERE --</div>
+          <div id="version">nerdobd2 &lt;v. 0.9.5&gt;</div>
+        </div>
+      </div>
+
+    </div>
+
+  
+  </body>
 </html>
