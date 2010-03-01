@@ -22,8 +22,7 @@ ajax_socket (void *pport)
     port = (int) pport;
 
     struct sockaddr_in cliaddr;
-
-
+    
     srv = tcp_listen (port);
 
     for (;;)
@@ -31,9 +30,8 @@ ajax_socket (void *pport)
         // pthread_t th_client;
 
         clisize = sizeof (cliaddr);
-        if ((cli =
-             accept (srv, (struct sockaddr *) &cliaddr,
-                     (socklen_t *) & clisize)) == -1)
+        if ((cli = accept (srv, (struct sockaddr *) &cliaddr,
+                           (socklen_t *) & clisize)) == -1)
             continue;
 
         // pthread throws strange errors after a while, thus using fork()

@@ -10,6 +10,8 @@ int     kw1281_send_block (unsigned char);
 int     kw1281_recv_block (unsigned char);
 int     kw1281_recv_byte_ack (void);
 int     kw1281_inc_counter (void);
+int     kw1281_get_ascii_blocks(void);
+int     kw1281_recover(void);
 int     kw1281_get_block (unsigned char);
 void    kw1281_print (void);
 
@@ -19,7 +21,8 @@ float   const_inj_subtract = 0.1;
 
 int     fd;
 int     counter;                // kw1281 protocol block counter
-int     ready = 0;
+char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
+char    dev_awake = 0;          // flag (true if ECU is already awake, thus 5 baud init not needed)
 
 // save old values
 struct termios oldtio;
@@ -534,14 +537,14 @@ kw1281_recv_block (unsigned char n)
     kw1281_inc_counter ();
 
     // set ready flag when receiving ack block
-    if (t == 0x09 && !ready)
+    if (t == 0x09 && !got_ack)
     {
-        ready = 1;
+        got_ack = 1;
     }
     // set ready flag when sending 0x00 block after errors
-    if (t == 0x00 && !ready)
+    if (t == 0x00 && !got_ack)
     {
-        ready = 1;
+        got_ack = 1;
     }
     
     return 0;
@@ -559,6 +562,62 @@ kw1281_get_block (unsigned char n)
     return 0;
 }
 
+int
+kw1281_get_ascii_blocks(void)
+{
+    got_ack = 0;
+    
+    while (!got_ack)
+    {
+        if (kw1281_recv_block (0x00) == -1)
+            return -1;
+        
+        if (!got_ack)
+            if (kw1281_send_ack () == -1)
+                return -1;
+    }
+
+    return 0;
+}
+
+int
+kw1281_recover(void)
+{
+    /*
+     * on communication errors:
+     * read 0x0f (or 0x27) (already done)
+     * read 0x0f (or 0x27) (again)
+     * reply with ack 
+     * recv 0x55 0x01 0xa8 (send ack)
+     * reset counter (next block from ECU has counter 1)
+     * recv_blocks()
+     */
+    unsigned char c;
+
+    
+    if (read (fd, &c, 1) == -1)
+    {
+        printf("kw1281_init: read() error\n");
+        return -1;
+    }
+#ifdef DEBUG
+    printf ("read 0x%02x\n", c);
+#endif
+    
+    if ( (c = kw1281_recv_byte_ack ()) == -1)
+        return -1;
+    
+#ifdef DEBUG
+    printf ("read 0x%02x (and sent ack)\n", c);
+#endif
+    
+    counter = 1;
+    
+    if (kw1281_get_ascii_blocks() == -1)
+        return -1;
+    
+    return 0;
+}
 
 int
 kw1281_open (char *device)
@@ -615,6 +674,18 @@ kw1281_init (int address)
     unsigned char c;
     
     int     in;
+    
+    // check if device is already awake
+    // if so, call recover and return, no 5 baud init needed
+    /*
+    if (dev_awake)
+    {
+        if (kw1281_recover() == -1)
+            return -1;
+        else
+            return 0;
+    }
+    */
     
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
@@ -707,6 +778,7 @@ kw1281_init (int address)
 #endif
     
     counter = 1;
+    dev_awake = 1;
     
     return 0;
 }
@@ -742,6 +814,7 @@ kw1281_mainloop (void)
         voltage += 0.15;
         load += 3;
         usleep (2000000);
+        return -1;
         
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
@@ -753,16 +826,10 @@ kw1281_mainloop (void)
     printf ("receive blocks\n");
 #endif
 
-    while (!ready)
-    {
-        if (kw1281_recv_block (0x00) == -1)
-            return -1;
-        
-        if (!ready)
-            if (kw1281_send_ack () == -1)
-                return -1;
-    }
-
+    
+    if (kw1281_get_ascii_blocks() == -1)
+        return -1;
+    
     printf ("init done.\n");
     for ( ; ; )
     {

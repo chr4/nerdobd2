@@ -1,5 +1,13 @@
 #include "serial.h"
 
+/*
+ * TODO:
+ *
+ * create timer for sensing heartbeat
+ * kill on problems
+ *
+ */
+
 int
 main (int arc, char **argv)
 {
@@ -38,10 +46,9 @@ main (int arc, char **argv)
             printf("errors. exiting...\n");
             pthread_kill(thread1, SIGTERM);
             pthread_join(thread1, NULL);
-            pthread_kill(thread1, SIGKILL);
-            usleep(100000);
             return -1;
         }
+        
     }
     
     return 0;
