@@ -1,12 +1,9 @@
 #include "serial.h"
 
 /*
- * TODO:
+ * start like this:
+ * $ while (true); do ./serial; done
  *
- * create timer for sensing heartbeat
- * kill on problems
- *
- * loop for bind problems with sleep
  */
 
 int
@@ -48,7 +45,7 @@ main (int arc, char **argv)
             ajax_shutdown();
             pthread_kill(thread1, SIGTERM);
             pthread_join(thread1, NULL);
-            exit(1);
+            return -1;
         }
         
     }
