@@ -13,14 +13,17 @@ rrdtool_update_consumption ()
         snprintf (cmd, sizeof (cmd), "rrdtool update consumption.rrd %d:%.2f:%.2f &", 
                   (int) time (&t), con_km, con_h);
     
-    system(cmd);
+    if (system(cmd) == -1)
+        perror("system() ");
+        
     
     
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph consumption.png --start %d --end %d DEF:con_km=consumption.rrd:km:AVERAGE AREA:con_km#990000:l/100km DEF:con_h=consumption.rrd:h:AVERAGE LINE3:con_h#009999:l/h &> /dev/null &", 
               (int) time (&t) - 300, (int) time (&t) );
     
-    system(cmd);
+    if (system(cmd) == -1)
+        perror("system() "); 
     
     return (void *) NULL;
 }
@@ -34,13 +37,14 @@ rrdtool_update_speed ()
     snprintf (cmd, sizeof (cmd), "rrdtool update speed.rrd %d:%.1f &", 
               (int) time (&t), speed);
     
-    system(cmd);
-    
+    if (system(cmd) == -1)
+        perror("system() ");    
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph speed.png --start %d --end %d DEF:myspeed=speed.rrd:speed:AVERAGE LINE2:myspeed#0000FF:speed &> /dev/null &",
               (int) time (&t) - 300, (int) time (&t) );
     
-    system(cmd);
+    if (system(cmd) == -1)
+        perror("system() ");
     
     return (void *) NULL;
 }

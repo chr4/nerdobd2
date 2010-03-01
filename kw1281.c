@@ -788,11 +788,11 @@ kw1281_mainloop (void)
         temp2++;
         voltage += 0.15;
         load += 3;
-        sleep(5);
-        
+
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
-        
+
+        sleep(5);
         return -1;
     }
 #endif

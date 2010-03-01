@@ -20,8 +20,8 @@
 
 
 
-#define SERIAL_ATTACHED
-//#define DEBUG
+//#define SERIAL_ATTACHED
+#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
@@ -48,4 +48,3 @@ float   con_km;
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;
-
