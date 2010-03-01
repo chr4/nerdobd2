@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,6 +19,7 @@
 #include <pthread.h>
 
 
+
 //#define SERIAL_ATTACHED
 #define DEBUG
 
@@ -30,6 +32,8 @@
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
+void   *rrdtool_update_speed ();
+void   *rrdtool_update_consumption ();
 
 int     kw1281_open (char *device);
 int     kw1281_init (int);

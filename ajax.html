@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">
+<html>
+<head>
+<title>AJAX test</title>
+</head>
+<script type="text/javascript">
+
+function xml_http_post(url, data, callback) {
+	var req = false;
+
+	req = new XMLHttpRequest();
+
+	req.open("POST", url, true);
+    req.onreadystatechange = function() {
+        if (req.readyState == 4) {
+            callback(req);
+        }
+    }
+    req.send(data);
+}
+
+
+
+
+function req_con_km() {
+    var data = '\n';           
+    xml_http_post("update_con_km", data, write_con_km);
+    setTimeout ( "req_con_km()", 500 );
+}
+function write_con_km(req) {
+	var elem = document.getElementById('con_km')
+	elem.innerHTML =  req.responseText
+}
+
+function req_speed() {
+    var data = '\n';           
+    xml_http_post("update_speed", data, write_speed);
+    setTimeout ( "req_speed()", 500 );
+}
+function write_speed(req) {
+	var elem = document.getElementById('speed')
+	elem.innerHTML =  req.responseText
+}
+
+function req_load() {
+    var data = '\n';           
+    xml_http_post("update_load", data, write_load);
+    setTimeout ( "req_load()", 500 );
+}
+function write_load(req) {
+	var elem = document.getElementById('load')
+	elem.innerHTML =  req.responseText
+}
+
+function req_rpm() {
+    var data = '\n';           
+    xml_http_post("update_rpm", data, write_rpm);
+    setTimeout ( "req_rpm()", 500 );
+}
+function write_rpm(req) {
+	var elem = document.getElementById('rpm')
+	elem.innerHTML =  req.responseText
+}
+
+function req_con_h() {
+    var data = '\n';           
+    xml_http_post("update_con_h", data, write_con_h);
+    setTimeout ( "req_con_h()", 500 );
+}
+function write_con_h(req) {
+	var elem = document.getElementById('con_h')
+	elem.innerHTML =  req.responseText
+}
+
+function req_temp1() {
+    var data = '\n';           
+    xml_http_post("update_temp1", data, write_temp1);
+    setTimeout ( "req_temp1()", 500 );
+}
+function write_temp1(req) {
+	var elem = document.getElementById('temp1')
+	elem.innerHTML =  req.responseText
+}
+
+function req_temp2() {
+    var data = '\n';           
+    xml_http_post("update_temp2", data, write_temp2);
+    setTimeout ( "req_temp2()", 500 );
+}
+function write_temp2(req) {
+	var elem = document.getElementById('temp2')
+	elem.innerHTML =  req.responseText
+}
+
+function req_voltage() {
+    var data = '\n';           
+    xml_http_post("update_voltage", data, write_voltage);
+    setTimeout ( "req_voltage()", 500 );
+}
+function write_voltage(req) {
+	var elem = document.getElementById('voltage')
+	elem.innerHTML =  req.responseText
+}
+
+
+function reload_speed() {
+    img = document.getElementById('img_speed');
+    img.src = '/speed.png?' + Date.parse(new Date());
+    setTimeout ( "reload_speed()", 500 );
+}
+function reload_consumption() {
+    img = document.getElementById('img_consumption');
+    img.src = '/consumption.png?' + Date.parse(new Date());
+    setTimeout ( "reload_consumption()", 500 );
+}
+
+function start() {
+    setTimeout ( "req_con_km()", 500 );
+    setTimeout ( "req_speed()", 500 );
+    
+    setTimeout ( "req_load()", 500 ); 
+    setTimeout ( "req_rpm()", 500 );     
+    setTimeout ( "req_con_h()", 500 );     
+
+    setTimeout ( "req_temp1()", 500 ); 
+    setTimeout ( "req_temp2()", 500 ); 
+    setTimeout ( "req_voltage()", 500 );    
+    
+    setTimeout ( "reload_speed()", 500 );
+    setTimeout ( "reload_consumption()", 500 );    
+}
+
+</script>
+<style type="text/css">
+#con_km {
+	font-family: Arial;
+	font-size: 70px;
+	line-height: 18px;
+	color: #ff0000;
+}
+#speed {
+	font-family: Arial;
+	font-size: 70px;
+	line-height: 18px;
+	color: #003862;
+}
+.small {
+    position:absolute;
+    top:200px;
+    left:20px;
+	font-family: Arial;
+	font-size: 18px;
+	color: #009900;
+
+}
+.graph_consumption {
+    position:absolute;
+    top:20;
+    left:300px;
+}
+.graph_speed {
+    position:absolute;
+    top:200;
+    left:300px;
+}
+
+</style>
+<body onload="start();">
+<br/><br/><br/>
+<div style="font-size:28px">
+<span id="con_km">-.--</span>l/100km<br/><br/>
+<span id="speed">-.-</span>km/h
+</div>
+<div class="small">
+  <span id="load">-</span> %<br>
+  <span id="con_h">-.--</span> l/h<br>
+  <span id="temp1">-.-</span> C<br>
+  <span id="temp2">-.-</span> C<br>
+  <span id="voltage">-.--</span> V<br>
+</div>
+
+<div class="graph_consumption">
+  <img id="img_consumption" src="consumption.png"/>
+</div>
+
+<div class="graph_speed">
+  <img id="img_speed" src="speed.png"/>
+</div>
+
+<br/><br/>
+</body>
+</html>
