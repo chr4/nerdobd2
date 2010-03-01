@@ -5,132 +5,92 @@
 </head>
 <script type="text/javascript">
 
-function xml_http_post(url, data, callback) {
-	var req = false;
-
+function update_variable(varname)
+{
+    var req = false;
+    
+    // we only need support firefox / konqueror
 	req = new XMLHttpRequest();
 
-	req.open("POST", url, true);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4) {
-            callback(req);
+	req.open("POST", "update_" + varname, true);
+    req.onreadystatechange = function()
+    {
+        if (req.readyState == 4)
+        {
+            // check if variable is valid (if not, don't update
+            if (req.responseText)
+                document.getElementById(varname).innerHTML = req.responseText;
+            else
+                // put code here to grey out not updated value
+                ;
         }
     }
-    req.send(data);
+    // send newline to request variable
+    req.send('\n');
+}
+
+// show image tmp in img after it is completely loaded
+function image_loaded(tmp, img)
+{
+
+    if (tmp.complete)
+    {
+        // show image
+        replace = document.getElementById("img_" + img);
+        replace.src = tmp.src;
+    }
+    else
+    {
+        // check again in 10ms
+        setTimeout("image_loaded(" + tmp + "," + img + ")", 10);
+    }
 }
 
 
+function update_image(imagename)
+{
+    tmp = new Image();
+    tmp.style.visibility = 'hidden';
 
-
-function req_con_km() {
-    var data = '\n';           
-    xml_http_post("update_con_km", data, write_con_km);
-    setTimeout ( "req_con_km()", 500 );
-}
-function write_con_km(req) {
-	var elem = document.getElementById('con_km')
-	elem.innerHTML =  req.responseText
-}
-
-function req_speed() {
-    var data = '\n';           
-    xml_http_post("update_speed", data, write_speed);
-    setTimeout ( "req_speed()", 500 );
-}
-function write_speed(req) {
-	var elem = document.getElementById('speed')
-	elem.innerHTML =  req.responseText
-}
-
-function req_load() {
-    var data = '\n';           
-    xml_http_post("update_load", data, write_load);
-    setTimeout ( "req_load()", 500 );
-}
-function write_load(req) {
-	var elem = document.getElementById('load')
-	elem.innerHTML =  req.responseText
-}
-
-function req_rpm() {
-    var data = '\n';           
-    xml_http_post("update_rpm", data, write_rpm);
-    setTimeout ( "req_rpm()", 500 );
-}
-function write_rpm(req) {
-	var elem = document.getElementById('rpm')
-	elem.innerHTML =  req.responseText
-}
-
-function req_con_h() {
-    var data = '\n';           
-    xml_http_post("update_con_h", data, write_con_h);
-    setTimeout ( "req_con_h()", 500 );
-}
-function write_con_h(req) {
-	var elem = document.getElementById('con_h')
-	elem.innerHTML =  req.responseText
-}
-
-function req_temp1() {
-    var data = '\n';           
-    xml_http_post("update_temp1", data, write_temp1);
-    setTimeout ( "req_temp1()", 500 );
-}
-function write_temp1(req) {
-	var elem = document.getElementById('temp1')
-	elem.innerHTML =  req.responseText
-}
-
-function req_temp2() {
-    var data = '\n';           
-    xml_http_post("update_temp2", data, write_temp2);
-    setTimeout ( "req_temp2()", 500 );
-}
-function write_temp2(req) {
-	var elem = document.getElementById('temp2')
-	elem.innerHTML =  req.responseText
-}
-
-function req_voltage() {
-    var data = '\n';           
-    xml_http_post("update_voltage", data, write_voltage);
-    setTimeout ( "req_voltage()", 500 );
-}
-function write_voltage(req) {
-	var elem = document.getElementById('voltage')
-	elem.innerHTML =  req.responseText
-}
-
-
-function reload_speed() {
-    img = document.getElementById('img_speed');
-    img.src = '/speed.png?' + Date.parse(new Date());
-    setTimeout ( "reload_speed()", 500 );
-}
-function reload_consumption() {
-    img = document.getElementById('img_consumption');
-    img.src = '/consumption.png?' + Date.parse(new Date());
-    setTimeout ( "reload_consumption()", 500 );
-}
-
-function start() {
-    setTimeout ( "req_con_km()", 500 );
-    setTimeout ( "req_speed()", 500 );
+    tmp.src = "/" + imagename + ".png?" + Date.parse(new Date());
     
-    setTimeout ( "req_load()", 500 ); 
-    setTimeout ( "req_rpm()", 500 );     
-    setTimeout ( "req_con_h()", 500 );     
-
-    setTimeout ( "req_temp1()", 500 ); 
-    setTimeout ( "req_temp2()", 500 ); 
-    setTimeout ( "req_voltage()", 500 );    
-    
-    setTimeout ( "reload_speed()", 500 );
-    setTimeout ( "reload_consumption()", 500 );    
+    image_loaded(tmp, imagename);
 }
+
+
+function update_all()
+{
+    update_variable("con_km");
+    update_variable("speed");
+    update_variable("load");
+    update_variable("con_h");
+    update_variable("temp1");
+    update_variable("temp2");
+    update_variable("voltage");
+    
+    update_image("speed");
+    update_image("consumption");
+    
+    // restart timer
+    setTimeout ( "update_all()", 500 );
+}
+
+/*
+ * better would be:
+ * /request_variable
+ * then send varname
+ * parse varname and reply with value
+ */
 
 </script>
+
+
+
+
+
+
+
+
 <style type="text/css">
 #con_km {
 	font-family: Arial;
@@ -165,7 +125,11 @@ function start() {
 }
 
 </style>
-<body onload="start();">
+
+
+<body onload="update_all();">
+
+<span id="debug">---</span>
 <br/><br/><br/>
 <div style="font-size:28px">
 <span id="con_km">-.--</span>l/100km<br/><br/>

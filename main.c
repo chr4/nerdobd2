@@ -4,6 +4,11 @@
  * start like this:
  * $ while (true); do ./serial; done
  *
+ * TODO:
+ *
+ * ajax.html WAY faster
+ *
+ * system() stops to create rrdtool images after a while..
  */
 
 int

@@ -119,7 +119,9 @@ handle_client (int connfd)
 
     if (!strcmp (recv_buf, "GET / HTTP/1.1"))
     {
-        printf ("GET ");
+#ifdef DEBUG
+        printf ("GET ajax.html\n");
+#endif
         // read and ignore all http headers
         if (ignore_headers (connfd) == -1)
             return 0;
@@ -131,7 +133,6 @@ handle_client (int connfd)
             exit (-1);
         }
 
-        printf ("ajax.html\n");
         while ((line = get_line (fd)) != NULL)
         {
             send (connfd, line, strlen (line), 0);
@@ -145,6 +146,9 @@ handle_client (int connfd)
         int     ret;
         static char buffer[1024 + 1];        /* static so zero filled */
 
+#ifdef DEBUG
+        printf ("GET speed.png\n");
+#endif
         // read and ignore all http headers
         if (ignore_headers (connfd) == -1)
             return 0;
@@ -170,6 +174,9 @@ handle_client (int connfd)
         int     ret;
         static char buffer[1024 + 1];        /* static so zero filled */
 
+#ifdef DEBUG
+        printf ("GET consumption.png\n");
+#endif
         // read and ignore all http headers
         if (ignore_headers (connfd) == -1)
             return 0;
@@ -192,7 +199,7 @@ handle_client (int connfd)
     }
 
     else if (!strcmp (recv_buf, "POST /update_con_km HTTP/1.1"))
-    {
+    {        
         // read and ignore headers
         if (ignore_headers (connfd) == -1)
             return 0;
@@ -279,9 +286,10 @@ handle_client (int connfd)
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
         send (connfd, buf, strlen (buf), 0);
     }
+#ifdef DEBUG    
     else
         printf ("got something else (%s)\n", recv_buf);
-
+#endif
 
     return 0;
 }
