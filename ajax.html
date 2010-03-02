@@ -22,7 +22,7 @@ function update_variable(varname)
             if (req.responseText)
             {
                 // set color back to normal
-                document.getElementById(varname).style.color = "#5795d4";
+                document.getElementById(varname).style.color = "#f00000";
                     
                 if (varname == "con_km")
                 {
@@ -113,7 +113,6 @@ body, html
 {
     float:left;
     width:490px;
-    background-color:#ffaabb;
 }
 
 .graphics
@@ -128,8 +127,7 @@ body, html
     margin-bottom:5px;
     margin-left:0px;
     margin-right:10px;
-    height:140px;
-    background-color:#fff333;
+    height:230px;
 }
 
 
@@ -149,7 +147,7 @@ body, html
 {
     font-family:helvetica;
     font-size:70px;
-    color:#5795d4;
+    color:#f00000;
 }
 
 #con_km_unit
@@ -164,7 +162,7 @@ body, html
 {
     font-family:helvetica;
     font-size:70px;
-    color:#5795d4;
+    color:#f00000;
 }
 
 #speed_unit
@@ -179,7 +177,7 @@ body, html
 {
     font-family:helvetica;
     font-size:24px;
-    color:#5795d4;
+    color:#f00000;
 }
 
 .other_unit
@@ -234,9 +232,11 @@ body, html
         <div class="rrdimage">
           <img id="img_speed" src="speed.png"/>
         </div>  
+        <!--
         <div class="rrdimage">
           <img id="img_speed_longterm" src="speed_longterm.png"/>
         </div>  
+        -->
       </div>
     </div>
     
