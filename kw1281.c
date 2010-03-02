@@ -770,9 +770,11 @@ kw1281_mainloop (void)
      * the html interface / ajax server
      */
 
+    sleep(5);
     printf ("incrementing values for testing purposes...\n");
     speed = 10;
     con_km = -1;
+    rpm = 1000;
     load = 0;
     con_h = 0.01;
     temp1 = 20;
@@ -788,6 +790,7 @@ kw1281_mainloop (void)
         temp2++;
         voltage += 0.15;
         load += 3;
+        rpm += 100;
 
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);

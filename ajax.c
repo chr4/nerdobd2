@@ -203,6 +203,10 @@ handle_client (int connfd)
         // read and ignore headers
         if (ignore_headers (connfd) == -1)
             return 0;
+        
+        // check if value was set
+        if (con_km == -2)
+            return -1;
 
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.02f", con_km);
@@ -215,6 +219,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (speed == -2)
+            return -1;
+        
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.01f", speed);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -226,6 +234,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (rpm == -2)
+            return -1;
+        
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.00f", rpm);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -237,6 +249,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (con_h == -2)
+            return -1;
+        
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.02f", con_h);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -248,6 +264,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (load == -2)
+            return -1;
+            
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.00f", load);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -259,6 +279,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (temp1 == -2)
+            return -1;
+        
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.01f", temp1);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -270,6 +294,10 @@ handle_client (int connfd)
         if (ignore_headers (connfd) == -1)
             return 0;
 
+        // check if value was set
+        if (temp2 == -2)
+            return -1;
+        
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.01f", temp2);
         send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
@@ -280,6 +308,10 @@ handle_client (int connfd)
         // read and ignore headers
         if (ignore_headers (connfd) == -1)
             return 0;
+        
+        // check if value was set
+        if (voltage == -2)
+            return -1;
 
         char    buf[256];
         snprintf (buf, sizeof (buf), "%.02f", voltage);

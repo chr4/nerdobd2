@@ -1,6 +1,11 @@
 #include "serial.h"
 
-char    rrdstyle[1024] = "--slope-mode --height=230 --width=490 --full-size-mode --color=SHADEB#222222 --color=SHADEA#222222 --color=BACK#222222 --color=FRAME#222222 --color=GRID#aaaaaa --color=MGRID#aaaaaa --color=CANVAS#eeeeee --color=AXIS#aaaaaa --color=FONT#aaaaaa --color=ARROW#aaaaaa";
+char    rrdstyle[1024] = "--slope-mode --height=230 --width=490 --full-size-mode "
+                         "--color=SHADEB#222222 --color=SHADEA#222222 "
+                         "--color=BACK#222222 --color=FRAME#222222 "
+                         "--color=GRID#aaaaaa --color=MGRID#aaaaaa "
+                         "--color=CANVAS#eeeeee --color=AXIS#aaaaaa "
+                         "--color=FONT#aaaaaa --color=ARROW#aaaaaa";
 
 
 void *
@@ -22,7 +27,12 @@ rrdtool_update_consumption ()
     
     
     snprintf (cmd, sizeof (cmd), 
-              "rrdtool graph consumption.png --start %d --end %d %s --upper-limit=20 DEF:con_km=consumption.rrd:km:AVERAGE AREA:con_km#f00000:l/100km DEF:con_h=consumption.rrd:h:AVERAGE LINE3:con_h#00f000:l/h &> /dev/null &", 
+              "rrdtool graph consumption.png --start %d --end %d %s "
+              "--upper-limit=20 --lower-limit=20 "
+              "DEF:con_km=consumption.rrd:km:AVERAGE "
+              "AREA:con_km#f00000:l/100km "
+              "DEF:con_h=consumption.rrd:h:AVERAGE LINE3:con_h#00f000:l/h "
+              "&> /dev/null &", 
               (int) time (&t) - 300, (int) time (&t), rrdstyle );
     
     if (system(cmd) == -1)
@@ -43,7 +53,11 @@ rrdtool_update_speed ()
     if (system(cmd) == -1)
         perror("system() ");    
     snprintf (cmd, sizeof (cmd), 
-              "rrdtool graph speed.png --start %d --end %d %s DEF:myspeed=speed.rrd:speed:AVERAGE LINE2:myspeed#f00000:speed &> /dev/null &",
+              "rrdtool graph speed.png --start %d --end %d %s "
+              "--upper-limit=150 --lower-limit=150 "
+              "DEF:myspeed=speed.rrd:speed:AVERAGE "
+              "LINE2:myspeed#f00000:speed "
+              "&> /dev/null &",
               (int) time (&t) - 300, (int) time (&t), rrdstyle );
     
     if (system(cmd) == -1)
