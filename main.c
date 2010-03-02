@@ -15,6 +15,10 @@
  *
  *
  * system() stops to create rrdtool images after a while..
+ *
+ * waidipd() somewhere in a while();
+ *
+ *
  */
 
 int
@@ -33,6 +37,18 @@ main (int arc, char **argv)
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
 
+    /* init values with -2, so ajax socket can control if data is availiable */
+    speed = -2;
+    rpm = -2;
+    temp1 = -2;
+    temp2 = -2;
+    oil_press = -2;
+    inj_time = -2;
+    load = -2;
+    voltage = -2;
+    con_h = -2;
+    con_km = -2;
+    
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
 

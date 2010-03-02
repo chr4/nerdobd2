@@ -86,6 +86,7 @@ function update_all()
 {
     update_variable("con_h");
     update_variable("con_km");
+    update_variable("rpm");
     update_variable("speed");
     update_variable("temp1");
     update_variable("temp2");
@@ -173,7 +174,7 @@ body, html
     padding-left:5px;
 }
 
-#con_h, #temp1, #temp2, #voltage
+#con_h, #rpm, #temp1, #temp2, #voltage
 {
     font-family:helvetica;
     font-size:24px;
@@ -268,6 +269,14 @@ body, html
               <span class="other_unit">l/h</span>
             </td>
           </tr>
+          <tr>
+            <td align="right" valign="baseline">
+              <span id="rpm">3000</span>
+            </td>
+            <td align="left" valign="baseline">
+              <span class="other_unit">rpm</span>
+            </td>
+          </tr>          
           <tr>
             <td align="right" valign="baseline">
               <span id="temp1">78.0</span>
