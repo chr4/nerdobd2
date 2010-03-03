@@ -1,6 +1,8 @@
 #include "serial.h"
 
 char    rrdstyle[1024] = "--slope-mode --height=230 --width=490 --full-size-mode "
+                         // 30sec grid line, major grid 1 min, lables 1 min, %M:%M
+                         "--x-grid SECOND:30:MINUTE:1:MINUTE:1:0:%R "
                          "--color=SHADEB#222222 --color=SHADEA#222222 "
                          "--color=BACK#222222 --color=FRAME#222222 "
                          "--color=GRID#aaaaaa --color=MGRID#aaaaaa "
@@ -28,10 +30,12 @@ rrdtool_update_consumption ()
     
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph consumption.png --start %d --end %d %s "
-              "--upper-limit=20 --lower-limit=20 "
+              "--upper-limit=20 "
               "DEF:con_km=consumption.rrd:km:AVERAGE "
+              "DEF:con_h=consumption.rrd:h:AVERAGE "
               "AREA:con_km#f00000:l/100km "
-              "DEF:con_h=consumption.rrd:h:AVERAGE LINE3:con_h#00f000:l/h "
+              "LINE2:con_h#00f000:l/h "
+
               "&> /dev/null &", 
               (int) time (&t) - 300, (int) time (&t), rrdstyle );
     
@@ -54,9 +58,9 @@ rrdtool_update_speed ()
         perror("system() ");    
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph speed.png --start %d --end %d %s "
-              "--upper-limit=150 --lower-limit=150 "
+              "--upper-limit=120 "
               "DEF:myspeed=speed.rrd:speed:AVERAGE "
-              "LINE2:myspeed#f00000:speed "
+              "AREA:myspeed#0000f0:speed "
               "&> /dev/null &",
               (int) time (&t) - 300, (int) time (&t), rrdstyle );
     
@@ -101,9 +105,13 @@ rrdtool_create_consumption (void)
         // 3. RRA one value (average consumption last 30mins)
         execlp ("rrdtool", "rrdtool", "create", "consumption.rrd",
                 "--start", starttime, "--step", "1",
-                "DS:km:GAUGE:15:U:U", "DS:h:GAUGE:15:0:U",
-                "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
-                "RRA:AVERAGE:0.5:1800:1", NULL);
+                "DS:km:GAUGE:5:U:U", "DS:h:GAUGE:5:0:U", // unknown after 5sec
+                "RRA:AVERAGE:0.5:1:300", 
+                /* 
+                "RRA:AVERAGE:0.5:300:1",   // 5min
+                "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+                 */
+                NULL);
         exit (0);
     }
     
@@ -144,9 +152,13 @@ rrdtool_create_speed (void)
         // rrdtool create
         execlp ("rrdtool", "rrdtool", "create", "speed.rrd",
                 "--start", starttime, "--step", "1",
-                "DS:speed:GAUGE:15:0:200", 
-                "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:5:360",
-                "RRA:AVERAGE:0.5:50:288", "RRA:AVERAGE:0.5:1800:1", NULL);
+                "DS:speed:GAUGE:5:0:200",   // unknown after 5sec
+                "RRA:AVERAGE:0.5:1:300", 
+                /*
+                "RRA:AVERAGE:0.5:300:1",   // 5min 
+                "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+                 */
+                NULL);
         exit (0);
     }
     

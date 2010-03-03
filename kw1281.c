@@ -831,7 +831,8 @@ kw1281_mainloop (void)
             return -1;
 
         // calculate consumption per hour
-        if (speed > 0)
+        if (speed > 5)
+            // below 5km/h, values get very high, which makes the graphs unreadable
             con_km = (con_h / speed) * 100;
         else
             con_km = -1;

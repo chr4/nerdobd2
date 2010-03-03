@@ -23,6 +23,7 @@ function update_variable(varname)
             {
                 // set color back to normal
                 document.getElementById(varname).style.color = "#f00000";
+                document.getElementById("debug").innerHTML = "";
                     
                 if (varname == "con_km")
                 {
@@ -45,7 +46,10 @@ function update_variable(varname)
                 }
             }
             else
+            {
                 document.getElementById(varname).style.color = "#888888";
+                document.getElementById("debug").innerHTML = "Waiting for new values...";
+            }
         }
     }
     // send newline to request variable
@@ -147,14 +151,15 @@ body, html
 #con_km
 {
     font-family:helvetica;
-    font-size:70px;
+    font-size:76px;
+    line-height:82px;
     color:#f00000;
 }
 
 #con_km_unit
 {
     font-family:helvetica;
-    font-size:14px;
+    font-size:18px;
     color:#aaaaaa;
     padding-left:5px;    
 }
@@ -162,29 +167,36 @@ body, html
 #speed
 {
     font-family:helvetica;
-    font-size:70px;
+    font-size:76px;
+    line-height:82px;
     color:#f00000;
 }
 
 #speed_unit
 {
     font-family:helvetica;
-    font-size:14px;
+    font-size:18px;
     color:#aaaaaa;
     padding-left:5px;
+}
+
+.other_values
+{
+    margin-top:20px;
 }
 
 #con_h, #rpm, #temp1, #temp2, #voltage
 {
     font-family:helvetica;
-    font-size:24px;
+    font-size:32px;
+    line-height:38px;
     color:#f00000;
 }
 
 .other_unit
 {
     font-family:helvetica;
-    font-size:16px;
+    font-size:18px;
     color:#aaaaaa;
     padding-left:5px;    
 }
@@ -254,18 +266,21 @@ body, html
           </tr>
           <tr>
             <td align="right" valign="baseline">
-              <span id="speed">30.6</span>
+              <span id="speed">130.6</span>
             </td>
             <td align="left" valign="baseline">
               <span id="speed_unit">km/h</span>
             </td>
           </tr>
-          
+        </table>
+        
+        <div class="other_values">
+        <table border="0" cellpadding="0" cellspacing="0">
           <tr>
-            <td align="right" valign="baseline">
+            <td align="right" width="200" valign="baseline">
               <span id="con_h">1.2</span>
             </td>
-            <td align="left" valign="baseline">
+            <td align="left" width="55" valign="baseline">
               <span class="other_unit">l/h</span>
             </td>
           </tr>
@@ -302,7 +317,7 @@ body, html
             </td>
           </tr>
         </table>
-
+        </div>
         
         <div class="footer">
           <div id="debug">-- DEBUGGING MESSAGES GO HERE --</div>
