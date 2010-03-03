@@ -770,13 +770,13 @@ kw1281_mainloop (void)
      * the html interface / ajax server
      */
 
-    sleep(5);
+    sleep(1);
     printf ("incrementing values for testing purposes...\n");
     speed = 10;
     con_km = -1;
     rpm = 1000;
     load = 0;
-    con_h = 0.01;
+    con_h = 1.01;
     temp1 = 20;
     temp2 = 0;
     voltage = 3.00;
@@ -785,7 +785,7 @@ kw1281_mainloop (void)
     {
         speed++;
         con_km = con_km * (-1) ;
-        con_h += 0.03;
+        con_h += 1.03;
         temp1++;
         temp2++;
         voltage += 0.15;
