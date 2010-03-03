@@ -23,7 +23,7 @@ function update_variable(varname)
             {
                 // set color back to normal
                 document.getElementById(varname).style.color = "#f00000";
-                document.getElementById("debug").innerHTML = "";
+                // document.getElementById("debug").innerHTML = "";
                     
                 if (varname == "con_km")
                 {
@@ -48,7 +48,7 @@ function update_variable(varname)
             else
             {
                 document.getElementById(varname).style.color = "#888888";
-                document.getElementById("debug").innerHTML = "Waiting for new values...";
+                // document.getElementById("debug").innerHTML = "Waiting for new values...";
             }
         }
     }
@@ -217,9 +217,9 @@ body, html
     font-family:courier;
     font-size:14px;
     margin-top:15px;
-    padding:5px;
-    padding:5px;
-    width:270px;
+    margin-right:00px;
+    padding:0px;
+    width:200px;
     height:47px;
     color:#888888;
     background-color:#444444;
@@ -228,7 +228,7 @@ body, html
 #version
 {
     margin-top:5px;
-    color:#aaaaaa;
+    color:#ffffff;
 }
 
     </style>
@@ -320,8 +320,10 @@ body, html
         </div>
         
         <div class="footer">
+        <!--
           <div id="debug">-- DEBUGGING MESSAGES GO HERE --</div>
-          <div id="version">nerdobd2 &lt;v. 0.9.5&gt;</div>
+        -->
+          <div id="version">nerdobd2 | v0.9.5</div>
         </div>
       </div>
 
