@@ -30,7 +30,7 @@ rrdtool_update_consumption ()
     
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph consumption.png --start %d --end %d %s "
-              "--upper-limit=20 "
+              "--upper-limit=19.5 --y-grid 3.25:1 "
               "DEF:con_km=consumption.rrd:km:AVERAGE "
               "DEF:con_h=consumption.rrd:h:AVERAGE "
               "AREA:con_km#f00000:l/100km "
@@ -58,7 +58,7 @@ rrdtool_update_speed ()
         perror("system() ");    
     snprintf (cmd, sizeof (cmd), 
               "rrdtool graph speed.png --start %d --end %d %s "
-              "--upper-limit=120 "
+              "--upper-limit=135 --y-grid 7.5:2 "
               "DEF:myspeed=speed.rrd:speed:AVERAGE "
               "AREA:myspeed#0000f0:speed "
               "&> /dev/null &",
