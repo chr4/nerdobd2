@@ -762,7 +762,8 @@ int
 kw1281_mainloop (void)
 {
     pthread_t pth_consumption, pth_speed;
-   
+    int status;
+    
 #ifndef SERIAL_ATTACHED
     /* 
      * this block is for testing purposes
@@ -795,6 +796,9 @@ kw1281_mainloop (void)
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
 
+        // collect defunct processes from rrdtool thread
+        while(waitpid(-1, &status, WNOHANG|__WALL) > 0);
+        
         sleep(1);
     }
 #endif
@@ -841,6 +845,8 @@ kw1281_mainloop (void)
         pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
         pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);        
 
+        // collect defunct processes from rrdtool thread
+        while(waitpid(-1, &status, WNOHANG|__WALL) > 0);
          
         // request block 0x04
         // (temperatures + voltage)
