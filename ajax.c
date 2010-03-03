@@ -1,14 +1,12 @@
 #include "serial.h"
 
 #define HEADER_PLAIN    "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+#define HEADER_HTML     "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
 #define HEADER_PNG      "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"
 
 int     tcp_listen (int);
-int     handle_client (int);
-void    cut_crlf (char *);
-ssize_t readline (int, void *, size_t);
-char   *get_line (FILE *);
-int     ignore_headers (int);
+int     handle_client(int);
+int     obd_send(int, float, char *);
 
 
 void   *
@@ -24,17 +22,13 @@ ajax_socket (void *pport)
     
     tcp_listen (port);
 
-    for (;;)
+    for ( ; ; )
     {
-        // pthread_t th_client;
-
         clisize = sizeof (cliaddr);
         if ((cli = accept (srv, (struct sockaddr *) &cliaddr,
                            (socklen_t *) & clisize)) == -1)
             continue;
 
-        // pthread throws strange errors after a while, thus using fork()
-        // pthread_create( &th_client, NULL, handle_client, (void *) cli);
         
         if ((pid = fork ()) == 0)
         {
@@ -44,8 +38,9 @@ ajax_socket (void *pport)
             exit (0);
         }
 
-        waitpid (pid, &status, 0);
-
+        // collect defunct processes (don't wait)
+        while(waitpid(-1, &status, WNOHANG) > 0);
+        
         close (cli);
     }
 }
@@ -105,310 +100,164 @@ tcp_listen (int port)
     return 0;
 }
 
-int
-handle_client (int connfd)
-{
-    char    recv_buf[1024];
-    FILE   *fd;
-    char   *line;
 
-    if (readline (connfd, recv_buf, sizeof (recv_buf)) <= 0)
+
+
+int
+obd_send(int fd, float val, char *format)
+{
+    char buf[256];
+    
+    // check if value was set
+    if (val == -2)
         return -1;
-
-    cut_crlf (recv_buf);
-
-    if (!strcmp (recv_buf, "GET / HTTP/1.1"))
-    {
-#ifdef DEBUG
-        printf ("GET ajax.html\n");
-#endif
-        // read and ignore all http headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // send the html file
-        if ((fd = fopen ("ajax.html", "r")) == NULL)
-        {
-            perror ("could not read html file");
-            exit (-1);
-        }
-
-        while ((line = get_line (fd)) != NULL)
-        {
-            send (connfd, line, strlen (line), 0);
-        }
-        fclose (fd);
-    }
-
-    else if (strstr (recv_buf, "GET /speed.png"))
-    {
-        int     file_fd;
-        int     ret;
-        static char buffer[1024 + 1];        /* static so zero filled */
-
-#ifdef DEBUG
-        printf ("GET speed.png\n");
-#endif
-        // read and ignore all http headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        if ((file_fd = open("speed.png", O_RDONLY)) == -1)
-        {
-            perror ("couldnt open png file\n");
-            return -1;
-        }
-        write (connfd, HEADER_PNG, strlen(HEADER_PNG));
-
-        while ((ret = read (file_fd, buffer, 1024)) > 0)
-        {
-
-            (void) write (connfd, buffer, ret);
-
-        }
-        close (file_fd);
-    }
-    else if (strstr (recv_buf, "GET /consumption.png"))
-    {
-        int     file_fd;
-        int     ret;
-        static char buffer[1024 + 1];        /* static so zero filled */
-
-#ifdef DEBUG
-        printf ("GET consumption.png\n");
-#endif
-        // read and ignore all http headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        if ((file_fd = open ("consumption.png", O_RDONLY)) == -1)
-        {
-            perror ("couldnt open png file\n");
-            return -1;
-        }
-
-        write (connfd, HEADER_PNG, strlen (HEADER_PNG));
-
-        while ((ret = read (file_fd, buffer, 1024)) > 0)
-        {
-
-            (void) write (connfd, buffer, ret);
-
-        }
-        close (file_fd);
-    }
-
-    else if (!strcmp (recv_buf, "POST /update_con_km HTTP/1.1"))
-    {        
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-        
-        // check if value was set
-        if (con_km == -2)
-            return -1;
-
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.02f", con_km);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_speed HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (speed == -2)
-            return -1;
-        
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.01f", speed);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_rpm HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (rpm == -2)
-            return -1;
-        
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.00f", rpm);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_con_h HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (con_h == -2)
-            return -1;
-        
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.02f", con_h);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_load HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (load == -2)
-            return -1;
-            
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.00f", load);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_temp1 HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (temp1 == -2)
-            return -1;
-        
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.01f", temp1);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_temp2 HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-
-        // check if value was set
-        if (temp2 == -2)
-            return -1;
-        
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.01f", temp2);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-    else if (!strcmp (recv_buf, "POST /update_voltage HTTP/1.1"))
-    {
-        // read and ignore headers
-        if (ignore_headers (connfd) == -1)
-            return 0;
-        
-        // check if value was set
-        if (voltage == -2)
-            return -1;
-
-        char    buf[256];
-        snprintf (buf, sizeof (buf), "%.02f", voltage);
-        send (connfd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
-        send (connfd, buf, strlen (buf), 0);
-    }
-#ifdef DEBUG    
-    else
-        printf ("got something else (%s)\n", recv_buf);
-#endif
-
+    
+    snprintf (buf, sizeof (buf), format, val);
+    send (fd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
+    send (fd, buf, strlen (buf), 0);
+    
     return 0;
 }
 
-// read and ignore headers
+
 int
-ignore_headers (int fd)
+handle_client(int fd)
 {
-    char    recv_buf[1024];
-
-    do
+    
+    int file_fd;
+    int r, i, j;
+    static char buffer[1024];
+    char *p;
+    
+    // read socket
+    if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
     {
-        if (readline (fd, recv_buf, sizeof (recv_buf)) <= 0)
+        printf("read() failed\n");
+        return -1;
+    }
+    
+    // terminate received string
+    if ( r > 0 && r < sizeof(buffer))
+        buffer[r] = '\0';
+    else
+        buffer[0] = '\0';
+    
+    // cut \n \r
+    for (i = 0; i < r; i++)
+        if(buffer[i] == '\r' || buffer[i] == '\n')
+            buffer[i]='#';
+
+    // printf("request: %s\n", buffer);
+    
+    
+    if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
+    {
+        printf("something else than GET and POST received\n");
+        return -1;
+    }
+    
+    // look for second space and terminate string (skip headers)
+    if ( (p = strchr(buffer, ' ')) != NULL)
+        if ( (p = strchr(p+1, ' ')) != NULL)
+            *p = '\0';
+    
+    
+    // check for illegal parent directory requests
+    for (j = 0; j < i - 1; j++)
+    {
+        if(buffer[j] == '.' && buffer[j+1] == '.')
+        {
+            printf(".. detected\n");
             return -1;
-
-        cut_crlf (recv_buf);
-
-    } while (strcmp (recv_buf, ""));
-
-    return 0;
-}
-
-void
-cut_crlf (char *stuff)
-{
-
-    char   *p;
-
-    p = strchr (stuff, '\r');
-    if (p)
-        *p = '\0';
-
-    p = strchr (stuff, '\n');
-    if (p)
-        *p = '\0';
-}
-
-ssize_t
-readline (int fd, void *vptr, size_t maxlen)
-{
-
-    ssize_t n, rc;
-    char    c, *ptr;
-
-    ptr = vptr;
-
-    for (n = 1; n < maxlen; n++)
-    {
-
-      again:
-        if ((rc = read (fd, &c, 1)) == 1)
-        {
-            *ptr++ = c;
-            if (c == '\n')
-                break;
         }
-        else if (rc == 0)
+    }
+    
+    // convert / to ajax.html
+    if (!strncmp(buffer, "GET /\0", 6)) 
+        strncpy(buffer, "GET /ajax.html", sizeof(buffer));
+    
+    
+    // answer to our obd requests ( get.obd?varname )
+    else if (!strncmp(buffer, "POST /get.obd?", 1) )
+    {      
+        // which varname?
+        if ( (p = strchr(buffer, '?')) == NULL)
         {
-            if (n == 1)
-                return 0;
-            else
-                break;
+            printf("bad obd request\n");
+            return -1;
         }
+        p++;    // skip '?'
+        
+#ifdef DEBUG
+        printf("got obd request for %s\n", p);
+#endif
+        
+        if (!strcmp(p, "speed") )
+            obd_send(fd, speed, "%.01f");
+        else if (!strcmp(p, "rpm") )
+            obd_send(fd, rpm, "%.00f");
+        else if (!strcmp(p, "con_h") )
+            obd_send(fd, con_h, "%.02f");
+        else if (!strcmp(p, "con_km") )
+            obd_send(fd, con_km, "%.02f");
+        else if (!strcmp(p, "load") )
+            obd_send(fd, load, "%.00f");
+        else if (!strcmp(p, "temp1") )
+            obd_send(fd, temp1, "%.01f");
+        else if (!strcmp(p, "temp2") )
+            obd_send(fd, temp2, "%.00f");
+        else if (!strcmp(p, "voltage") )
+            obd_send(fd, voltage, "%.02f");
         else
         {
-            if (errno == EINTR)
-                goto again;
+            printf("unkown obd varname: %s\n", p);
             return -1;
         }
+        
+        return 0;
     }
+    
+    // terminate arguments after ?
+    if ( (p = strchr(buffer, '?')) != NULL) 
+        *p = '\0';
+   
+#ifdef DEBUG
+    printf("%s\n", buffer);
+#endif
+    
+    // search for last dot in filename
+    if ( (p = strrchr(buffer, '.')) == NULL)
+    {
+        printf("no . found in filename!\n");
+        return -1;
+    }
+        
+    // is file type known?
+    if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
+        write(fd, HEADER_HTML, strlen(HEADER_HTML));
+    
+    else if (!strcmp(p, ".png") )
+        write(fd, HEADER_PNG, strlen(HEADER_PNG));
+    
+    else if (!strcmp(p, ".txt") )
+        write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN));    
+    
+    else
+    {
+        printf("extention not found\n");
+        return -1;
+    }
+    
+    if(( file_fd = open(&buffer[5],O_RDONLY)) == -1)
+    {
+        printf("open() failed: %s\n", &buffer[5]);
+        return -1;
+    }
+    
+    while ( (r = read(file_fd, buffer, sizeof(buffer))) > 0 )
+        write(fd, buffer,r);
 
-    *ptr = 0;
-    return n;
-}
-
-
-char   *
-get_line (FILE * fz)
-{
-    char    buffy[1024];
-    char   *p;
-
-    if (fgets (buffy, 1024, fz) == NULL)
-        return NULL;
-
-    // cut_crlf(buffy);
-    p = buffy;
-
-    return p;
+    close(file_fd);
+    
+    return 0;
 }

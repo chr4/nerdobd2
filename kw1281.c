@@ -796,7 +796,7 @@ kw1281_mainloop (void)
         rrdtool_update_speed();
         
         // collect defunct processes from rrdtool
-        while(waitpid(-1, &status, WNOHANG /* |__WALL */) > 0);
+        while(waitpid(-1, &status, WNOHANG) > 0);
         
         sleep(1);
     }
@@ -845,7 +845,7 @@ kw1281_mainloop (void)
         rrdtool_update_speed();
 
         // collect defunct processes from rrdtool thread
-        while(waitpid(-1, &status, WNOHANG|__WALL) > 0);
+        while(waitpid(-1, &status, WNOHANG) > 0);
          
         // request block 0x04
         // (temperatures + voltage)
