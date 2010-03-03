@@ -13,7 +13,7 @@ function update_variable(varname)
     // we only need support firefox / konqueror
 	req = new XMLHttpRequest();
     
-	req.open("POST", "update_" + varname, true);
+	req.open("POST", "/get.obd?" + varname, true);
     req.onreadystatechange = function()
     {
         if (req.readyState == 4)
@@ -63,26 +63,29 @@ function image_loaded(tmp, img)
     
     if (tmp.complete)
     {
+        document.getElementById("debug").innerHTML = "image loaded<br/>" + Date.parse(new Date());
         // show image
         replace = document.getElementById("img_" + img);
         replace.src = tmp.src;
     }
     else
     {
+        document.getElementById("debug").innerHTML = "waiting<br/>" + Date.parse(new Date());
         // check again in 10ms
         setTimeout("image_loaded(" + tmp + "," + img + ")", 10);
     }
 }
 
 
-function update_image(imagename)
+function update_image(img)
 {
     tmp = new Image();
-    tmp.style.visibility = 'hidden';
-    
-    tmp.src = "/" + imagename + ".png?" + Date.parse(new Date());
-    
-    image_loaded(tmp, imagename);
+//    tmp.style.visibility = 'hidden';
+
+    //tmp = document.getElementById("img_" + imagename);
+    tmp.src = "/" + img + ".png?" + Date.parse(new Date());
+
+    image_loaded(tmp, img);
 }
 
 
@@ -95,7 +98,7 @@ function update_all()
     update_variable("temp1");
     update_variable("temp2");
     update_variable("voltage");
-    
+
     update_image("speed");
     update_image("consumption");
     
@@ -320,9 +323,7 @@ body, html
         </div>
         
         <div class="footer">
-        <!--
           <div id="debug">-- DEBUGGING MESSAGES GO HERE --</div>
-        -->
           <div id="version">nerdobd2 | v0.9.5</div>
         </div>
       </div>
