@@ -761,7 +761,6 @@ kw1281_init (int address)
 int
 kw1281_mainloop (void)
 {
-    pthread_t pth_consumption, pth_speed;
     int status;
     
 #ifndef SERIAL_ATTACHED
@@ -792,12 +791,12 @@ kw1281_mainloop (void)
         voltage += 0.15;
         load += 3;
         rpm += 100;
-
-        pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
-        pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);
-
-        // collect defunct processes from rrdtool thread
-        while(waitpid(-1, &status, WNOHANG|__WALL) > 0);
+        
+        rrdtool_update_consumption();
+        rrdtool_update_speed();
+        
+        // collect defunct processes from rrdtool
+        while(waitpid(-1, &status, WNOHANG /* |__WALL */) > 0);
         
         sleep(1);
     }
@@ -842,8 +841,8 @@ kw1281_mainloop (void)
             con_km = -1;
 
         // update rrdtool databases
-        pthread_create (&pth_consumption, NULL, rrdtool_update_consumption, NULL);
-        pthread_create (&pth_speed, NULL, rrdtool_update_speed, NULL);        
+        rrdtool_update_consumption();
+        rrdtool_update_speed();
 
         // collect defunct processes from rrdtool thread
         while(waitpid(-1, &status, WNOHANG|__WALL) > 0);

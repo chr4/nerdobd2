@@ -15,8 +15,8 @@ char *rrdstyle[256] =
 };
 
 
-void *
-rrdtool_update_consumption ()
+void
+rrdtool_update_consumption (void)
 {
     char    starttime[256];
     char    endtime[256];    
@@ -89,11 +89,11 @@ rrdtool_update_consumption ()
         exit(0);
     }
     
-    return (void *) NULL;
+    return;
 }
 
-void *
-rrdtool_update_speed ()
+void
+rrdtool_update_speed (void)
 {
     char    starttime[256];
     char    endtime[256];
@@ -159,7 +159,7 @@ rrdtool_update_speed ()
         exit(0);
     }
     
-    return (void *) NULL;
+    return;
 }
 
 void
