@@ -1,6 +1,6 @@
 #include "serial.h"
 
-char    rrdstyle[1024] = "--slope-mode --height=230 --width=490 --full-size-mode "
+char    rrdstyle[1024] = "--slope-mode --height=230 --width=490 --full-size-mode --rigid "
                          // 30sec grid line, major grid 1 min, lables 1 min, %M:%M
                          "--x-grid SECOND:30:MINUTE:1:MINUTE:1:0:%R "
                          "--color=SHADEB#222222 --color=SHADEA#222222 "
