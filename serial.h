@@ -20,7 +20,7 @@
 
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -32,8 +32,8 @@
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
-void   *rrdtool_update_speed ();
-void   *rrdtool_update_consumption ();
+void    rrdtool_update_speed (void);
+void    rrdtool_update_consumption (void);
 
 int     kw1281_open (char *device);
 int     kw1281_init (int);
