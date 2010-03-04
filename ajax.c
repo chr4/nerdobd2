@@ -1,12 +1,14 @@
 #include "serial.h"
 
-#define HEADER_PLAIN    "Connection: close\r\nContent-Type: text/plain\r\n\r\n"
-#define HEADER_HTML     "Connection: close\r\nContent-Type: text/html\r\n\r\n"
-#define HEADER_PNG      "Connection: close\r\nContent-Type: image/png\r\n\r\n"
-#define HEADER_CSS      "Connection: close\r\nContent-Type: text/css\r\n\r\n"
-#define HEADER_JS       "Connection: close\r\nContent-Type: application/x-javascript\r\n\r\n"
-#define HEADER_ICON     "Connection: close\r\nContent-Type: image/x-icon\r\n\r\n"
 #define SERVER_STRING   "Server: nerdobd ajax server |0.9.4\r\n"
+#define SERVER_CON      "Connection: close\r\n"
+
+#define HEADER_PLAIN    SERVER_STRING SERVER_CON "Content-Type: text/plain\r\n\r\n"
+#define HEADER_HTML     SERVER_STRING SERVER_CON "Content-Type: text/html\r\n\r\n"
+#define HEADER_PNG      SERVER_STRING SERVER_CON "Content-Type: image/png\r\n\r\n"
+#define HEADER_CSS      SERVER_STRING SERVER_CON "Content-Type: text/css\r\n\r\n"
+#define HEADER_JS       SERVER_STRING SERVER_CON "Content-Type: application/x-javascript\r\n\r\n"
+#define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 
 /*
  * implement keep-alive
@@ -27,8 +29,6 @@
  Connection: close
  Content-Type: text/html; charset=UTF-8
 
- 
- 
  */
 
 int     tcp_listen (int);
@@ -316,7 +316,7 @@ handle_client(int fd)
     
     // send content length
     snprintf(out, sizeof(out), "HTTP/1.0 200 OK\r\n"
-             "Content-Length: %9jd\r\n", (intmax_t) stats.st_size);
+             "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
     write(fd, out, strlen(out));
     
 #ifdef DEBUG
