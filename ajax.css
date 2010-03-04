@@ -1,0 +1,123 @@
+body, html
+{
+    background-color:#222222;
+    padding:0px;
+    margin:1px;
+}
+
+.left_box
+{
+    float:left;
+    width:490px;
+}
+
+.graphics
+{
+    padding-top:0px;
+    padding-left:5px;
+}
+
+.rrdimage
+{
+    margin-top:0px;
+    margin-bottom:5px;
+    margin-left:0px;
+    margin-right:10px;
+    height:230px;
+}
+
+
+.right_box
+{
+    float:right;
+    width:285px;
+}
+
+.plain_values
+{
+    text-align:right;
+    margin:10px;
+}
+
+#con_km
+{
+    font-family:helvetica;
+    font-size:76px;
+    line-height:82px;
+    color:#f00000;
+}
+
+#con_km_unit
+{
+    font-family:helvetica;
+    font-size:18px;
+    color:#aaaaaa;
+    padding-left:5px;    
+}
+
+#speed
+{
+    font-family:helvetica;
+    font-size:76px;
+    line-height:82px;
+    color:#f00000;
+}
+
+#speed_unit
+{
+    font-family:helvetica;
+    font-size:18px;
+    color:#aaaaaa;
+    padding-left:5px;
+}
+
+.other_values
+{
+    margin-top:20px;
+}
+
+#con_h, #rpm, #temp1, #temp2, #voltage
+{
+    font-family:helvetica;
+    font-size:32px;
+    line-height:38px;
+    color:#f00000;
+}
+
+.other_unit
+{
+    font-family:helvetica;
+    font-size:18px;
+    color:#aaaaaa;
+    padding-left:5px;    
+}
+
+
+.footer
+{
+    text-align:right;
+    position:absolute;
+    bottom:0px;
+    right:0px;
+    margin-right:15px;
+    margin-bottom:5px;
+}
+
+#debug
+{
+    font-family:courier;
+    font-size:14px;
+    margin-top:15px;
+    margin-right:00px;
+    padding:0px;
+    width:200px;
+    height:47px;
+    color:#888888;
+    background-color:#444444;
+}
+
+#version
+{
+    margin-top:5px;
+    color:#ffffff;
+}
