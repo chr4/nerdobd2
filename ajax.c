@@ -11,26 +11,6 @@
 #define HEADER_JS       SERVER_STRING SERVER_CON "Content-Type: application/x-javascript\r\n\r\n"
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 
-/*
- * implement keep-alive
- *
- * stat to get filesize
- * send length header
- 
- 
- Server Response:
- 
- HTTP/1.1 200 OK
- Date: Mon, 23 May 2005 22:38:34 GMT
- Server: Apache/1.3.3.7 (Unix)  (Red-Hat/Linux)
- Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
- Etag: "3f80f-1b6-3e1cb03b"
- Accept-Ranges: bytes
- Content-Length: 438
- Connection: close
- Content-Type: text/html; charset=UTF-8
-
- */
 
 int     tcp_listen (int);
 int     handle_client(int);
@@ -61,10 +41,6 @@ ajax_socket (void *pport)
         if ((pid = fork ()) == 0)
         {
             close (srv);
-            
-            // keep alive, thus not closing socket after request
-            //while (handle_client (cli) != -1);
-            //printf("keep-alive: closed connection.\n");
             
             handle_client (cli);
             
