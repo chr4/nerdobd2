@@ -240,7 +240,7 @@ handle_client(int fd)
         else if (!strcmp(p, "temp1") )
             obd_send(fd, temp1, "%.01f");
         else if (!strcmp(p, "temp2") )
-            obd_send(fd, temp2, "%.00f");
+            obd_send(fd, temp2, "%.01f");
         else if (!strcmp(p, "voltage") )
             obd_send(fd, voltage, "%.02f");
         else if (!strcmp(p, "debug") )

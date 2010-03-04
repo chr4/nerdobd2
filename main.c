@@ -48,6 +48,7 @@ main (int arc, char **argv)
     voltage = -2;
     con_h = -2;
     con_km = -2;
+    con_av = -2;
     
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
