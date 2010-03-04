@@ -21,7 +21,7 @@
 
 
 
-//#define SERIAL_ATTACHED
+#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -40,12 +40,14 @@ int     kw1281_open (char *device);
 int     kw1281_init (int);
 int     kw1281_mainloop (void);
 
+void    ajax_log(char *s);
 void   *ajax_socket (void *);
 int     ajax_shutdown(void);
 
 float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
 float   con_h;
 float   con_km;
+char    debug[1024];    // debuging messages go here
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;
