@@ -233,6 +233,8 @@ handle_client(int fd)
             obd_send(fd, con_h, "%.02f");
         else if (!strcmp(p, "con_km") )
             obd_send(fd, con_km, "%.02f");
+        else if (!strcmp(p, "con_av") )
+            obd_send(fd, con_av, "%.02f");
         else if (!strcmp(p, "load") )
             obd_send(fd, load, "%.00f");
         else if (!strcmp(p, "temp1") )

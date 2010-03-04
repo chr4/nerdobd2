@@ -86,6 +86,7 @@ function update_all()
 {
     update_variable("con_h");
     update_variable("con_km");
+    update_variable("con_av");    
     update_variable("rpm");
     update_variable("speed");
     update_variable("temp1");

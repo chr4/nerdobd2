@@ -21,13 +21,37 @@ rrdtool_update_consumption (void)
     char    starttime[256];
     char    endtime[256];    
     time_t  t;
+    int     i;
+    float   tmp = 0;
+    
     
     if (con_km < 0)
+    {
         snprintf (starttime, sizeof (starttime), "%d::%.2f", 
                   (int) time (&t), con_h);
+    }
     else
+    {
+        // safe value for calulating average consumption
+        if (con_av_counter < 300)
+            con_av_array[con_av_counter++] = con_km;
+        else
+        {
+            con_av_counter = 0;
+            con_av_array[con_av_counter++] = con_km;
+        }
+
+        // calulate average consumption
+        for (i = 0; i < con_av_counter; i++)
+            tmp += con_av_array[i];
+        
+        con_av = tmp / i;
+        
+        
         snprintf (starttime, sizeof (starttime), "%d:%.2f:%.2f", 
                   (int) time (&t), con_km, con_h);
+    }
+    
     
     if (fork() == 0)
     {
