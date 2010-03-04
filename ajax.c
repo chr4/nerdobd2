@@ -2,6 +2,7 @@
 
 #define SERVER_STRING   "Server: nerdobd ajax server |0.9.4\r\n"
 #define SERVER_CON      "Connection: close\r\n"
+#define HTTP_OK         "HTTP/1.0 200 OK\r\n"
 
 #define HEADER_PLAIN    SERVER_STRING SERVER_CON "Content-Type: text/plain\r\n\r\n"
 #define HEADER_HTML     SERVER_STRING SERVER_CON "Content-Type: text/html\r\n\r\n"
@@ -62,8 +63,8 @@ ajax_socket (void *pport)
             close (srv);
             
             // keep alive, thus not closing socket after request
-            // while (handle_client (cli) != -1);
-            // printf("keep-alive: closed connection.\n");
+            //while (handle_client (cli) != -1);
+            //printf("keep-alive: closed connection.\n");
             
             handle_client (cli);
             
@@ -141,11 +142,13 @@ int
 obd_send_debug(int fd, char *val, char *format)
 {
     char buf[256];
-
-    // check if value was set
+    char buf2[256];
 
     snprintf (buf, sizeof (buf), format, val);
-    send (fd, "HTTP/1.0 200 OK\r\n" HEADER_PLAIN, strlen ("HTTP/1.0 200 OK\r\n" HEADER_PLAIN), 0);
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(buf));
+    send (fd, HTTP_OK, strlen(HTTP_OK), 0);
+    send (fd, buf2, strlen(buf2), 0);
+    send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
     send (fd, buf, strlen (buf), 0);
 
     return 0;
@@ -155,14 +158,18 @@ int
 obd_send(int fd, float val, char *format)
 {
     char buf[256];
+    char buf2[256];
     
     // check if value was set
     if (val == -2)
         return -1;
     
     snprintf (buf, sizeof (buf), format, val);
-    send (fd, "HTTP/1.0 200 OK\r\n" HEADER_PLAIN, strlen ("HTTP/1.0 200 OK\r\n" HEADER_PLAIN), 0);
-    send (fd, buf, strlen (buf), 0);
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(buf));
+    send (fd, HTTP_OK, strlen(HTTP_OK), 0);
+    send (fd, buf2, strlen(buf2), 0);
+    send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
+    send (fd, buf, strlen (buf), 0);    
     
     return 0;
 }
@@ -203,29 +210,6 @@ handle_client(int fd)
     if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
     {
         printf("we only support POST and GET but got: %s\n", buffer);
-        
-        
-        /*** DEBUG ***/
-        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
-        {
-            printf("read() failed\n");
-            return -1;
-        }
-        printf("we only support POST and GET but got: %s\n", buffer);
-        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
-        {
-            printf("read() failed\n");
-            return -1;
-        }
-        printf("we only support POST and GET but got: %s\n", buffer);
-        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
-        {
-            printf("read() failed\n");
-            return -1;
-        }
-        printf("we only support POST and GET but got: %s\n", buffer);
-        /*** END ***/
-        
         return -1;
     }
     
@@ -330,7 +314,7 @@ handle_client(int fd)
     
     
     // send content length
-    snprintf(out, sizeof(out), "HTTP/1.0 200 OK\r\n"
+    snprintf(out, sizeof(out), HTTP_OK
              "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
     write(fd, out, strlen(out));
     
