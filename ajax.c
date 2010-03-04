@@ -1,55 +1,35 @@
 #include "serial.h"
 
-#define HEADER_PLAIN    "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
-#define HEADER_HTML     "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
-#define HEADER_PNG      "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"
-#define HEADER_CSS      "HTTP/1.0 200 OK\r\nContent-Type: text/css\r\n\r\n"
-#define HEADER_JS       "HTTP/1.0 200 OK\r\nContent-Type: application/x-javascript\r\n\r\n"
-#define HEADER_ICON     "HTTP/1.0 200 OK\r\nContent-Type: image/x-icon\r\n\r\n"
+#define HEADER_PLAIN    "Connection: close\r\nContent-Type: text/plain\r\n\r\n"
+#define HEADER_HTML     "Connection: close\r\nContent-Type: text/html\r\n\r\n"
+#define HEADER_PNG      "Connection: close\r\nContent-Type: image/png\r\n\r\n"
+#define HEADER_CSS      "Connection: close\r\nContent-Type: text/css\r\n\r\n"
+#define HEADER_JS       "Connection: close\r\nContent-Type: application/x-javascript\r\n\r\n"
+#define HEADER_ICON     "Connection: close\r\nContent-Type: image/x-icon\r\n\r\n"
+#define SERVER_STRING   "Server: nerdobd ajax server |0.9.4\r\n"
 
 /*
- extensions [] = {
+ * implement keep-alive
+ *
+ * stat to get filesize
+ * send length header
  
- {"gif", "image/gif" },  
  
- {"jpg", "image/jpeg"}, 
+ Server Response:
  
- {"jpeg","image/jpeg"},
- 
- {"png", "image/png" },  
- 
- {"zip", "image/zip" },  
- 
- {"gz",  "image/gz"  },  
- 
- {"tar", "image/tar" },  
- 
- {"htm", "text/html" },  
- 
- {"html","text/html" },  
- 
- {0,0} };
+ HTTP/1.1 200 OK
+ Date: Mon, 23 May 2005 22:38:34 GMT
+ Server: Apache/1.3.3.7 (Unix)  (Red-Hat/Linux)
+ Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
+ Etag: "3f80f-1b6-3e1cb03b"
+ Accept-Ranges: bytes
+ Content-Length: 438
+ Connection: close
+ Content-Type: text/html; charset=UTF-8
 
  
- buflen=strlen(buffer);
  
- fstr = (char *)0;
- 
- for(i=0;extensions[i].ext != 0;i++) {
- 
- len = strlen(extensions[i].ext);
- 
- if( !strncmp(&buffer[buflen-len], extensions[i].ext, len)) {
- 
- fstr =extensions[i].filetype;
- 
- break;
- 
- }
- 
- }
  */
-
 
 int     tcp_listen (int);
 int     handle_client(int);
@@ -80,7 +60,13 @@ ajax_socket (void *pport)
         if ((pid = fork ()) == 0)
         {
             close (srv);
+            
+            // keep alive, thus not closing socket after request
+            // while (handle_client (cli) != -1);
+            // printf("keep-alive: closed connection.\n");
+            
             handle_client (cli);
+            
             close (cli);
             exit (0);
         }
@@ -91,6 +77,7 @@ ajax_socket (void *pport)
         close (cli);
     }
 }
+
 
 int
 ajax_shutdown(void)
@@ -131,6 +118,7 @@ tcp_listen (int port)
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons (port);
 
+    // retry if bind failed
     while (bind (srv, (struct sockaddr *) &servaddr, sizeof (servaddr)) == -1)
     {
         perror ("bind() failed");
@@ -160,7 +148,7 @@ obd_send(int fd, float val, char *format)
         return -1;
     
     snprintf (buf, sizeof (buf), format, val);
-    send (fd, HEADER_PLAIN, strlen (HEADER_PLAIN), 0);
+    send (fd, "HTTP/1.0 200 OK\r\n" HEADER_PLAIN, strlen ("HTTP/1.0 200 OK\r\n" HEADER_PLAIN), 0);
     send (fd, buf, strlen (buf), 0);
     
     return 0;
@@ -174,6 +162,8 @@ handle_client(int fd)
     int file_fd;
     int r, i, j;
     static char buffer[1024];
+    char out[1024];
+    struct stat stats;
     char *p;
     
     // read socket
@@ -194,12 +184,35 @@ handle_client(int fd)
         if(buffer[i] == '\r' || buffer[i] == '\n')
             buffer[i]='#';
 
-    // printf("request: %s\n", buffer);
+    //printf("request: %s\n", buffer);
     
     
     if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
     {
-        printf("something else than GET and POST received\n");
+        printf("we only support POST and GET but got: %s\n", buffer);
+        
+        
+        /*** DEBUG ***/
+        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
+        {
+            printf("read() failed\n");
+            return -1;
+        }
+        printf("we only support POST and GET but got: %s\n", buffer);
+        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
+        {
+            printf("read() failed\n");
+            return -1;
+        }
+        printf("we only support POST and GET but got: %s\n", buffer);
+        if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
+        {
+            printf("read() failed\n");
+            return -1;
+        }
+        printf("we only support POST and GET but got: %s\n", buffer);
+        /*** END ***/
+        
         return -1;
     }
     
@@ -212,7 +225,7 @@ handle_client(int fd)
     // check for illegal parent directory requests
     for (j = 0; j < i - 1; j++)
     {
-        if(buffer[j] == '.' && buffer[j+1] == '.')
+        if(buffer[j] == '.' && buffer[j + 1] == '.')
         {
             printf(".. detected\n");
             return -1;
@@ -278,12 +291,43 @@ handle_client(int fd)
         printf("no . found in filename!\n");
         return -1;
     }
+
+
+    i = 0;
+    // if filesize == 0, wait and try again, max 5 times
+    do {
+        if (stat(&buffer[5], &stats) == -1)
+        {
+            perror("stat()");
+            return -1;
+        }
         
+        usleep(50000);
+        i++;
+        
+        if ( i > 30)
+        {
+            printf("file with 0bytes: %s\n", &buffer[0]);
+            return -1;
+        }
+        
+    } while (stats.st_size == 0);
+    
+    
+    // send content length
+    snprintf(out, sizeof(out), "HTTP/1.0 200 OK\r\n"
+             "Content-Length: %9jd\r\n", (intmax_t) stats.st_size);
+    write(fd, out, strlen(out));
+    
+#ifdef DEBUG
+    printf("sending file: %s with %9jd length\n", &buffer[5], (intmax_t) stats.st_size);
+#endif
+    
     // is file type known?
     if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
         write(fd, HEADER_HTML, strlen(HEADER_HTML));
     
-    else if (!strcmp(p, ".png") )
+    else if (!strcmp(p, ".png") ) 
         write(fd, HEADER_PNG, strlen(HEADER_PNG));
     
     else if (!strcmp(p, ".txt") )
@@ -304,9 +348,11 @@ handle_client(int fd)
         return -1;
     }
     
+    
+    // open and send file
     if(( file_fd = open(&buffer[5],O_RDONLY)) == -1)
     {
-        printf("open() failed: %s\n", &buffer[5]);
+        perror("open()");
         return -1;
     }
     
