@@ -21,7 +21,7 @@
 
 
 
-//#define SERIAL_ATTACHED
+#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -47,6 +47,12 @@ int     ajax_shutdown(void);
 float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
 float   con_h;
 float   con_km;
+
+// average consumption for the last 300sec (5min)
+float   con_av_array[300];        
+int     con_av_counter;
+float   con_av;
+
 char    debug[1024];    // debuging messages go here
 
 // make server socket global so we can close/shutdown it on exit

@@ -768,6 +768,9 @@ kw1281_mainloop (void)
 {
     int status;
     
+    // init average consumption counter
+    con_av_counter = 0;
+    
 #ifndef SERIAL_ATTACHED
     /* 
      * this block is for testing purposes
@@ -789,8 +792,9 @@ kw1281_mainloop (void)
     for (;;)
     {
         speed++;
-        con_km = con_km * (-1) ;
+        con_km += 0.75;
         con_h += 1.03;
+        
         temp1++;
         temp2++;
         voltage += 0.15;
@@ -801,6 +805,8 @@ kw1281_mainloop (void)
         
         rrdtool_update_consumption();
         rrdtool_update_speed();
+        
+        printf("average consumption: %.02f\n", con_av);
         
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
