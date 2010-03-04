@@ -3,6 +3,53 @@
 #define HEADER_PLAIN    "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\n\r\n"
 #define HEADER_HTML     "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
 #define HEADER_PNG      "HTTP/1.0 200 OK\r\nContent-Type: image/png\r\n\r\n"
+#define HEADER_CSS      "HTTP/1.0 200 OK\r\nContent-Type: text/css\r\n\r\n"
+#define HEADER_JS       "HTTP/1.0 200 OK\r\nContent-Type: application/x-javascript\r\n\r\n"
+#define HEADER_ICON     "HTTP/1.0 200 OK\r\nContent-Type: image/x-icon\r\n\r\n"
+
+/*
+ extensions [] = {
+ 
+ {"gif", "image/gif" },  
+ 
+ {"jpg", "image/jpeg"}, 
+ 
+ {"jpeg","image/jpeg"},
+ 
+ {"png", "image/png" },  
+ 
+ {"zip", "image/zip" },  
+ 
+ {"gz",  "image/gz"  },  
+ 
+ {"tar", "image/tar" },  
+ 
+ {"htm", "text/html" },  
+ 
+ {"html","text/html" },  
+ 
+ {0,0} };
+
+ 
+ buflen=strlen(buffer);
+ 
+ fstr = (char *)0;
+ 
+ for(i=0;extensions[i].ext != 0;i++) {
+ 
+ len = strlen(extensions[i].ext);
+ 
+ if( !strncmp(&buffer[buflen-len], extensions[i].ext, len)) {
+ 
+ fstr =extensions[i].filetype;
+ 
+ break;
+ 
+ }
+ 
+ }
+ */
+
 
 int     tcp_listen (int);
 int     handle_client(int);
@@ -240,7 +287,16 @@ handle_client(int fd)
         write(fd, HEADER_PNG, strlen(HEADER_PNG));
     
     else if (!strcmp(p, ".txt") )
-        write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN));    
+        write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN));   
+    
+    else if (!strcmp(p, ".js") )
+        write(fd, HEADER_JS, strlen(HEADER_JS));
+    
+    else if (!strcmp(p, ".css") )
+        write(fd, HEADER_CSS, strlen(HEADER_CSS));
+    
+    else if (!strcmp(p, ".ico") )
+        write(fd, HEADER_ICON, strlen(HEADER_ICON));    
     
     else
     {
