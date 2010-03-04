@@ -3,7 +3,7 @@
 static void _set_bit (int);
 
 int     kw1281_send_byte_ack (unsigned char);
-int     kw1281_send_ack (void);
+int     kw1281_sendajax_log_ack (void);
 int     kw1281_send_block (unsigned char);
 int     kw1281_recv_block (unsigned char);
 int     kw1281_recv_byte_ack (void);
@@ -14,7 +14,6 @@ int     kw1281_get_block (unsigned char);
 int     kw1281_read_timeout(void);
 int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
-
 
 float   const_multiplier = 0.00000089;
 float   const_inj_subtract = 0.1;
@@ -55,13 +54,13 @@ kw1281_read_timeout(void)
     {
         if (read (fd, &c, 1) == -1)
         {
-            printf("kw1281_read_timeout: read() error\n");
+            ajax_log("kw1281_read_timeout: read() error\n");
             return -1;
         }
     }
     else
     {
-        printf("kw1281_read_timeout: timeout occured\n");
+        ajax_log("kw1281_read_timeout: timeout occured\n");
         return -1;
     }
 
@@ -94,13 +93,13 @@ kw1281_write_timeout(unsigned char c)
     {
         if (write (fd, &c, 1) <= 0)
         {
-            printf("kw1281_write_timeout: write() error\n");
+            ajax_log("kw1281_write_timeout: write() error\n");
             return -1;
         }
     }
     else
     {
-        printf("kw1281_write_timeout: timeout occured\n");
+        ajax_log("kw1281_write_timeout: timeout occured\n");
         return -1;
     }
     
@@ -153,7 +152,7 @@ kw1281_recv_byte_ack (void)
 
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_recv_byte_ack: read() error\n");
+        ajax_log("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
     
@@ -162,13 +161,13 @@ kw1281_recv_byte_ack (void)
     
     if (kw1281_write_timeout(d) == -1)
     {
-        printf("kw1281_recv_byte_ack: write() error\n");
+        ajax_log("kw1281_recv_byte_ack: write() error\n");
         return -1;
     }
     
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_recv_byte_ack: read() error\n");
+        ajax_log("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
     
@@ -176,7 +175,7 @@ kw1281_recv_byte_ack (void)
     {
         printf ("kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n",
                 d, 0xff - c);
-
+        ajax_log("kw1281_recv_byte_ack: echo error\n");
         return -1;
     }
     return c;
@@ -192,13 +191,13 @@ kw1281_send_byte_ack (unsigned char c)
     
     if (kw1281_write_timeout(c) == -1)
     {
-        printf("kw1281_send_byte_ack: write() error\n");
+        ajax_log("kw1281_send_byte_ack: write() error\n");
         return -1;
     }
     
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_send_byte_ack: read() error\n");
+        ajax_log("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
     
@@ -206,12 +205,13 @@ kw1281_send_byte_ack (unsigned char c)
     {
         printf ("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c,
                 d);
+        ajax_log("kw1281_send_byte_ack: echo error\n");
         return -1;
     }
 
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_send_byte_ack: read() error\n");
+        ajax_log("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
     
@@ -219,6 +219,7 @@ kw1281_send_byte_ack (unsigned char c)
     {
         printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n",
                 0xff - c, d);
+        ajax_log("kw1281_send_byte_ack: ack error\n");
         return -1;
     }
     
@@ -252,19 +253,20 @@ kw1281_send_ack ()
     
     if (kw1281_write_timeout(c) == -1)
     {
-        printf("kw1281_send_ack: write() error\n");
+        ajax_log("kw1281_send_ack: write() error\n");
         return -1;
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_send_ack: read() error\n");
+        ajax_log("kw1281_send_ack: read() error\n");
         return -1;
     }
     
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
+        ajax_log("echo error\n");
         return -1;
     }
 
@@ -284,28 +286,28 @@ kw1281_send_block (unsigned char n)
     /* block length */
     if (kw1281_send_byte_ack (0x04) == -1)
     {
-        printf("kw1281_send_block() error\n");
+        ajax_log("kw1281_send_block() error\n");
         return -1;
     }
 
     // counter
     if (kw1281_send_byte_ack (kw1281_inc_counter ()) == -1)
     {
-        printf("kw1281_send_block() error\n");
+        ajax_log("kw1281_send_block() error\n");
         return -1;
     }
 
     /*  type group reading */
     if (kw1281_send_byte_ack (0x29) == -1)
     {
-        printf("kw1281_send_block() error\n");
+        ajax_log("kw1281_send_block() error\n");
         return -1;
     }
 
     /* which group block */
     if (kw1281_send_byte_ack (n) == -1)
     {
-        printf("kw1281_send_block() error\n");
+        ajax_log("kw1281_send_block() error\n");
         return -1;
     }
 
@@ -316,19 +318,20 @@ kw1281_send_block (unsigned char n)
     
     if (kw1281_write_timeout(c) == -1)
     {
-        printf("kw1281_send_block: write() error\n");
+        ajax_log("kw1281_send_block: write() error\n");
         return -1;
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_send_block: read() error\n");
+        ajax_log("kw1281_send_block: read() error\n");
         return -1;
     }
     
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
+        ajax_log("echo error\n");
         return -1;
     }
     
@@ -346,19 +349,20 @@ kw1281_recv_block (unsigned char n)
     /* block length */
     if ( (l = kw1281_recv_byte_ack ()) == -1)
     {
-        printf("kw1281_recv_block() error\n");
+        ajax_log("kw1281_recv_block() error\n");
         return -1;
     }
 
     if ( (c = kw1281_recv_byte_ack ()) == -1)
     {
-        printf("kw1281_recv_block() error\n");
+        ajax_log("kw1281_recv_block() error\n");
         return -1;
     }
 
     if (c != counter)
     {
         printf ("counter error (%d != %d)\n", counter, c);
+        ajax_log("counter error\n");
 
 #ifdef DEBUG
         printf ("IN   OUT\t(block dump)\n");
@@ -380,7 +384,7 @@ kw1281_recv_block (unsigned char n)
 
     if ( (t = kw1281_recv_byte_ack ()) == -1)
     {
-        printf("kw1281_recv_block() error\n");
+        ajax_log("kw1281_recv_block() error\n");
         return -1;
     }
 
@@ -411,7 +415,7 @@ kw1281_recv_block (unsigned char n)
     {
         if ( (c = kw1281_recv_byte_ack ()) == -1)
     {
-        printf("kw1281_recv_block() error\n");
+        ajax_log("kw1281_recv_block() error\n");
         return -1;
     }
 
@@ -494,12 +498,13 @@ kw1281_recv_block (unsigned char n)
     /* read block end */
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_recv_block: read() error\n");
+        ajax_log("kw1281_recv_block: read() error\n");
         return -1;
     }
     if (c != 0x03)
     {
         printf ("block end error (0x03 != 0x%02x)\n", c);
+        ajax_log("block end error\n");
         return -1;
     }
 
@@ -524,13 +529,13 @@ kw1281_get_block (unsigned char n)
 {
     if (kw1281_send_block(n) == -1)
     {
-        printf("kw1281_get_block() error\n");
+        ajax_log("kw1281_get_block() error\n");
         return -1;
     }
     
     if (kw1281_recv_block(n) == -1)
     {
-        printf("kw1281_get_block() error\n");
+        ajax_log("kw1281_get_block() error\n");
         return -1;
     }
     
@@ -572,7 +577,7 @@ kw1281_recover(void)
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_init: read() error\n");
+        ajax_log("kw1281_init: read() error\n");
         return -1;
     }
 #ifdef DEBUG
@@ -609,7 +614,7 @@ kw1281_open (char *device)
 
     if (ioctl (fd, TIOCGSERIAL, &ot) < 0)
     {
-        printf ("getting tio failed\n");
+        ajax_log ("getting tio failed\n");
         return -1;
     }
     memcpy (&st, &ot, sizeof (ot));
@@ -620,7 +625,7 @@ kw1281_open (char *device)
     st.flags |= ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
     if (ioctl (fd, TIOCSSERIAL, &st) < 0)
     {
-        printf ("TIOCSSERIAL failed\n");
+        ajax_log ("TIOCSSERIAL failed\n");
         return -1;
     }
     
@@ -634,7 +639,7 @@ kw1281_open (char *device)
     tcflush (fd, TCIFLUSH);
     if (tcsetattr (fd, TCSANOW, &newtio) == -1)
     {
-        printf("tcsetattr() failed.\n");
+        ajax_log("tcsetattr() failed.\n");
         return -1;
     }
 
@@ -665,14 +670,14 @@ kw1281_init (int address)
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
-        printf("TIOCMGET failed.\n");
+        ajax_log("TIOCMGET failed.\n");
         return -1;
     }
     flags &= ~(TIOCM_DTR | TIOCM_RTS);
 
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
-        printf("TIOCMSET failed.\n");
+        ajax_log("TIOCMSET failed.\n");
         return -1;
     }
 
@@ -697,21 +702,21 @@ kw1281_init (int address)
     // set dtr
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
-        printf("TIOCMGET failed.\n");
+        ajax_log("TIOCMGET failed.\n");
         return -1;
     }
 
      flags |= TIOCM_DTR;
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
-        printf("TIOCMSET failed.\n");
+        ajax_log("TIOCMSET failed.\n");
         return -1;
     }
  
     // read bogus values, if any
     if (ioctl (fd, FIONREAD, &in) < 0)
     {
-        printf("FIONREAD failed.\n");
+        ajax_log("FIONREAD failed.\n");
         return -1;
     }
 
@@ -719,7 +724,7 @@ kw1281_init (int address)
     {
         if ( (c = kw1281_read_timeout()) == -1)
         {
-            printf("kw1281_init: read() error\n");
+            ajax_log("kw1281_init: read() error\n");
             return -1;
         }
 #ifdef DEBUG
@@ -729,7 +734,7 @@ kw1281_init (int address)
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_init: read() error\n");
+        ajax_log("kw1281_init: read() error\n");
         return -1;
     }
 #ifdef DEBUG
@@ -738,7 +743,7 @@ kw1281_init (int address)
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        printf("kw1281_init: read() error\n");
+        ajax_log("kw1281_init: read() error\n");
         return -1;
     }
 #ifdef DEBUG
@@ -792,6 +797,8 @@ kw1281_mainloop (void)
         load += 3;
         rpm += 100;
         
+        snprintf(debug, sizeof(debug), "test: %f", voltage);
+        
         rrdtool_update_consumption();
         rrdtool_update_speed();
         
@@ -811,7 +818,7 @@ kw1281_mainloop (void)
     if (kw1281_get_ascii_blocks() == -1)
         return -1;
     
-    printf ("init done.\n");
+    ajax_log ("init done.\n");
     for ( ; ; )
     {
         // request block 0x02

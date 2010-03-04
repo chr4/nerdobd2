@@ -34,7 +34,7 @@
 int     tcp_listen (int);
 int     handle_client(int);
 int     obd_send(int, float, char *);
-
+int     obd_send_debug(int, char *, char *);
 
 void   *
 ajax_socket (void *pport)
@@ -137,6 +137,19 @@ tcp_listen (int port)
 
 
 
+int
+obd_send_debug(int fd, char *val, char *format)
+{
+    char buf[256];
+
+    // check if value was set
+
+    snprintf (buf, sizeof (buf), format, val);
+    send (fd, "HTTP/1.0 200 OK\r\n" HEADER_PLAIN, strlen ("HTTP/1.0 200 OK\r\n" HEADER_PLAIN), 0);
+    send (fd, buf, strlen (buf), 0);
+
+    return 0;
+}
 
 int
 obd_send(int fd, float val, char *format)
@@ -268,6 +281,8 @@ handle_client(int fd)
             obd_send(fd, temp2, "%.00f");
         else if (!strcmp(p, "voltage") )
             obd_send(fd, voltage, "%.02f");
+        else if (!strcmp(p, "debug") )
+            obd_send_debug(fd, debug, "%s");        
         else
         {
             printf("unkown obd varname: %s\n", p);
@@ -362,4 +377,13 @@ handle_client(int fd)
     close(file_fd);
     
     return 0;
+}
+
+void
+ajax_log(char *s)
+{
+    printf("%s", s);
+    snprintf(debug, sizeof(debug), "%s", s);
+    
+    return;   
 }

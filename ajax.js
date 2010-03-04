@@ -14,8 +14,8 @@ function update_variable(varname)
             if (req.responseText)
             {
                 // set color back to normal
-                document.getElementById(varname).style.color = "#f00000";
-                document.getElementById("debug").innerHTML = "";
+                if (varname != "debug")
+                    document.getElementById(varname).style.color = "#f00000";
                 
                 if (varname == "con_km")
                 {
@@ -39,8 +39,10 @@ function update_variable(varname)
             }
             else
             {
-                document.getElementById(varname).style.color = "#888888";
-                document.getElementById("debug").innerHTML = "Waiting for new values...";
+                document.getElementById("debug").innerHTML ="Waiting for values...";
+    
+                if (varname != "debug")
+                    document.getElementById(varname).style.color = "#888888";
             }
         }
     }
@@ -91,6 +93,7 @@ function update_all()
     update_variable("temp1");
     update_variable("temp2");
     update_variable("voltage");
+    update_variable("debug");    
     
     update_image("speed");
     update_image("consumption");
