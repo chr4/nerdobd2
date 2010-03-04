@@ -268,7 +268,17 @@ handle_client(int fd)
     }
 
 
+    if (stat(&buffer[5], &stats) == -1)
+    {
+#ifdef DEBUG        
+        printf("file with 0bytes: %s\n", &buffer[0]);
+#endif        
+        return -1;
+    }
+    
+    /*
     i = 0;
+    
     // if filesize == 0, wait and try again, max 5 times
     do {
         if (stat(&buffer[5], &stats) == -1)
@@ -287,6 +297,7 @@ handle_client(int fd)
         }
         
     } while (stats.st_size == 0);
+    */
     
     
     // send content length

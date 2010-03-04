@@ -106,13 +106,14 @@ body, html
 #debug
 {
     font-family:courier;
-    font-size:14px;
+    font-size:18px;
     margin-top:15px;
-    margin-right:00px;
+    margin-right:0px;
+    padding-right:10px;
     padding:0px;
-    width:200px;
-    height:47px;
-    color:#888888;
+    width:270px;
+    height:22px;
+    color:#ffffff;
     background-color:#444444;
 }
 

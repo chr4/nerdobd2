@@ -38,9 +38,7 @@ function update_variable(varname)
                 }
             }
             else
-            {
-                document.getElementById("debug").innerHTML ="Waiting for values...";
-    
+            {    
                 if (varname != "debug")
                     document.getElementById(varname).style.color = "#888888";
             }
