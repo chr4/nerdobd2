@@ -8,22 +8,89 @@
  * 
  * create nice looking interface
  *
- * apply .js colors, etc through .css file
- * so we can have multiple styles with only changing the css
- * (prolly not possible, because colors have to be changed in C files)
- *
  * create graphical overlay for masking rrdtool watermarks
- * 
  * create fixed line at 6.55 liters (rrdtool, consumtion)
+ * -> using <div> tags?
+ *
+ * add button to interface to reset averages (graphs? restart programm?)
  *
  * fix communication errors with ECU
  */
+
+void    init_values(void);
+
+
+void
+init_values(void)
+{
+    int fd;
+    
+    /* init values with -2, so ajax socket can control if data is availiable */
+    speed = -2;
+    rpm = -2;
+    temp1 = -2;
+    temp2 = -2;
+    oil_press = -2;
+    inj_time = -2;
+    load = -2;
+    voltage = -2;
+    con_h = -2;
+    con_km = -2;
+    
+    
+    // init average consumption struct
+    memset(&consumption.array, '0', sizeof(consumption.array));
+    consumption.counter = 0;
+    consumption.array_full = 0;
+    consumption.average_short = -2;
+    consumption.average_medium = -2;
+    consumption.average_long = -2;
+    
+    // init average speed struct
+    memset(&av_speed.array, '0', sizeof(av_speed.array));
+    av_speed.counter = 0;
+    av_speed.array_full = 0;
+    av_speed.average_short = -2;
+    av_speed.average_medium = -2;
+    av_speed.average_long = -2;
+    
+    
+    // overwrite consumption inits from file, if present
+    if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
+    {
+        read(fd, &consumption, sizeof(consumption));
+        close( fd );
+    }
+    
+    // overwrite speed inits from file, if present
+    if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
+    {
+        read(fd, &av_speed, sizeof(av_speed));
+        close( fd );
+    }
+    
+#ifdef DEBUG  
+    int i;
+    printf("consumption.counter: %d\n", consumption.counter);
+    for (i = 0; i < consumption.counter; i++)
+        printf("%.02f ", consumption.array[i]);
+    printf("array full? (%d)\n", consumption.array_full);
+    printf("consumption averages: %.02f, %.02f, %.02f\n",
+           consumption.average_short, consumption.average_medium, consumption.average_long);
+    
+    printf("av_speed.counter: %d\n", consumption.counter);
+    for (i = 0; i < av_speed.counter; i++)
+        printf("%.02f ", av_speed.array[i]);
+    printf("array full? (%d)\n", av_speed.array_full);
+    printf("speed averages: %.02f, %.02f, %.02f\n",
+           av_speed.average_short, av_speed.average_medium, av_speed.average_long);    
+#endif  
+}
 
 int
 main (int arc, char **argv)
 {
     pthread_t thread1;
-    int fd;
 
 #ifdef SERIAL_ATTACHED
     // kw1281_open() somehow has to be started
@@ -36,44 +103,8 @@ main (int arc, char **argv)
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
 
-    /* init values with -2, so ajax socket can control if data is availiable */
-    speed = -2;
-    rpm = -2;
-    temp1 = -2;
-    temp2 = -2;
-    oil_press = -2;
-    inj_time = -2;
-    load = -2;
-    voltage = -2;
-    con_h = -2;
-    con_km = -2;
-
-    
-    // init average consumption struct
-    memset(&consumption.array, '0', sizeof(consumption.array));
-    consumption.counter = 0;
-    consumption.array_full = 0;
-    consumption.average_short = -2;
-    consumption.average_medium = -2;
-    consumption.average_long = -2;
-    
-    
-    // overwrite consumption inits from file, if present
-    if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
-    {
-        read(fd, &consumption, sizeof(struct con_av));
-        close( fd );
-    }
-    
-#ifdef DEBUG  
-    int i;
-    printf("consumption.counter: %d\n", consumption.counter);
-    for (i = 0; i < consumption.counter; i++)
-       printf("%.02f ", consumption.array[i]);
-    printf("array full? (%d)\n", consumption.array_full);
-    printf("consumption averages: %.02f, %.02f, %.02f\n",
-           consumption.average_short, consumption.average_medium, consumption.average_long);
-#endif    
+    // initialize values (if possible, load from file)
+    init_values();
 
     
     // create ajax socket in new thread for handling http connections

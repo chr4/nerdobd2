@@ -21,7 +21,7 @@
 
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -31,12 +31,13 @@
 
 #define PORT            8080
 
-// consumption measure length in seconds
-#define CON_SHORT       300     // last 5 minutes
-#define CON_MEDIUM      1800    // last 30 minutes
-#define CON_LONG        14400   // last 4 hours
+// measure length in seconds
+#define SHORT       300     // last 5 minutes
+#define MEDIUM      1800    // last 30 minutes
+#define LONG        14400   // last 4 hours
 
 #define CON_AV_FILE     "consumption.data"
+#define SPEED_AV_FILE   "speed.data"
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
@@ -58,13 +59,24 @@ float   con_km;
 // average consumption
 struct con_av
 {
-    float   array[CON_LONG];
+    float   array[LONG];
     char    array_full;
     int     counter;
     float   average_short;
     float   average_medium;
     float   average_long;    
 } consumption;
+
+// average speed
+struct speed_av
+{
+    float   array[LONG];
+    char    array_full;
+    int     counter;
+    float   average_short;
+    float   average_medium;
+    float   average_long;    
+} av_speed;
 
 
 char    debug[1024];    // debuging messages go here
