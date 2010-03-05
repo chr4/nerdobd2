@@ -609,6 +609,7 @@ kw1281_open (char *device)
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
         ajax_log ("couldn't open serial device\n");
+	sleep(1);
         return -1;
     }
 

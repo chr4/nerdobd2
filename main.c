@@ -7,8 +7,16 @@
  * TODO:
  * 
  * create nice looking interface
- * 
  *
+ * apply .js colors, etc through .css file
+ * so we can have multiple styles with only changing the css
+ * (prolly not possible, because colors have to be changed in C files)
+ *
+ * create graphical overlay for masking rrdtool watermarks
+ * 
+ * create fixed line at 6.55 liters (rrdtool, consumtion)
+ *
+ * fix communication errors with ECU
  */
 
 int
