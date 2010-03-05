@@ -803,7 +803,7 @@ kw1281_mainloop (void)
         
         rrdtool_update_consumption();
         rrdtool_update_speed();
-            
+        
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
         

@@ -22,8 +22,9 @@ rrdtool_update_consumption (void)
     char    endtime[256];    
     time_t  t;
     int     i;
-    float   tmp = 0;
-    
+    float   tmp_short = 0;
+    float   tmp_medium = 0;    
+    float   tmp_long = 0;
     
     if (con_km < 0)
     {
@@ -32,36 +33,58 @@ rrdtool_update_consumption (void)
     }
     else
     {
-        // safe value for calulating average consumption
-        if (con_av_counter < 300)
-            con_av_array[con_av_counter++] = con_km;
-        else
-        {
-            con_av_array_full = 1;
-            con_av_counter = 0;
-            con_av_array[con_av_counter++] = con_km;
-        }
 
-        // calulate average consumption
-        if (con_av_array_full)
-            for (i = 0; i < 300; i++)
-                tmp += con_av_array[i];
+        // save consumption to average consumption array
+        if (consumption.counter == CON_LONG)
+        {
+            consumption.array_full = 1;
+            consumption.counter = 0;
+        }
+        
+        consumption.array[consumption.counter++] = con_km;
+        
+
+        // calculate average for CON_SHORT seconds
+        if (consumption.counter > CON_SHORT)
+            for (i = consumption.counter - CON_SHORT; i < consumption.counter; i++)
+                tmp_short += consumption.array[i];
         else
-            for (i = 0; i < con_av_counter; i++)
-                tmp += con_av_array[i];
+            for (i = 0; i < consumption.counter; i++)
+                tmp_short += consumption.array[i];
         
-        con_av = tmp / i;
+        consumption.average_short = tmp_short / i;
         
+        
+        // calculate average for CON_MEDIUM seconds
+        if (consumption.counter > CON_MEDIUM)
+            for (i = consumption.counter - CON_MEDIUM; i < consumption.counter; i++)
+                tmp_medium += consumption.array[i];
+        else
+            for (i = 0; i < consumption.counter; i++)
+                tmp_medium += consumption.array[i];
+        
+        consumption.average_medium = tmp_medium / i;
+
+        
+        // calculate average for CON_LONG seconds
+        if (consumption.array_full)
+            for (i = 0; i < CON_LONG; i++)
+                tmp_long += consumption.array[i];
+        else
+            for (i = 0; i < consumption.counter; i++)
+                tmp_long += consumption.array[i];
+        
+        consumption.average_long = tmp_long / i;
+
+
         // save consumption array to file
         int fd;
         
-        if ( (fd = open( "con_av.dat", O_WRONLY|O_CREAT, 00644 )) == -1)
+        if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
             perror("couldn't open file:\n");
         else
         {
-            write(fd, &con_av_counter, sizeof(con_av_counter));
-            write(fd, &con_av_array, sizeof(con_av_array));
-            write(fd, &con_av_array_full, sizeof(con_av_array_full));
+            write(fd, &consumption, sizeof(consumption));
             close(fd);
         }
         

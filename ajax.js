@@ -85,13 +85,17 @@ function update_image(img)
 function update_all()
 {
     update_variable("con_h");
-    update_variable("con_km");
-    update_variable("con_av");    
+    update_variable("con_km");    
     update_variable("rpm");
     update_variable("speed");
     update_variable("temp1");
     update_variable("temp2");
     update_variable("voltage");
+    
+    update_variable("con_av_short");
+    update_variable("con_av_medium");
+    update_variable("con_av_long");
+    
     update_variable("debug");    
     
     update_image("speed");

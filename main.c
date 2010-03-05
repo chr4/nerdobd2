@@ -47,30 +47,33 @@ main (int arc, char **argv)
     voltage = -2;
     con_h = -2;
     con_km = -2;
-    con_av = -2;
+
     
-    // init average consumption counter
-    con_av_counter = 0;
-    con_av_array_full = 0;
-    memset(&con_av_array, '0', sizeof(con_av_array));
+    // init average consumption struct
+    memset(&consumption.array, '0', sizeof(consumption.array));
+    consumption.counter = 0;
+    consumption.array_full = 0;
+    consumption.average_short = -2;
+    consumption.average_medium = -2;
+    consumption.average_long = -2;
     
-    // read con_av_counter and con_av_array from file
-    if ( (fd = open( "con_av.dat", O_RDONLY )) != -1)
+    
+    // overwrite consumption inits from file, if present
+    if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
     {
-        read(fd, &con_av_counter, sizeof(con_av_counter));
-        read(fd, &con_av_array, sizeof(con_av_array));       
-        read(fd, &con_av_array_full, sizeof(con_av_array_full));
+        read(fd, &consumption, sizeof(struct con_av));
         close( fd );
-        
-#ifdef DEBUG  
-        int i;
-        printf("con_av_counter: %d\n", con_av_counter);
-        for (i = 0; i < con_av_counter; i++)
-            printf("%f ", con_av_array[i]);
-        printf("array full? (%d)\n", con_av_array_full);
-#endif
-        
     }
+    
+#ifdef DEBUG  
+    int i;
+    printf("consumption.counter: %d\n", consumption.counter);
+    for (i = 0; i < consumption.counter; i++)
+       printf("%.02f ", consumption.array[i]);
+    printf("array full? (%d)\n", consumption.array_full);
+    printf("consumption averages: %.02f, %.02f, %.02f\n",
+           consumption.average_short, consumption.average_medium, consumption.average_long);
+#endif    
 
     
     // create ajax socket in new thread for handling http connections

@@ -29,7 +29,14 @@
 #define WRITE_DELAY     5700
 #define INIT_DELAY      200000
 
-#define PORT		8080
+#define PORT            8080
+
+// consumption measure length in seconds
+#define CON_SHORT       300     // last 5 minutes
+#define CON_MEDIUM      1800    // last 30 minutes
+#define CON_LONG        14400   // last 4 hours
+
+#define CON_AV_FILE     "consumption.data"
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
@@ -48,11 +55,17 @@ float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
 float   con_h;
 float   con_km;
 
-// average consumption for the last 300sec (5min)
-float   con_av_array[300];        
-int     con_av_counter;
-float   con_av;
-char    con_av_array_full;
+// average consumption
+struct con_av
+{
+    float   array[CON_LONG];
+    char    array_full;
+    int     counter;
+    float   average_short;
+    float   average_medium;
+    float   average_long;    
+} consumption;
+
 
 char    debug[1024];    // debuging messages go here
 

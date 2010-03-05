@@ -233,8 +233,15 @@ handle_client(int fd)
             obd_send(fd, con_h, "%.02f");
         else if (!strcmp(p, "con_km") )
             obd_send(fd, con_km, "%.02f");
-        else if (!strcmp(p, "con_av") )
-            obd_send(fd, con_av, "%.02f");
+        
+        else if (!strcmp(p, "con_av_short") )
+            obd_send(fd, consumption.average_short, "%.02f");
+        else if (!strcmp(p, "con_av_medium") )
+            obd_send(fd, consumption.average_medium, "%.02f");
+        else if (!strcmp(p, "con_av_long") )
+            obd_send(fd, consumption.average_long, "%.02f");
+        
+        
         else if (!strcmp(p, "load") )
             obd_send(fd, load, "%.00f");
         else if (!strcmp(p, "temp1") )

@@ -76,10 +76,18 @@ body, html
     margin-top:20px;
 }
 
-#con_h, #con_av, #rpm, #temp1, #temp2, #voltage
+#con_h, #rpm, #temp1, #temp2, #voltage
 {
     font-family:helvetica;
     font-size:32px;
+    line-height:38px;
+    color:#f00000;
+}
+
+#con_av_short, #con_av_medium, #con_av_long
+{
+    font-family:helvetica;
+    font-size:26px;
     line-height:38px;
     color:#f00000;
 }
