@@ -241,6 +241,12 @@ handle_client(int fd)
         else if (!strcmp(p, "con_av_long") )
             obd_send(fd, consumption.average_long, "%.02f");
         
+        else if (!strcmp(p, "speed_av_short") )
+            obd_send(fd, av_speed.average_short, "%.02f");
+        else if (!strcmp(p, "speed_av_medium") )
+            obd_send(fd, av_speed.average_medium, "%.02f");
+        else if (!strcmp(p, "speed_av_long") )
+            obd_send(fd, av_speed.average_long, "%.02f");
         
         else if (!strcmp(p, "load") )
             obd_send(fd, load, "%.00f");

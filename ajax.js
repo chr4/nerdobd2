@@ -96,6 +96,11 @@ function update_all()
     update_variable("con_av_medium");
     update_variable("con_av_long");
     
+    update_variable("speed_av_short");
+    update_variable("speed_av_medium");
+    update_variable("speed_av_long");
+    
+    
     update_variable("debug");    
     
     update_image("speed");

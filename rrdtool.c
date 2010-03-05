@@ -35,7 +35,7 @@ rrdtool_update_consumption (void)
     {
 
         // save consumption to average consumption array
-        if (consumption.counter == CON_LONG)
+        if (consumption.counter == LONG)
         {
             consumption.array_full = 1;
             consumption.counter = 0;
@@ -44,9 +44,9 @@ rrdtool_update_consumption (void)
         consumption.array[consumption.counter++] = con_km;
         
 
-        // calculate average for CON_SHORT seconds
-        if (consumption.counter > CON_SHORT)
-            for (i = consumption.counter - CON_SHORT; i < consumption.counter; i++)
+        // calculate average for SHORT seconds
+        if (consumption.counter > SHORT)
+            for (i = consumption.counter - SHORT; i < consumption.counter; i++)
                 tmp_short += consumption.array[i];
         else
             for (i = 0; i < consumption.counter; i++)
@@ -55,9 +55,9 @@ rrdtool_update_consumption (void)
         consumption.average_short = tmp_short / i;
         
         
-        // calculate average for CON_MEDIUM seconds
-        if (consumption.counter > CON_MEDIUM)
-            for (i = consumption.counter - CON_MEDIUM; i < consumption.counter; i++)
+        // calculate average for MEDIUM seconds
+        if (consumption.counter > MEDIUM)
+            for (i = consumption.counter - MEDIUM; i < consumption.counter; i++)
                 tmp_medium += consumption.array[i];
         else
             for (i = 0; i < consumption.counter; i++)
@@ -66,9 +66,9 @@ rrdtool_update_consumption (void)
         consumption.average_medium = tmp_medium / i;
 
         
-        // calculate average for CON_LONG seconds
+        // calculate average for LONG seconds
         if (consumption.array_full)
-            for (i = 0; i < CON_LONG; i++)
+            for (i = 0; i < LONG; i++)
                 tmp_long += consumption.array[i];
         else
             for (i = 0; i < consumption.counter; i++)
@@ -163,6 +163,66 @@ rrdtool_update_speed (void)
     char    starttime[256];
     char    endtime[256];
     time_t  t;
+    int     i;
+    float   tmp_short = 0;
+    float   tmp_medium = 0;    
+    float   tmp_long = 0;
+    
+    
+    // save speed to average speed array
+    if (av_speed.counter == LONG)
+    {
+        av_speed.array_full = 1;
+        av_speed.counter = 0;
+    }
+    
+    av_speed.array[av_speed.counter++] = con_km;
+    
+    
+    // calculate average for SHORT seconds
+    if (av_speed.counter > SHORT)
+        for (i = av_speed.counter - SHORT; i < av_speed.counter; i++)
+            tmp_short += av_speed.array[i];
+    else
+        for (i = 0; i < av_speed.counter; i++)
+            tmp_short += av_speed.array[i];
+    
+    av_speed.average_short = tmp_short / i;
+    
+    
+    // calculate average for MEDIUM seconds
+    if (av_speed.counter > MEDIUM)
+        for (i = av_speed.counter - MEDIUM; i < av_speed.counter; i++)
+            tmp_medium += av_speed.array[i];
+    else
+        for (i = 0; i < av_speed.counter; i++)
+            tmp_medium += av_speed.array[i];
+    
+    av_speed.average_medium = tmp_medium / i;
+    
+    
+    // calculate average for LONG seconds
+    if (av_speed.array_full)
+        for (i = 0; i < LONG; i++)
+            tmp_long += av_speed.array[i];
+    else
+        for (i = 0; i < av_speed.counter; i++)
+            tmp_long += av_speed.array[i];
+    
+    av_speed.average_long = tmp_long / i;
+    
+    
+    // save av_speed array to file
+    int fd;
+    
+    if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+        perror("couldn't open file:\n");
+    else
+    {
+        write(fd, &av_speed, sizeof(av_speed));
+        close(fd);
+    }
+    
     
     snprintf (starttime, sizeof (starttime), "%d:%.1f", 
               (int) time (&t), speed);

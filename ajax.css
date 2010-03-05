@@ -26,6 +26,53 @@ body, html
     height:230px;
 }
 
+/* overlay covering rrdtool watermark */
+.overlay
+{
+    position:relative;;
+    top:-230px;
+    left:475px;
+    height:160px;
+    width:15px;
+    background-color:#222222;
+}
+
+/* average consumption values underneath consumption graph */
+.con_av
+{
+    position:absolute;
+    top:215px;
+    left:95px;
+    font-family:helvetica;
+    font-size:14px;
+    line-height:22px;
+    color:#aaaaaa
+}
+
+#con_av_short, #con_av_medium, #con_av_long
+{
+    font-size:18px;
+    color:#f00000;
+}
+
+/* average speed values underneath speed graph */
+.speed_av
+{
+    position:absolute;
+    top:450px;
+    left:95px;
+    font-family:helvetica;
+    font-size:14px;
+    line-height:22px;
+    color:#aaaaaa
+}
+
+#speed_av_short, #speed_av_medium, #speed_av_long
+{
+    font-size:18px;
+    color:#f00000;
+}
+
 
 .right_box
 {
@@ -80,14 +127,6 @@ body, html
 {
     font-family:helvetica;
     font-size:32px;
-    line-height:38px;
-    color:#f00000;
-}
-
-#con_av_short, #con_av_medium, #con_av_long
-{
-    font-family:helvetica;
-    font-size:26px;
     line-height:38px;
     color:#f00000;
 }
