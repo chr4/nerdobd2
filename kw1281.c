@@ -608,7 +608,7 @@ kw1281_open (char *device)
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
-        printf ("couldn't open serial device %s.\n", device);
+        ajax_log ("couldn't open serial device\n");
         return -1;
     }
 
@@ -768,9 +768,6 @@ kw1281_mainloop (void)
 {
     int status;
     
-    // init average consumption counter
-    con_av_counter = 0;
-    
 #ifndef SERIAL_ATTACHED
     /* 
      * this block is for testing purposes
@@ -779,7 +776,7 @@ kw1281_mainloop (void)
      */
 
     sleep(1);
-    printf ("incrementing values for testing purposes...\n");
+    ajax_log("incrementing values for testing purposes...\n");
     speed = 10;
     con_km = -1;
     rpm = 1000;
@@ -801,13 +798,11 @@ kw1281_mainloop (void)
         load += 3;
         rpm += 100;
         
-        snprintf(debug, sizeof(debug), "test: %f", voltage);
+        snprintf(debug, sizeof(debug), "debug test: %f", voltage);
         
         rrdtool_update_consumption();
         rrdtool_update_speed();
-        
-        printf("average consumption: %.02f\n", con_av);
-        
+            
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
         
