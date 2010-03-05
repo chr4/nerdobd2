@@ -37,15 +37,33 @@ rrdtool_update_consumption (void)
             con_av_array[con_av_counter++] = con_km;
         else
         {
+            con_av_array_full = 1;
             con_av_counter = 0;
             con_av_array[con_av_counter++] = con_km;
         }
 
         // calulate average consumption
-        for (i = 0; i < con_av_counter; i++)
-            tmp += con_av_array[i];
+        if (con_av_array_full)
+            for (i = 0; i < 300; i++)
+                tmp += con_av_array[i];
+        else
+            for (i = 0; i < con_av_counter; i++)
+                tmp += con_av_array[i];
         
         con_av = tmp / i;
+        
+        // save consumption array to file
+        int fd;
+        
+        if ( (fd = open( "con_av.dat", O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(fd, &con_av_counter, sizeof(con_av_counter));
+            write(fd, &con_av_array, sizeof(con_av_array));
+            write(fd, &con_av_array_full, sizeof(con_av_array_full));
+            close(fd);
+        }
         
         
         snprintf (starttime, sizeof (starttime), "%d:%.2f:%.2f", 

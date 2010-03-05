@@ -5,19 +5,9 @@
  * $ while (true); do ./serial; done
  *
  * TODO:
- *
- * ajax.html WAY faster
- *
- * better would be:
- * /request_variable
- * then send varname
- * parse varname and reply with value
- *
- *
- * system() stops to create rrdtool images after a while..
- *
- * waidipd() somewhere in a while();
- *
+ * 
+ * create nice looking interface
+ * 
  *
  */
 
@@ -25,6 +15,7 @@ int
 main (int arc, char **argv)
 {
     pthread_t thread1;
+    int fd;
 
 #ifdef SERIAL_ATTACHED
     // kw1281_open() somehow has to be started
@@ -49,6 +40,30 @@ main (int arc, char **argv)
     con_h = -2;
     con_km = -2;
     con_av = -2;
+    
+    // init average consumption counter
+    con_av_counter = 0;
+    con_av_array_full = 0;
+    memset(&con_av_array, '0', sizeof(con_av_array));
+    
+    // read con_av_counter and con_av_array from file
+    if ( (fd = open( "con_av.dat", O_RDONLY )) != -1)
+    {
+        read(fd, &con_av_counter, sizeof(con_av_counter));
+        read(fd, &con_av_array, sizeof(con_av_array));       
+        read(fd, &con_av_array_full, sizeof(con_av_array_full));
+        close( fd );
+        
+#ifdef DEBUG  
+        int i;
+        printf("con_av_counter: %d\n", con_av_counter);
+        for (i = 0; i < con_av_counter; i++)
+            printf("%f ", con_av_array[i]);
+        printf("array full? (%d)\n", con_av_array_full);
+#endif
+        
+    }
+
     
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);

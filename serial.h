@@ -52,6 +52,7 @@ float   con_km;
 float   con_av_array[300];        
 int     con_av_counter;
 float   con_av;
+char    con_av_array_full;
 
 char    debug[1024];    // debuging messages go here
 
