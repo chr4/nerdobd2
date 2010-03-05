@@ -3,6 +3,7 @@ body, html
     background-color:#222222;
     padding:0px;
     margin:1px;
+    overflow:hidden; /* hide scroll bar */
 }
 
 .left_box
@@ -29,7 +30,7 @@ body, html
 /* overlay covering rrdtool watermark */
 .overlay
 {
-    position:relative;;
+    position:relative; /* relative to image */
     top:-230px;
     left:475px;
     height:160px;
