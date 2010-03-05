@@ -16,6 +16,8 @@ int     tcp_listen (int);
 int     handle_client(int);
 int     obd_send(int, float, char *);
 int     obd_send_debug(int, char *, char *);
+void    reset_counters(void);
+
 
 void   *
 ajax_socket (void *pport)
@@ -258,6 +260,10 @@ handle_client(int fd)
             obd_send(fd, voltage, "%.02f");
         else if (!strcmp(p, "debug") )
             obd_send_debug(fd, debug, "%s");        
+        
+        else if (!strcmp(p, "reset") )
+            reset_counters();
+        
         else
         {
             printf("unkown obd varname: %s\n", p);
@@ -372,4 +378,53 @@ ajax_log(char *s)
     snprintf(debug, sizeof(debug), "%s", s);
     
     return;   
+}
+
+void
+reset_counters(void)
+{
+    int     fd;
+    
+    printf("resetting counters...\n");
+    
+    // init average consumption struct
+    memset(&consumption.array, '0', sizeof(consumption.array));
+    consumption.counter = 0;
+    consumption.array_full = 0;
+    consumption.average_short = -2;
+    consumption.average_medium = -2;
+    consumption.average_long = -2;
+    
+    // write zero values to file to reset counters
+    if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+        perror("couldn't open file:\n");
+    else
+    {
+        write(fd, &consumption, sizeof(consumption));
+        close(fd);
+    }
+    
+
+    // init average speed struct
+    memset(&av_speed.array, '0', sizeof(av_speed.array));
+    av_speed.counter = 0;
+    av_speed.array_full = 0;
+    av_speed.average_short = -2;
+    av_speed.average_medium = -2;
+    av_speed.average_long = -2;
+    
+    // write zero values to file to reset counters
+    if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+        perror("couldn't open file:\n");
+    else
+    {
+        write(fd, &consumption, sizeof(consumption));
+        close(fd);
+    }
+
+    sleep(1);
+    printf("values: %.02f %d %d %.02f\n", 
+           consumption.average_short, consumption.counter, av_speed.counter, av_speed.average_long);
+    
+    return;
 }

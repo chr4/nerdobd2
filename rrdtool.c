@@ -22,6 +22,8 @@ rrdtool_update_consumption (void)
     char    endtime[256];    
     time_t  t;
     int     i;
+    int     fd;
+
     float   tmp_short = 0;
     float   tmp_medium = 0;    
     float   tmp_long = 0;
@@ -34,6 +36,13 @@ rrdtool_update_consumption (void)
     else
     {
 
+        // read values from file (in case its been resetted)
+        if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
+        {
+            read(fd, &consumption, sizeof(consumption));
+            close( fd );
+        }
+        
         // save consumption to average consumption array
         if (consumption.counter == LONG)
         {
@@ -77,9 +86,7 @@ rrdtool_update_consumption (void)
         consumption.average_long = tmp_long / i;
 
 
-        // save consumption array to file
-        int fd;
-        
+        // save consumption array to file        
         if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
             perror("couldn't open file:\n");
         else
@@ -164,10 +171,20 @@ rrdtool_update_speed (void)
     char    endtime[256];
     time_t  t;
     int     i;
+    int     fd;
+
     float   tmp_short = 0;
     float   tmp_medium = 0;    
     float   tmp_long = 0;
     
+    
+    // read values from file (in case its been resetted)
+    if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
+    {
+        read(fd, &av_speed, sizeof(av_speed));
+        close( fd );
+    }
+
     
     // save speed to average speed array
     if (av_speed.counter == LONG)
@@ -212,9 +229,7 @@ rrdtool_update_speed (void)
     av_speed.average_long = tmp_long / i;
     
     
-    // save av_speed array to file
-    int fd;
-    
+    // save av_speed array to file    
     if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
         perror("couldn't open file:\n");
     else

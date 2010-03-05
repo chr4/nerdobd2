@@ -109,3 +109,9 @@ function update_all()
     // restart timer
     setTimeout ( "update_all()", 500 );
 }
+
+
+function reset_counters()
+{
+    update_variable("reset");
+}
