@@ -31,7 +31,7 @@ body, html
 .overlay
 {
     position:relative; /* relative to image */
-    top:-230px;
+    top:-228px;
     left:475px;
     height:160px;
     width:15px;

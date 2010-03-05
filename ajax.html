@@ -17,7 +17,7 @@
           <div class="con_av">
             <span id="con_av_short">6.55</span> (last 5min) | 
             <span id="con_av_medium">6.55</span> (last 30min) |
-            <span id="con_av_long">6.55</span> (last 4h)
+            <span id="con_av_long"onclick="alert('this')">6.55</span> (last 4h)
           </div>          
         </div>
         <div class="rrdimage">
@@ -100,7 +100,10 @@
         
         <div class="footer">
           <div id="debug">initializing...</div>
-          <div id="version">nerdobd2 | v0.9.5</div>
+          <div id="version">
+            <input type="button" value="reset counters" onclick="reset_counters()"/>
+            nerdobd2 | v0.9.5
+          </div>
         </div>
       </div>
 
