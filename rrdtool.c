@@ -177,8 +177,9 @@ rrdtool_update_speed (void)
     float   tmp_medium = 0;    
     float   tmp_long = 0;
     
-    
-    // read values from file (in case its been resetted)
+    if (speed >= 0)
+    { 
+        // read values from file (in case its been resetted)
     if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
     {
         read(fd, &av_speed, sizeof(av_speed));
@@ -237,7 +238,7 @@ rrdtool_update_speed (void)
         write(fd, &av_speed, sizeof(av_speed));
         close(fd);
     }
-    
+    }
     
     snprintf (starttime, sizeof (starttime), "%d:%.1f", 
               (int) time (&t), speed);

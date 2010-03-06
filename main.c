@@ -9,6 +9,9 @@
  * create nice looking interface
  *  -> fonts?
  *
+ * why -1 in av_speed?
+ * why doesnt debug ajax log work?
+ *
  * create graphical overlay for masking rrdtool watermarks
  * create fixed line at 6.55 liters (rrdtool, consumtion)
  * -> using <div> tags?
@@ -19,7 +22,10 @@
  *
  * call rrdtool with rrdlib and not with exec()
  *
+ * timeout select doesnt properly return (wtf?)
  *
+ * fix or remove load
+ * 
  * kw1281 fastinit? (is this only kwp2000?)
  *  Set baud rate etc to 360 baud, 8, N, 1
  *  write(fd, "", 1); // send 0x00 byte message

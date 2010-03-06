@@ -15,7 +15,7 @@
 int     tcp_listen (int);
 int     handle_client(int);
 int     obd_send(int, float, char *);
-int     obd_send_debug(int, char *, char *);
+int     obd_send_debug(int);
 void    reset_counters(void);
 
 
@@ -117,17 +117,15 @@ tcp_listen (int port)
 
 
 int
-obd_send_debug(int fd, char *val, char *format)
+obd_send_debug(int fd)
 {
-    char buf[256];
     char buf2[256];
 
-    snprintf (buf, sizeof (buf), format, val);
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(buf));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
-    send (fd, buf, strlen (buf), 0);
+    send (fd, debug, strlen (debug), 0);
 
     return 0;
 }
@@ -148,7 +146,7 @@ obd_send(int fd, float val, char *format)
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
     send (fd, buf, strlen (buf), 0);    
-    
+
     return 0;
 }
 
@@ -259,7 +257,7 @@ handle_client(int fd)
         else if (!strcmp(p, "voltage") )
             obd_send(fd, voltage, "%.02f");
         else if (!strcmp(p, "debug") )
-            obd_send_debug(fd, debug, "%s");        
+            obd_send_debug(fd);        
         
         else if (!strcmp(p, "reset") )
             reset_counters();
@@ -384,9 +382,11 @@ void
 reset_counters(void)
 {
     int     fd;
-    
+   
+#ifdef DEBUG 
     printf("resetting counters...\n");
-    
+#endif    
+
     // init average consumption struct
     memset(&consumption.array, '0', sizeof(consumption.array));
     consumption.counter = 0;
@@ -422,9 +422,13 @@ reset_counters(void)
         close(fd);
     }
 
+    ajax_log("counters resetted.\n");
+
+#ifdef DEBUG
     sleep(1);
     printf("values: %.02f %d %d %.02f\n", 
            consumption.average_short, consumption.counter, av_speed.counter, av_speed.average_long);
+#endif
     
     return;
 }
