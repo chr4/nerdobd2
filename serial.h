@@ -21,7 +21,7 @@
 
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -53,7 +53,7 @@ void    ajax_log(char *s);
 void   *ajax_socket (void *);
 int     ajax_shutdown(void);
 
-float   speed, rpm, temp1, temp2, oil_press, inj_time, load, voltage;
+float   speed, rpm, temp1, temp2, oil_press, inj_time, voltage;
 float   con_h;
 float   con_km;
 

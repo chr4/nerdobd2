@@ -446,6 +446,7 @@ kw1281_recv_block (unsigned char n)
                         rpm = 0.2 * buf[i + 1] * buf[i + 2];
                     break;
 
+                /* can't calculate load properly, thus leaving it alone
                 case 0x21:        // load
                     if (i == 0)
                     {
@@ -455,7 +456,8 @@ kw1281_recv_block (unsigned char n)
                             load = 100 * buf[i + 2] / buf[i + 1];
                     }
                     break;
-
+                */
+                    
                 case 0x0f:        // injection time
                     inj_time = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
@@ -781,12 +783,11 @@ kw1281_mainloop (void)
     speed = 10;
     con_km = -1;
     rpm = 1000;
-    load = 0;
     con_h = 1.01;
     temp1 = 20;
     temp2 = 0;
     voltage = 3.00;
-
+    
     for (;;)
     {
         speed++;
@@ -796,10 +797,9 @@ kw1281_mainloop (void)
         temp1++;
         temp2++;
         voltage += 0.15;
-        load += 3;
         rpm += 100;
         
-        snprintf(debug, sizeof(debug), "debug test: %f", voltage);
+        //snprintf(debug, sizeof(debug), "debug test: %.01f", av_speed.average_short);
         
         rrdtool_update_consumption();
         rrdtool_update_speed();
@@ -881,7 +881,7 @@ kw1281_print (void)
     printf ("temp1\t\t%.1f °C\n", temp1);
     printf ("temp2\t\t%.1f °C\n", temp2);
     printf ("voltage\t\t%.2f V\n", voltage);
-    printf ("load\t\t%.0f %%\n", load);
+    //printf ("load\t\t%.0f %%\n", load);
     printf ("absolute press\t%.0f mbar\n", oil_press);
     printf ("counter\t\t%d\n", counter);
     printf ("\n");

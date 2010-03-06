@@ -9,22 +9,11 @@
  * create nice looking interface
  *  -> fonts?
  *
- * why -1 in av_speed?
- * why doesnt debug ajax log work?
- *
- * create graphical overlay for masking rrdtool watermarks
- * create fixed line at 6.55 liters (rrdtool, consumtion)
- * -> using <div> tags?
- *
- * add button to interface to reset averages (graphs? restart programm?)
- *
  * fix communication errors with ECU
  *
  * call rrdtool with rrdlib and not with exec()
  *
  * timeout select doesnt properly return (wtf?)
- *
- * fix or remove load
  * 
  * kw1281 fastinit? (is this only kwp2000?)
  *  Set baud rate etc to 360 baud, 8, N, 1
@@ -50,7 +39,6 @@ init_values(void)
     temp2 = -2;
     oil_press = -2;
     inj_time = -2;
-    load = -2;
     voltage = -2;
     con_h = -2;
     con_km = -2;
@@ -95,7 +83,7 @@ init_values(void)
     printf("array full? (%d)\n", consumption.array_full);
     printf("consumption averages: %.02f, %.02f, %.02f\n",
            consumption.average_short, consumption.average_medium, consumption.average_long);
-    
+
     printf("av_speed.counter: %d\n", consumption.counter);
     for (i = 0; i < av_speed.counter; i++)
         printf("%.02f ", av_speed.array[i]);

@@ -180,78 +180,79 @@ rrdtool_update_speed (void)
     if (speed >= 0)
     { 
         // read values from file (in case its been resetted)
-    if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
-    {
-        read(fd, &av_speed, sizeof(av_speed));
-        close( fd );
-    }
+        if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
+        {
+            read(fd, &av_speed, sizeof(av_speed));
+            close( fd );
+        }
 
-    
-    // save speed to average speed array
-    if (av_speed.counter == LONG)
-    {
-        av_speed.array_full = 1;
-        av_speed.counter = 0;
-    }
-    
-    av_speed.array[av_speed.counter++] = con_km;
-    
-    
-    // calculate average for SHORT seconds
-    if (av_speed.counter > SHORT)
-        for (i = av_speed.counter - SHORT; i < av_speed.counter; i++)
-            tmp_short += av_speed.array[i];
-    else
-        for (i = 0; i < av_speed.counter; i++)
-            tmp_short += av_speed.array[i];
-    
-    av_speed.average_short = tmp_short / i;
-    
-    
-    // calculate average for MEDIUM seconds
-    if (av_speed.counter > MEDIUM)
-        for (i = av_speed.counter - MEDIUM; i < av_speed.counter; i++)
-            tmp_medium += av_speed.array[i];
-    else
-        for (i = 0; i < av_speed.counter; i++)
-            tmp_medium += av_speed.array[i];
-    
-    av_speed.average_medium = tmp_medium / i;
-    
-    
-    // calculate average for LONG seconds
-    if (av_speed.array_full)
-        for (i = 0; i < LONG; i++)
-            tmp_long += av_speed.array[i];
-    else
-        for (i = 0; i < av_speed.counter; i++)
-            tmp_long += av_speed.array[i];
-    
-    av_speed.average_long = tmp_long / i;
-    
-    
-    // save av_speed array to file    
-    if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-        perror("couldn't open file:\n");
-    else
-    {
-        write(fd, &av_speed, sizeof(av_speed));
-        close(fd);
-    }
-    }
-    
-    snprintf (starttime, sizeof (starttime), "%d:%.1f", 
-              (int) time (&t), speed);
-    
-    if (fork() == 0)
-    {
-        execlp("rrdtool", "rrdtool",
-               "update", "speed.rrd", starttime,
-               NULL);
+
+        // save speed to average speed array
+        if (av_speed.counter == LONG)
+        {
+            av_speed.array_full = 1;
+            av_speed.counter = 0;
+        }
+
+        av_speed.array[av_speed.counter++] = speed;
+
+
+        // calculate average for SHORT seconds
+        if (av_speed.counter > SHORT)
+            for (i = av_speed.counter - SHORT; i < av_speed.counter; i++)
+                tmp_short += av_speed.array[i];
+        else
+            for (i = 0; i < av_speed.counter; i++)
+                tmp_short += av_speed.array[i];
+
+        av_speed.average_short = tmp_short / i;
+
+
+        // calculate average for MEDIUM seconds
+        if (av_speed.counter > MEDIUM)
+            for (i = av_speed.counter - MEDIUM; i < av_speed.counter; i++)
+                tmp_medium += av_speed.array[i];
+        else
+            for (i = 0; i < av_speed.counter; i++)
+                tmp_medium += av_speed.array[i];
+
+        av_speed.average_medium = tmp_medium / i;
+
+
+        // calculate average for LONG seconds
+        if (av_speed.array_full)
+            for (i = 0; i < LONG; i++)
+                tmp_long += av_speed.array[i];
+        else
+            for (i = 0; i < av_speed.counter; i++)
+                tmp_long += av_speed.array[i];
+
+        av_speed.average_long = tmp_long / i;
+
+
+        // save av_speed array to file    
+        if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(fd, &av_speed, sizeof(av_speed));
+            close(fd);
+        }
         
-        exit(0);
+        snprintf (starttime, sizeof (starttime), "%d:%.1f", 
+                  (int) time (&t), speed);
+        
+        if (fork() == 0)
+        {
+            execlp("rrdtool", "rrdtool",
+                   "update", "speed.rrd", starttime,
+                   NULL);
+            
+            exit(0);
+        }
     }
-
+    
+    
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
              (int) time (&t) - 300); // now - 300s (5min)
