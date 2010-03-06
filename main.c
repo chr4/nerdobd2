@@ -15,6 +15,17 @@
  * add button to interface to reset averages (graphs? restart programm?)
  *
  * fix communication errors with ECU
+ *
+ * call rrdtool with rrdlib and not with exec()
+ *
+ *
+ * kw1281 fastinit? (is this only kwp2000?)
+ *  Set baud rate etc to 360 baud, 8, N, 1
+ *  write(fd, "", 1); // send 0x00 byte message
+ *  // And read back the single byte echo, which shows TX completes
+ *  while ( (c = read_with_select_timeout(fd, &cbuf, 1)) <= 0)
+ *  // Now wait 24-26 ms so Twup expires
+ *  usleep(24000);
  */
 
 void    init_values(void);
