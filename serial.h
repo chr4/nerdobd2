@@ -27,7 +27,7 @@
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
 // serial dump logs 15600ms before answer arrives maybe 7800 is better?
-#define WRITE_DELAY     5700 
+#define WRITE_DELAY     7600 // 5700
 #define INIT_DELAY      200000
 
 #define PORT            8080
