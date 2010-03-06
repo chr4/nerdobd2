@@ -14,6 +14,8 @@
  * call rrdtool with rrdlib and not with exec()
  *
  * timeout select doesnt properly return (wtf?)
+ *   5times kw1281_read_timeout: timeout occured
+ *   then counter error counter error (1 != 255)
  * 
  * kw1281 fastinit? (is this only kwp2000?)
  *  Set baud rate etc to 360 baud, 8, N, 1
@@ -125,8 +127,8 @@ main (int arc, char **argv)
         // send 5baud address, read sync byte + key word
         if (kw1281_init (0x01) == -1)
         {
-            printf("init failed. trying again...\n");
-            continue;
+            printf("init failed. exiting...\n");
+            return -1;
         }
 #endif
 
