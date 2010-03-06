@@ -248,8 +248,6 @@ handle_client(int fd)
         else if (!strcmp(p, "speed_av_long") )
             obd_send(fd, av_speed.average_long, "%.02f");
         
-        else if (!strcmp(p, "load") )
-            obd_send(fd, load, "%.00f");
         else if (!strcmp(p, "temp1") )
             obd_send(fd, temp1, "%.01f");
         else if (!strcmp(p, "temp2") )
@@ -421,8 +419,6 @@ reset_counters(void)
         write(fd, &consumption, sizeof(consumption));
         close(fd);
     }
-
-    ajax_log("counters resetted.\n");
 
 #ifdef DEBUG
     sleep(1);

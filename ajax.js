@@ -100,9 +100,6 @@ function update_all()
     update_variable("speed_av_medium");
     update_variable("speed_av_long");
     
-    
-    update_variable("debug");    
-    
     update_image("speed");
     update_image("consumption");
     
@@ -110,6 +107,17 @@ function update_all()
     setTimeout ( "update_all()", 500 );
 }
 
+function update_debug()
+{
+    update_variable("debug");
+    setTimeout ( "update_debug()", 200 );    
+}
+
+function start()
+{
+    update_all();
+    update_debug();
+}
 
 function reset_counters()
 {
