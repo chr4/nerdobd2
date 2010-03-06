@@ -41,14 +41,22 @@ kw1281_read_timeout(void)
     timeout.tv_usec = 0;  /* milliseconds */
     timeout.tv_sec  = 1;  /* seconds */
     
-    FD_ZERO(&rfds);
-    FD_SET(fd, &rfds);
     
-    if ( (res = select(fd + 1, &rfds, NULL, NULL, &timeout)) == -1)
-    {
-        perror("kw1281_read_timeout: select() ");
-        return -1;
-    }
+    
+    
+    /* doing do-while to catch EINTR */
+    do {
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+    
+        res = select(fd + 1, &rfds, NULL, NULL, &timeout);
+        
+        if (errno == EINTR)
+            ajax_log("read: select() got EINTR");
+        if (res == -1)
+            ajax_log("read: select() failed");
+        
+    } while (res == -1 && errno == EINTR);
 
     if (res)
     {
@@ -80,14 +88,18 @@ kw1281_write_timeout(unsigned char c)
     timeout.tv_usec = 0;  /* milliseconds */
     timeout.tv_sec  = 1;  /* seconds */
     
-    FD_ZERO(&wfds);
-    FD_SET(fd, &wfds);
+    do {
+        FD_ZERO(&wfds);
+        FD_SET(fd, &wfds);
     
-    if ( (res = select(fd + 1, NULL, &wfds, NULL, &timeout)) == -1)
-    {
-        perror("kw1281_write_timeout: select() ");
-        return -1;
-    }
+        res = select(fd + 1, NULL, &wfds, NULL, &timeout);
+        
+        if (errno == EINTR)
+            ajax_log("write: select() got EINTR");
+        if (res == -1)
+            ajax_log("write: select() failed");
+        
+    } while (res == -1 && errno == EINTR);
     
     if (res)
     {
