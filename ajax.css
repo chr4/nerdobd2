@@ -38,12 +38,26 @@ body, html
     background-color:#222222;
 }
 
+/* a line marking 6.55 liters 
+ * rrdtool cannot create one fixed line
+ * so i'm doing this with a css overlay
+ */
+.consumption_line
+{
+    position:relative;
+    top:-260px;
+    left:51px;
+    height:1px;
+    width:408px;
+    background-color:#eeeeee;
+}
+
 /* average consumption values underneath consumption graph */
 .con_av
 {
     position:absolute;
-    top:210px;
-    left:90px;
+    top:212px;
+    left:80px;
 }
 
 #con_av_short, #con_av_medium, #con_av_long
@@ -58,8 +72,8 @@ body, html
 .speed_av
 {
     position:absolute;
-    top:445px;
-    left:90px;
+    top:447px;
+    left:80px;
 }
 
 /* unit layout for values underneath speed graph*/
@@ -72,6 +86,7 @@ body, html
 
 #speed_av_short, #speed_av_medium, #speed_av_long
 {
+    font-family:helvetica;
     font-size:18px;
     color:#f00000;
 }
@@ -160,11 +175,9 @@ body, html
     margin-top:15px;
     margin-right:0px;
     padding-right:10px;
-    padding:0px;
-    width:270px;
-    height:22px;
+    padding:2px;
     color:#ffffff;
-    background-color:#444444;
+    background-color:#333333;
 }
 
 #version
