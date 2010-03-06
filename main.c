@@ -7,6 +7,7 @@
  * TODO:
  * 
  * create nice looking interface
+ *  -> fonts?
  *
  * create graphical overlay for masking rrdtool watermarks
  * create fixed line at 6.55 liters (rrdtool, consumtion)
