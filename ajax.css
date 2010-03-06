@@ -42,16 +42,14 @@ body, html
 .con_av
 {
     position:absolute;
-    top:215px;
-    left:95px;
-    font-family:helvetica;
-    font-size:14px;
-    line-height:22px;
-    color:#aaaaaa
+    top:210px;
+    left:90px;
 }
 
 #con_av_short, #con_av_medium, #con_av_long
 {
+    font-family:helvetica;
+    line-height:22px;
     font-size:18px;
     color:#f00000;
 }
@@ -60,12 +58,16 @@ body, html
 .speed_av
 {
     position:absolute;
-    top:450px;
-    left:95px;
+    top:445px;
+    left:90px;
+}
+
+/* unit layout for values underneath speed graph*/
+#av_unit
+{
     font-family:helvetica;
     font-size:14px;
-    line-height:22px;
-    color:#aaaaaa
+    color:#aaaaaa;
 }
 
 #speed_av_short, #speed_av_medium, #speed_av_long
@@ -167,6 +169,7 @@ body, html
 
 #version
 {
+    vertical-align:bottom;
     margin-top:5px;
     color:#ffffff;
 }
