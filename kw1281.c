@@ -42,9 +42,10 @@ kw1281_read_timeout(void)
     timeout.tv_sec  = 1;  /* seconds */
     
     
-    
-    
-    /* doing do-while to catch EINTR */
+    /* doing do-while to catch EINTR
+     * it's not absolutely necessary, but i read
+     * somewhere that it's better to do it that way...
+     */
     do {
         FD_ZERO(&rfds);
         FD_SET(fd, &rfds);
@@ -88,6 +89,10 @@ kw1281_write_timeout(unsigned char c)
     timeout.tv_usec = 0;  /* milliseconds */
     timeout.tv_sec  = 1;  /* seconds */
     
+    /* doing do-while to catch EINTR
+     * it's not absolutely necessary, but i read
+     * somewhere that it's better to do it that way...
+     */
     do {
         FD_ZERO(&wfds);
         FD_SET(fd, &wfds);
@@ -426,10 +431,10 @@ kw1281_recv_block (unsigned char n)
     while (--l)
     {
         if ( (c = kw1281_recv_byte_ack ()) == -1)
-    {
-        ajax_log("kw1281_recv_block() error\n");
-        return -1;
-    }
+        {
+            ajax_log("kw1281_recv_block() error\n");
+            return -1;
+        }
 
         buf[i++] = c;
 
