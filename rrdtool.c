@@ -62,11 +62,23 @@ rrdtool_update_consumption (void)
             av_con.average_short = tmp_short / SHORT;
         }
         else
-        {
+        {                
             for (i = 0; i < av_con.counter; i++)
                 tmp_short += av_con.array[i];
         
-            av_con.average_short = tmp_short / i;
+            /* if array is full, but we don't have enough
+             * values at the beginning of the array, take
+             * the last values at the end of array
+             */
+            if (av_con.array_full)
+            {
+                for (i = SHORT - i; i < LONG; i++)
+                    tmp_short += av_con.array[i];
+                
+                av_con.average_short = tmp_short / SHORT;
+            }
+            else
+                av_con.average_short = tmp_short / i;
         }
         
         
@@ -82,8 +94,20 @@ rrdtool_update_consumption (void)
         {
             for (i = 0; i < av_con.counter; i++)
                 tmp_medium += av_con.array[i];
-        
-            av_con.average_medium = tmp_medium / i;
+            
+            /* if array is full, but we don't have enough
+             * values at the beginning of the array, take
+             * the last values at the end of array
+             */
+            if (av_con.array_full)
+            {
+                for (i = MEDIUM - i; i < LONG; i++)
+                    tmp_medium += av_con.array[i];
+                
+                av_con.average_medium = tmp_medium / MEDIUM;
+            }
+            else
+                av_con.average_medium = tmp_medium / i;
         }
         
         // calculate average for LONG seconds
@@ -221,7 +245,19 @@ rrdtool_update_speed (void)
             for (i = 0; i < av_speed.counter; i++)
                 tmp_short += av_speed.array[i];
 
-            av_speed.average_short = tmp_short / i;
+            /* if array is full, but we don't have enough
+             * values at the beginning of the array, take
+             * the last values at the end of array
+             */
+            if (av_speed.array_full)
+            {
+                for (i = SHORT - i; i < LONG; i++)
+                    tmp_short += av_speed.array[i];
+                
+                av_speed.average_short = tmp_short / SHORT;
+            }
+            else
+                av_speed.average_short = tmp_short / i;
         }
 
         // calculate average for MEDIUM seconds
@@ -236,8 +272,20 @@ rrdtool_update_speed (void)
         {
             for (i = 0; i < av_speed.counter; i++)
                 tmp_medium += av_speed.array[i];
-
-            av_speed.average_medium = tmp_medium / i;
+            
+            /* if array is full, but we don't have enough
+             * values at the beginning of the array, take
+             * the last values at the end of array
+             */
+            if (av_speed.array_full)
+            {
+                for (i = MEDIUM - i; i < LONG; i++)
+                    tmp_medium += av_speed.array[i];
+                
+                av_speed.average_medium = tmp_medium / MEDIUM;
+            }
+            else
+                av_speed.average_medium = tmp_medium / i;
         }
 
         // calculate average for LONG seconds
@@ -293,7 +341,7 @@ rrdtool_update_speed (void)
             "--start", starttime, "--end", endtime,
             "--upper-limit", "135", "--lower-limit", "0", "--y-grid", "7.5:2",
             "DEF:myspeed=speed.rrd:speed:AVERAGE",
-            "AREA:myspeed#f00000ee:speed", 
+            "AREA:myspeed#f00000ee:km/h", 
             NULL    // array needs to be terminated with NULL
         };
         
