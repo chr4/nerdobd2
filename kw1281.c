@@ -11,6 +11,7 @@ int     kw1281_inc_counter (void);
 int     kw1281_get_ascii_blocks(void);
 int     kw1281_recover(void);
 int     kw1281_get_block (unsigned char);
+int     kw1281_empty_buffer(void);
 int     kw1281_read_timeout(void);
 int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
@@ -25,8 +26,57 @@ char    dev_awake = 0;          // flag (true if ECU is already awake, thus 5 ba
 
 // save old values
 struct termios oldtio;
-struct serial_struct ot;
+struct serial_struct ot, st;
 
+
+// read 1024 bytes with 200ms timeout
+int
+kw1281_empty_buffer(void)
+{
+    char c[1024];
+    
+    int res;
+    struct timeval timeout;
+    fd_set rfds;                // file descriptor set
+    
+    // set timeout value within input loop
+    timeout.tv_usec = 200000;   // milliseconds
+    timeout.tv_sec  = 0.2;      // seconds
+    
+    
+    /* doing do-while to catch EINTR
+     * it's not absolutely necessary, but i read
+     * somewhere that it's better to do it that way...
+     */
+    do {
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        
+        res = select(fd + 1, &rfds, NULL, NULL, &timeout);
+        
+        if (errno == EINTR)
+            ajax_log("read: select() got EINTR");
+        if (res == -1)
+            ajax_log("read: select() failed");
+        
+    } while (res == -1 && errno == EINTR);
+    
+    if (res)
+    {
+        if (read (fd, &c, sizeof(c)) == -1)
+        {
+            ajax_log("kw1281_read_timeout: read() error\n");
+            return -1;
+        }
+    }
+    else
+    {
+        ajax_log("kw1281_read_timeout: timeout occured\n");
+        return -1;
+    }
+    
+    return 0;    
+}
 
 int
 kw1281_read_timeout(void)
@@ -35,11 +85,11 @@ kw1281_read_timeout(void)
     
     int res;
     struct timeval timeout;
-    fd_set rfds;    /* file descriptor set */
+    fd_set rfds;            // file descriptor set
     
-    /* set timeout value within input loop */
-    timeout.tv_usec = 0;  /* milliseconds */
-    timeout.tv_sec  = 1;  /* seconds */
+    // set timeout value within input loop
+    timeout.tv_usec = 0;    // milliseconds
+    timeout.tv_sec  = 1;    // seconds
     
     
     /* doing do-while to catch EINTR
@@ -622,7 +672,6 @@ int
 kw1281_open (char *device)
 {
     struct termios newtio;
-    struct serial_struct st;
 
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
@@ -666,6 +715,62 @@ kw1281_open (char *device)
     return 0;
 }
 
+int
+kw1281_fastinit (int address)
+{
+    struct serial_struct nt;
+    char    c;
+        
+    
+    // empty receive buffer
+    kw1281_empty_buffer();    
+    
+    // wait the idle time
+    usleep(300000);
+    
+    
+    // get current settings
+    memcpy (&nt, &st, sizeof (st));
+    
+    // setting custom baud rate to 360 baud
+    nt.custom_divisor = st.baud_base / 360;
+    nt.flags &= ~ASYNC_SPD_MASK;
+    nt.flags |= ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
+    
+    if (ioctl (fd, TIOCSSERIAL, &nt) < 0)
+    {
+        ajax_log ("TIOCSSERIAL failed\n");
+        return -1;
+    }
+
+    // send 0x00 byte message
+    if (kw1281_write_timeout('\0') == -1)
+    {
+        ajax_log("kw1281_fastinit: write() error\n");
+        return -1;
+    }
+
+    // And read back the single byte echo, which shows TX completes
+    if ( (c = kw1281_read_timeout()) == -1)
+    {
+        ajax_log("kw1281_fastinit: read() error\n");
+        return -1;
+    }
+    
+    // wait for 24-26ms
+    usleep(24000);
+    
+    
+    // restore normal settings
+    if (ioctl (fd, TIOCSSERIAL, &st) < 0)
+    {
+        ajax_log ("TIOCSSERIAL failed\n");
+        return -1;
+    }    
+
+    return 0;
+}
+
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
 int
 kw1281_init (int address)
@@ -686,6 +791,14 @@ kw1281_init (int address)
             return 0;
     }
     */
+    
+    // empty receive buffer
+    kw1281_empty_buffer();
+    
+    
+    // wait the idle time
+    usleep(300000);
+    
     
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)

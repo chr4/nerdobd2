@@ -16,14 +16,7 @@
  * timeout select doesnt properly return (wtf?)
  *   5times kw1281_read_timeout: timeout occured
  *   then counter error counter error (1 != 255)
- * 
- * kw1281 fastinit? (is this only kwp2000?)
- *  Set baud rate etc to 360 baud, 8, N, 1
- *  write(fd, "", 1); // send 0x00 byte message
- *  // And read back the single byte echo, which shows TX completes
- *  while ( (c = read_with_select_timeout(fd, &cbuf, 1)) <= 0)
- *  // Now wait 24-26 ms so Twup expires
- *  usleep(24000);
+ *
  */
 
 void    init_values(void);
@@ -126,6 +119,7 @@ main (int arc, char **argv)
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
         if (kw1281_init (0x01) == -1)
+        //if (kw1281_fastinit (0x01) == -1)
         {
             printf("init failed. exiting...\n");
             return -1;

@@ -47,6 +47,7 @@ void    rrdtool_update_consumption (void);
 
 int     kw1281_open (char *device);
 int     kw1281_init (int);
+int     kw1281_fastinit (int);
 int     kw1281_mainloop (void);
 
 void    ajax_log(char *s);
