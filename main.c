@@ -47,12 +47,12 @@ init_values(void)
     
     
     // init average consumption struct
-    memset(&consumption.array, '0', sizeof(consumption.array));
-    consumption.counter = 0;
-    consumption.array_full = 0;
-    consumption.average_short = -2;
-    consumption.average_medium = -2;
-    consumption.average_long = -2;
+    memset(&av_con.array, '0', sizeof(av_con.array));
+    av_con.counter = 0;
+    av_con.array_full = 0;
+    av_con.average_short = -2;
+    av_con.average_medium = -2;
+    av_con.average_long = -2;
     
     // init average speed struct
     memset(&av_speed.array, '0', sizeof(av_speed.array));
@@ -66,7 +66,7 @@ init_values(void)
     // overwrite consumption inits from file, if present
     if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
     {
-        read(fd, &consumption, sizeof(consumption));
+        read(fd, &av_con, sizeof(av_con));
         close( fd );
     }
     
@@ -79,12 +79,12 @@ init_values(void)
     
 #ifdef DEBUG  
     int i;
-    printf("consumption.counter: %d\n", consumption.counter);
-    for (i = 0; i < consumption.counter; i++)
-        printf("%.02f ", consumption.array[i]);
-    printf("array full? (%d)\n", consumption.array_full);
-    printf("consumption averages: %.02f, %.02f, %.02f\n",
-           consumption.average_short, consumption.average_medium, consumption.average_long);
+    printf("av_con.counter: %d\n", av_con.counter);
+    for (i = 0; i < av_con.counter; i++)
+        printf("%.02f ", av_con.array[i]);
+    printf("array full? (%d)\n", av_con.array_full);
+    printf("av_con averages: %.02f, %.02f, %.02f\n",
+           av_con.average_short, av_con.average_medium, av_con.average_long);
 
     printf("av_speed.counter: %d\n", consumption.counter);
     for (i = 0; i < av_speed.counter; i++)

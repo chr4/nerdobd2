@@ -39,51 +39,51 @@ rrdtool_update_consumption (void)
         // read values from file (in case its been resetted)
         if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
         {
-            read(fd, &consumption, sizeof(consumption));
+            read(fd, &av_con, sizeof(av_con));
             close( fd );
         }
         
         // save consumption to average consumption array
-        if (consumption.counter == LONG)
+        if (av_con.counter == LONG)
         {
-            consumption.array_full = 1;
-            consumption.counter = 0;
+            av_con.array_full = 1;
+            av_con.counter = 0;
         }
         
-        consumption.array[consumption.counter++] = con_km;
+        av_con.array[av_con.counter++] = con_km;
         
 
         // calculate average for SHORT seconds
-        if (consumption.counter > SHORT)
-            for (i = consumption.counter - SHORT; i < consumption.counter; i++)
-                tmp_short += consumption.array[i];
+        if (av_con.counter > SHORT)
+            for (i = av_con.counter - SHORT; i < av_con.counter; i++)
+                tmp_short += av_con.array[i];
         else
-            for (i = 0; i < consumption.counter; i++)
-                tmp_short += consumption.array[i];
+            for (i = 0; i < av_con.counter; i++)
+                tmp_short += av_con.array[i];
         
-        consumption.average_short = tmp_short / i;
+        av_con.average_short = tmp_short / i;
         
         
         // calculate average for MEDIUM seconds
-        if (consumption.counter > MEDIUM)
-            for (i = consumption.counter - MEDIUM; i < consumption.counter; i++)
-                tmp_medium += consumption.array[i];
+        if (av_con.counter > MEDIUM)
+            for (i = av_con.counter - MEDIUM; i < av_con.counter; i++)
+                tmp_medium += av_con.array[i];
         else
-            for (i = 0; i < consumption.counter; i++)
-                tmp_medium += consumption.array[i];
+            for (i = 0; i < av_con.counter; i++)
+                tmp_medium += av_con.array[i];
         
-        consumption.average_medium = tmp_medium / i;
+        av_con.average_medium = tmp_medium / i;
 
         
         // calculate average for LONG seconds
-        if (consumption.array_full)
+        if (av_con.array_full)
             for (i = 0; i < LONG; i++)
-                tmp_long += consumption.array[i];
+                tmp_long += av_con.array[i];
         else
-            for (i = 0; i < consumption.counter; i++)
-                tmp_long += consumption.array[i];
+            for (i = 0; i < av_con.counter; i++)
+                tmp_long += av_con.array[i];
         
-        consumption.average_long = tmp_long / i;
+        av_con.average_long = tmp_long / i;
 
 
         // save consumption array to file        
@@ -91,7 +91,7 @@ rrdtool_update_consumption (void)
             perror("couldn't open file:\n");
         else
         {
-            write(fd, &consumption, sizeof(consumption));
+            write(fd, &av_con, sizeof(av_con));
             close(fd);
         }
         

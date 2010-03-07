@@ -27,12 +27,12 @@
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
 // serial dump logs 15600ms before answer arrives maybe 7800 is better?
-#define WRITE_DELAY     7600 // 5700
+#define WRITE_DELAY     5700
 #define INIT_DELAY      200000
 
 #define PORT            8080
 
-// measure length in seconds
+// measure length in seconds (for calculating averages)
 #define SHORT       300     // last 5 minutes
 #define MEDIUM      1800    // last 30 minutes
 #define LONG        14400   // last 4 hours
@@ -57,27 +57,16 @@ float   speed, rpm, temp1, temp2, oil_press, inj_time, voltage;
 float   con_h;
 float   con_km;
 
-// average consumption
-struct con_av
+// averages
+struct average
 {
     float   array[LONG];
     char    array_full;
     int     counter;
-    float   average_short;
-    float   average_medium;
-    float   average_long;    
-} consumption;
-
-// average speed
-struct speed_av
-{
-    float   array[LONG];
-    char    array_full;
-    int     counter;
-    float   average_short;
-    float   average_medium;
-    float   average_long;    
-} av_speed;
+    float   average_short;  // average of short time period (SHORT)
+    float   average_medium; // average of medium time period (MEDIUM)
+    float   average_long;   // average of long time period (LONG)  
+} av_con, av_speed;
 
 
 char    debug[1024];    // debuging messages go here
