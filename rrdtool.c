@@ -55,25 +55,36 @@ rrdtool_update_consumption (void)
 
         // calculate average for SHORT seconds
         if (av_con.counter > SHORT)
+        {
             for (i = av_con.counter - SHORT; i < av_con.counter; i++)
                 tmp_short += av_con.array[i];
+        
+            av_con.average_short = tmp_short / SHORT;
+        }
         else
+        {
             for (i = 0; i < av_con.counter; i++)
                 tmp_short += av_con.array[i];
         
-        av_con.average_short = tmp_short / i;
+            av_con.average_short = tmp_short / i;
+        }
         
         
         // calculate average for MEDIUM seconds
         if (av_con.counter > MEDIUM)
+        {
             for (i = av_con.counter - MEDIUM; i < av_con.counter; i++)
                 tmp_medium += av_con.array[i];
+
+            av_con.average_medium = tmp_medium / MEDIUM;
+        }
         else
+        {
             for (i = 0; i < av_con.counter; i++)
                 tmp_medium += av_con.array[i];
         
-        av_con.average_medium = tmp_medium / i;
-
+            av_con.average_medium = tmp_medium / i;
+        }
         
         // calculate average for LONG seconds
         if (av_con.array_full)
@@ -199,25 +210,35 @@ rrdtool_update_speed (void)
 
         // calculate average for SHORT seconds
         if (av_speed.counter > SHORT)
+        {
             for (i = av_speed.counter - SHORT; i < av_speed.counter; i++)
                 tmp_short += av_speed.array[i];
+ 
+             av_speed.average_short = tmp_short / SHORT;
+        }
         else
+        {
             for (i = 0; i < av_speed.counter; i++)
                 tmp_short += av_speed.array[i];
 
-        av_speed.average_short = tmp_short / i;
-
+            av_speed.average_short = tmp_short / i;
+        }
 
         // calculate average for MEDIUM seconds
         if (av_speed.counter > MEDIUM)
+        {
             for (i = av_speed.counter - MEDIUM; i < av_speed.counter; i++)
                 tmp_medium += av_speed.array[i];
+            
+             av_speed.average_medium = tmp_short / MEDIUM;
+        }
         else
+        {
             for (i = 0; i < av_speed.counter; i++)
                 tmp_medium += av_speed.array[i];
 
-        av_speed.average_medium = tmp_medium / i;
-
+            av_speed.average_medium = tmp_medium / i;
+        }
 
         // calculate average for LONG seconds
         if (av_speed.array_full)
