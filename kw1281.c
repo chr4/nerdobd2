@@ -715,6 +715,30 @@ kw1281_open (char *device)
     return 0;
 }
 
+// restore old serial configuration and close port
+int
+kw1281_close(void)
+{
+    printf("shutting down serial port");
+    
+    if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
+    {
+        ajax_log ("TIOCSSERIAL failed\n");
+        return -1;
+    }
+    
+    tcflush (fd, TCIFLUSH);
+    if (tcsetattr (fd, TCSANOW, &oldtio) == -1)
+    {
+        ajax_log("tcsetattr() failed.\n");
+        return -1;
+    }
+
+    close(fd);
+
+    return 0;    
+}
+
 int
 kw1281_fastinit (int address)
 {

@@ -46,6 +46,7 @@ void    rrdtool_update_speed (void);
 void    rrdtool_update_consumption (void);
 
 int     kw1281_open (char *device);
+int     kw1281_close(void);
 int     kw1281_init (int);
 int     kw1281_fastinit (int);
 int     kw1281_mainloop (void);

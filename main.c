@@ -118,10 +118,11 @@ main (int arc, char **argv)
         
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
-        if (kw1281_init (0x01) == -1)
-        //if (kw1281_fastinit (0x01) == -1)
+        //if (kw1281_init (0x01) == -1)
+        if (kw1281_fastinit (0x01) == -1)
         {
             printf("init failed. exiting...\n");
+            kw1281_close();
             return -1;
         }
 #endif
@@ -132,6 +133,8 @@ main (int arc, char **argv)
             ajax_shutdown();
             pthread_kill(thread1, SIGTERM);
             pthread_join(thread1, NULL);
+            
+            kw1281_close();
             return -1;
         }
         
