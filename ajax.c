@@ -235,11 +235,11 @@ handle_client(int fd)
             obd_send(fd, con_km, "%.02f");
         
         else if (!strcmp(p, "con_av_short") )
-            obd_send(fd, consumption.average_short, "%.02f");
+            obd_send(fd, av_con.average_short, "%.02f");
         else if (!strcmp(p, "con_av_medium") )
-            obd_send(fd, consumption.average_medium, "%.02f");
+            obd_send(fd, av_con.average_medium, "%.02f");
         else if (!strcmp(p, "con_av_long") )
-            obd_send(fd, consumption.average_long, "%.02f");
+            obd_send(fd, av_con.average_long, "%.02f");
         
         else if (!strcmp(p, "speed_av_short") )
             obd_send(fd, av_speed.average_short, "%.02f");
@@ -386,19 +386,19 @@ reset_counters(void)
 #endif    
 
     // init average consumption struct
-    memset(&consumption.array, '0', sizeof(consumption.array));
-    consumption.counter = 0;
-    consumption.array_full = 0;
-    consumption.average_short = -2;
-    consumption.average_medium = -2;
-    consumption.average_long = -2;
+    memset(&av_con.array, '0', sizeof(av_con.array));
+    av_con.counter = 0;
+    av_con.array_full = 0;
+    av_con.average_short = -2;
+    av_con.average_medium = -2;
+    av_con.average_long = -2;
     
     // write zero values to file to reset counters
     if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
         perror("couldn't open file:\n");
     else
     {
-        write(fd, &consumption, sizeof(consumption));
+        write(fd, &av_con, sizeof(av_con));
         close(fd);
     }
     
@@ -416,14 +416,14 @@ reset_counters(void)
         perror("couldn't open file:\n");
     else
     {
-        write(fd, &consumption, sizeof(consumption));
+        write(fd, &av_speed, sizeof(av_speed));
         close(fd);
     }
 
 #ifdef DEBUG
     sleep(1);
     printf("values: %.02f %d %d %.02f\n", 
-           consumption.average_short, consumption.counter, av_speed.counter, av_speed.average_long);
+           av_con.average_short, av_con.counter, av_speed.counter, av_speed.average_long);
 #endif
     
     return;
