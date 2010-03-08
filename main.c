@@ -17,6 +17,17 @@
  *   5times kw1281_read_timeout: timeout occured
  *   then counter error counter error (1 != 255)
  *
+ *
+ * howto properly close serial port
+ * (so we don't have timeout problems on reconnect)
+ *
+ *     (void)ioctl(fd, TIOCSSERIAL, &dt->dt_osinfo);
+ *     (void)ioctl(fd, TCSETS, &dt->dt_otinfo);
+ *     (void)ioctl(fd, TIOCMSET, &dt->dt_modemflags);
+ *
+ *
+ * fastinit is unused atm (and not working)
+ * recover is unused atm (and not working)
  */
 
 void    init_values(void);
@@ -41,20 +52,23 @@ init_values(void)
     
     // init average consumption struct
     memset(&av_con.array, '0', sizeof(av_con.array));
+    /*
     av_con.counter = 0;
     av_con.array_full = 0;
-    av_con.average_short = -2;
-    av_con.average_medium = -2;
-    av_con.average_long = -2;
+    av_con.average_short = 0;
+    av_con.average_medium = 0;
+    av_con.average_long = 0;
+    */
     
     // init average speed struct
     memset(&av_speed.array, '0', sizeof(av_speed.array));
+    /*
     av_speed.counter = 0;
     av_speed.array_full = 0;
-    av_speed.average_short = -2;
-    av_speed.average_medium = -2;
-    av_speed.average_long = -2;
-    
+    av_speed.average_short = 0;
+    av_speed.average_medium = 0;
+    av_speed.average_long = 0;
+    */  
     
     // overwrite consumption inits from file, if present
     if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
@@ -93,6 +107,16 @@ main (int arc, char **argv)
 {
     pthread_t thread1;
 
+    // we need realtime priority!
+    struct sched_param prio;
+    
+    prio.sched_priority = 1;
+    if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
+    {
+        perror("sched_setscheduler");
+    }
+    
+    
 #ifdef SERIAL_ATTACHED
     // kw1281_open() somehow has to be started
     // before any threading stuff.
@@ -118,8 +142,8 @@ main (int arc, char **argv)
         
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
-        //if (kw1281_init (0x01) == -1)
-        if (kw1281_fastinit (0x01) == -1)
+        if (kw1281_init (0x01) == -1)
+        //if (kw1281_fastinit (0x01) == -1)
         {
             printf("init failed. exiting...\n");
             kw1281_close();
@@ -130,15 +154,17 @@ main (int arc, char **argv)
         if (kw1281_mainloop() == -1)
         {
             printf("errors. exiting...\n");
+            kw1281_close();
             ajax_shutdown();
             pthread_kill(thread1, SIGTERM);
             pthread_join(thread1, NULL);
             
-            kw1281_close();
             return -1;
         }
         
     }
-    
+
+    // should never be reached
+    kw1281_close();    
     return 0;
 }

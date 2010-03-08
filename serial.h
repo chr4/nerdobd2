@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <pthread.h>
+#include <sched.h>
 
 
 
@@ -33,9 +34,9 @@
 #define PORT            8080
 
 // measure length in seconds (for calculating averages)
-#define SHORT       300     // last 5 minutes
-#define MEDIUM      1800    // last 30 minutes
-#define LONG        14400   // last 4 hours
+#define SHORT           300     // last 5 minutes
+#define MEDIUM          1800    // last 30 minutes
+#define LONG            14400   // last 4 hours
 
 #define CON_AV_FILE     "consumption.data"
 #define SPEED_AV_FILE   "speed.data"

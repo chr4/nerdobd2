@@ -27,6 +27,7 @@ char    dev_awake = 0;          // flag (true if ECU is already awake, thus 5 ba
 // save old values
 struct termios oldtio;
 struct serial_struct ot, st;
+int     oldflags;
 
 
 // read 1024 bytes with 200ms timeout
@@ -65,13 +66,11 @@ kw1281_empty_buffer(void)
     {
         if (read (fd, &c, sizeof(c)) == -1)
         {
-            ajax_log("kw1281_read_timeout: read() error\n");
             return -1;
         }
     }
     else
     {
-        ajax_log("kw1281_read_timeout: timeout occured\n");
         return -1;
     }
     
@@ -677,7 +676,7 @@ kw1281_open (char *device)
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
         ajax_log ("couldn't open serial device\n");
-	sleep(1);
+        sleep(1);
         return -1;
     }
 
@@ -705,6 +704,7 @@ kw1281_open (char *device)
     newtio.c_oflag = 0;
     newtio.c_cc[VMIN] = 1;
     newtio.c_cc[VTIME] = 0;
+    
     tcflush (fd, TCIFLUSH);
     if (tcsetattr (fd, TCSANOW, &newtio) == -1)
     {
@@ -719,7 +719,7 @@ kw1281_open (char *device)
 int
 kw1281_close(void)
 {
-    printf("shutting down serial port");
+    ajax_log("shutting down serial port\n");
     
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
     {
@@ -727,13 +727,20 @@ kw1281_close(void)
         return -1;
     }
     
-    tcflush (fd, TCIFLUSH);
-    if (tcsetattr (fd, TCSANOW, &oldtio) == -1)
+    // allow buffer to drain, discard input
+    // TCSADRAIN for only letting it drain
+    if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
     {
         ajax_log("tcsetattr() failed.\n");
         return -1;
     }
 
+    if (ioctl (fd, TIOCMSET, &oldflags) < 0)
+    {
+        ajax_log("TIOCMSET failed.\n");
+        return -1;
+    }
+    
     close(fd);
 
     return 0;    
@@ -801,8 +808,8 @@ kw1281_init (int address)
 {
     int     i, p, flags;
     unsigned char c;
-    
     int     in;
+    
     
     // check if device is already awake
     // if so, call recover and return, no 5 baud init needed
@@ -818,8 +825,7 @@ kw1281_init (int address)
     
     // empty receive buffer
     kw1281_empty_buffer();
-    
-    
+
     // wait the idle time
     usleep(300000);
     
@@ -830,6 +836,10 @@ kw1281_init (int address)
         ajax_log("TIOCMGET failed.\n");
         return -1;
     }
+    
+    // save old flags so we can restore them later
+    oldflags = flags;
+    
     flags &= ~(TIOCM_DTR | TIOCM_RTS);
 
     if (ioctl (fd, TIOCMSET, &flags) < 0)
