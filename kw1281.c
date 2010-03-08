@@ -6,6 +6,7 @@ int     kw1281_send_byte_ack (unsigned char);
 int     kw1281_sendajax_log_ack (void);
 int     kw1281_send_block (unsigned char);
 int     kw1281_recv_block (unsigned char);
+int     kw1281_send_ack (void);
 int     kw1281_recv_byte_ack (void);
 int     kw1281_inc_counter (void);
 int     kw1281_get_ascii_blocks(void);
@@ -309,9 +310,9 @@ kw1281_send_byte_ack (unsigned char c)
     return 0;
 }
 
-/* send an ACK block */
+// send an ACK block
 int
-kw1281_send_ack ()
+kw1281_send_ack (void)
 {
     unsigned char c;
 
