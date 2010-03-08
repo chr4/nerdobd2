@@ -21,10 +21,6 @@
  * howto properly close serial port
  * (so we don't have timeout problems on reconnect)
  *
- *     (void)ioctl(fd, TIOCSSERIAL, &dt->dt_osinfo);
- *     (void)ioctl(fd, TCSETS, &dt->dt_otinfo);
- *     (void)ioctl(fd, TIOCMSET, &dt->dt_modemflags);
- *
  *
  * fastinit is unused atm (and not working)
  * recover is unused atm (and not working)
@@ -50,25 +46,10 @@ init_values(void)
     con_km = -2;
     
     
-    // init average consumption struct
+    // init average structs
     memset(&av_con.array, '0', sizeof(av_con.array));
-    /*
-    av_con.counter = 0;
-    av_con.array_full = 0;
-    av_con.average_short = 0;
-    av_con.average_medium = 0;
-    av_con.average_long = 0;
-    */
-    
-    // init average speed struct
     memset(&av_speed.array, '0', sizeof(av_speed.array));
-    /*
-    av_speed.counter = 0;
-    av_speed.array_full = 0;
-    av_speed.average_short = 0;
-    av_speed.average_medium = 0;
-    av_speed.average_long = 0;
-    */  
+
     
     // overwrite consumption inits from file, if present
     if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
@@ -106,15 +87,20 @@ int
 main (int arc, char **argv)
 {
     pthread_t thread1;
-
-    // we need realtime priority!
     struct sched_param prio;
     
-    prio.sched_priority = 1;
-    if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
+    // set realtime priority if we're running as root
+    if (getuid() == 0)
     {
-        perror("sched_setscheduler");
+        prio.sched_priority = 1;
+        
+        if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
+        {
+            perror("sched_setscheduler");
+        }
     }
+    else
+        printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
     
     
 #ifdef SERIAL_ATTACHED
