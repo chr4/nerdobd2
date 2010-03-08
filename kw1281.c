@@ -62,7 +62,7 @@ kw1281_empty_buffer(void)
         
     } while (res == -1 && errno == EINTR);
     
-    if (res)
+    if (res > 0)
     {
         if (read (fd, &c, sizeof(c)) == -1)
         {
@@ -101,14 +101,18 @@ kw1281_read_timeout(void)
     
         res = select(fd + 1, &rfds, NULL, NULL, &timeout);
         
-        if (errno == EINTR)
-            ajax_log("read: select() got EINTR");
         if (res == -1)
-            ajax_log("read: select() failed");
+        {
+            if (errno == EINTR)
+                ajax_log("read: select() got EINTR");
+
+            else
+                ajax_log("read: select() failed");
+        }
         
     } while (res == -1 && errno == EINTR);
 
-    if (res)
+    if (res > 0)
     {
         if (read (fd, &c, 1) == -1)
         {
@@ -116,9 +120,13 @@ kw1281_read_timeout(void)
             return -1;
         }
     }
-    else
+    else if (res == 0)
     {
         ajax_log("kw1281_read_timeout: timeout occured\n");
+        return -1;
+    }
+    else {
+        ajax_log("kw1281_read_timeout: unknown error\n");
         return -1;
     }
 
@@ -148,14 +156,18 @@ kw1281_write_timeout(unsigned char c)
     
         res = select(fd + 1, NULL, &wfds, NULL, &timeout);
         
-        if (errno == EINTR)
-            ajax_log("write: select() got EINTR");
         if (res == -1)
-            ajax_log("write: select() failed");
+        {
+            if (errno == EINTR)
+                ajax_log("write: select() got EINTR");
+            
+            else
+                ajax_log("write: select() failed");
+        }
         
     } while (res == -1 && errno == EINTR);
     
-    if (res)
+    if (res > 0)
     {
         if (write (fd, &c, 1) <= 0)
         {
@@ -163,11 +175,16 @@ kw1281_write_timeout(unsigned char c)
             return -1;
         }
     }
-    else
+    else if (res == 0)
     {
         ajax_log("kw1281_write_timeout: timeout occured\n");
         return -1;
     }
+    else {
+        ajax_log("kw1281_write_timeout: unknown error\n");
+        return -1;
+    }
+
     
     return 0;
 }
@@ -741,7 +758,11 @@ kw1281_close(void)
         return -1;
     }
     
-    close(fd);
+    // check close
+    if (close(fd))
+    {
+        perror("close");
+    }
 
     return 0;    
 }

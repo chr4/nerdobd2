@@ -1,5 +1,5 @@
 CC=gcc
-CC_OPTIONS=-Wall -lpthread
+CC_OPTIONS=-Wall -lpthread -ggdb
 
 
 serial : main.o kw1281.o rrdtool.o ajax.o
