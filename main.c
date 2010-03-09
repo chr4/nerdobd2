@@ -4,6 +4,11 @@
  * start like this:
  * $ while (true); do ./serial; done
  *
+ * thanks: Florian Schäffer     http://www.blafusel.de/obd/obd2_kw1281.html
+ *         Philipp aka pH5      http://www.blafusel.de/phpbb/viewtopic.php?t=223
+ *         freediag             http://freediag.org/
+ *
+ *
  * TODO:
  * 
  * create nice looking interface
@@ -13,10 +18,6 @@
  *
  * call rrdtool with rrdlib and not with exec()
  *
- * timeout select doesnt properly return (wtf?)
- *   5times kw1281_read_timeout: timeout occured
- *   then counter error counter error (1 != 255)
- *
  *
  * howto properly close serial port
  * (so we don't have timeout problems on reconnect)
@@ -24,6 +25,8 @@
  *
  * fastinit is unused atm (and not working)
  * recover is unused atm (and not working)
+ *
+ *
  */
 
 void    init_values(void);
