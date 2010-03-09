@@ -138,9 +138,17 @@ rrdtool_update_consumption (void)
     
     if (fork() == 0)
     {
-        execlp("rrdtool", "rrdtool",
-               "update", "consumption.rrd", starttime,
-               NULL);
+        // rrdtool args
+        char *args[] = 
+        {
+            "update", "consumption.rrd", starttime,
+            NULL
+        };
+        
+        
+        for (i = 0; args[i] != NULL; i++);
+        if (rrd_update(i, args) == -1)
+            printf("rrd_update() error\n");
 
         exit(0);
     }
@@ -160,7 +168,7 @@ rrdtool_update_consumption (void)
         
         char *args[256] =
         {             
-            "rrdtool", "graph", "consumption.png",
+            "graph", "consumption.png",
             "--start", starttime, "--end", endtime,
             "--upper-limit", "19.5", "--lower-limit", "0", "--y-grid", "3.25:1",
             "DEF:con_km=consumption.rrd:km:AVERAGE", 
@@ -192,7 +200,11 @@ rrdtool_update_consumption (void)
             args[n] = combined[n];
         
         
-        execvp(args[0], args);
+        for (i = 0; args[i] != NULL; i++);
+
+        if (rrd_graph_v(i, args) == NULL)
+            printf("rrd_graph() error\n");
+        
         exit(0);
     }
     
@@ -312,10 +324,18 @@ rrdtool_update_speed (void)
                   (int) time (&t), speed);
         
         if (fork() == 0)
-        {
-            execlp("rrdtool", "rrdtool",
-                   "update", "speed.rrd", starttime,
-                   NULL);
+        {          
+            // rrdtool args
+            char *args[] = 
+            {
+                "update", "speed.rrd", starttime,
+                NULL
+            };
+            
+            
+            for (i = 0; args[i] != NULL; i++);
+            if (rrd_update(i, args) == -1)
+                printf("rrd_update() error\n");
             
             exit(0);
         }
@@ -337,7 +357,7 @@ rrdtool_update_speed (void)
 
         char *args[256] =
         { 
-            "rrdtool", "graph", "speed.png",
+            "graph", "speed.png",
             "--start", starttime, "--end", endtime,
             "--upper-limit", "135", "--lower-limit", "0", "--y-grid", "7.5:2",
             "DEF:myspeed=speed.rrd:speed:AVERAGE",
@@ -364,9 +384,12 @@ rrdtool_update_speed (void)
         // we need an array of pointers for execvp()
         for (n = 0; n < i; n++)
             args[n] = combined[n];
-
         
-        execvp(args[0], args);
+        
+        for (i = 0; args[i] != NULL; i++);
+         if (rrd_graph_v(i, args) == NULL)
+            printf("rrd_graph_v() error\n");
+        
         exit(0);
     }
     
@@ -376,10 +399,12 @@ rrdtool_update_speed (void)
 void
 rrdtool_create_consumption (void)
 {
-    pid_t   pid;
-    int     status;
     time_t  t;
     FILE   *fp;
+    
+    int     i;
+    char    starttime[256];
+    
     
     fp = fopen ("consumption.rrd", "rw");
     if (fp)
@@ -389,45 +414,37 @@ rrdtool_create_consumption (void)
     }
     
     printf ("creating consumption rrd database\n");
-    
-    /*
-     // remove old file
-     if (unlink(cmd) == -1)
-     perror("could not delete old .rrd file");
-     */
-    
-    if ((pid = fork ()) == 0)
+
+    snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
+        
+    char *args[] = 
     {
-        char    starttime[256];
-        
-        snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
-        
-        // after 15secs: unknown value
-        // 1. RRA last 5 mins
-        // 2. RRA last 30mins
-        // 3. RRA one value (average consumption last 30mins)
-        execlp ("rrdtool", "rrdtool", "create", "consumption.rrd",
-                "--start", starttime, "--step", "1",
-                "DS:km:GAUGE:30:U:U", "DS:h:GAUGE:5:0:U", // unknown after 30sec
-                "RRA:AVERAGE:0.5:1:300", 
-                "RRA:AVERAGE:0.5:300:1",   // 5min
-                "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
-                NULL);
-        exit (0);
-    }
+        "create", "consumption.rrd",
+        "--start", starttime, "--step", "1",
+        "DS:km:GAUGE:30:U:U", "DS:h:GAUGE:5:0:U",           // unknown after 30sec
+        "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:300:1",   // 5min
+        "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+        NULL
+    };
     
-    waitpid (pid, &status, 0);
+    
+    for (i = 0; args[i] != NULL; i++);
+	if (rrd_create(i, args) == -1)
+        printf("rrd_create() error\n");
     
     return;
 }
 
+
 void
 rrdtool_create_speed (void)
 {
-    pid_t   pid;
-    int     status;
     time_t  t;
     FILE   *fp;
+    
+    char    starttime[256];
+    int     i;
+    
     
     fp = fopen ("speed.rrd", "rw");
     if (fp)
@@ -438,30 +455,48 @@ rrdtool_create_speed (void)
     
     printf ("creating speed rrd database\n");
     
-    /*
-     // remove old file
-     if (unlink(cmd) == -1)
-     perror("could not delete old .rrd file");
-     */
+    snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
     
-    if ((pid = fork ()) == 0)
-    {
-        char    starttime[256];
+    // rrdtool create
+    char *args[] = 
+        {
+            "create", "speed.rrd",
+            "--start", starttime, "--step", "1",
+            "DS:speed:GAUGE:30:0:200",                          // unknown after 30sec
+            "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:300:1",   // 5min 
+            "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+            NULL
+        };
         
-        snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
-        
-        // rrdtool create
-        execlp ("rrdtool", "rrdtool", "create", "speed.rrd",
-                "--start", starttime, "--step", "1",
-                "DS:speed:GAUGE:30:0:200",   // unknown after 30sec
-                "RRA:AVERAGE:0.5:1:300", 
-                "RRA:AVERAGE:0.5:300:1",   // 5min 
-                "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
-                NULL);
-        exit (0);
+    
+    for (i = 0; args[i] != NULL; i++);
+	if (rrd_create(i, args) == -1)
+        printf("rrd_create() error\n");
+    
+
+    /*
+#ifndef LDOPEN
+	rrd_create(i, args);    
+#else
+    printf("def LDOPEN\n");
+    
+    void *sohandle = dlopen("librrd.so", RTLD_NOW | RTLD_GLOBAL);
+    int (*rrdcreate_function) (int, char **);
+    
+    if (sohandle == NULL) {
+        perror("rrd.so");
+        exit(-1);
     }
     
-    waitpid (pid, &status, 0);
+    // lookup constructor
+    rrdcreate_function = dlsym(sohandle, "rrd_create");
     
-    return;
+    if (rrdcreate_function == NULL) {
+        fprintf(stderr, "Unable to find rrd_create\n");
+        exit(-1);
+    }
+    
+    (*rrdcreate_function) (i, args);
+#endif
+    */  
 }

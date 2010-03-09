@@ -16,8 +16,6 @@
  *
  * fix communication errors with ECU, resp recover on errors
  *
- * call rrdtool with rrdlib and not with exec()
- *
  * use shm instead of pthread shared variables (why?)
  *
  *
@@ -51,9 +49,18 @@ init_values(void)
     
     
     // init average structs
-    memset(&av_con.array, '0', sizeof(av_con.array));
-    memset(&av_speed.array, '0', sizeof(av_speed.array));
-
+    av_con.array_full = 0;
+    av_con.counter = 0;
+    av_con.average_short = 0; 
+    av_con.average_medium = 0;
+    av_con.average_long = 0;
+    
+    av_speed.array_full = 0;
+    av_speed.counter = 0;
+    av_speed.average_short = 0; 
+    av_speed.average_medium = 0;
+    av_speed.average_long = 0;
+    
     
     // overwrite consumption inits from file, if present
     if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
@@ -125,8 +132,12 @@ main (int arc, char **argv)
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
 
-    for ( ; ; )
-    {
+    /* this loop is intended to restart the connection
+     * on connection errors, unfortunately, somehow kw1281_open()
+     * only works before any threading and forking
+     */
+    // for ( ; ; )
+    // {
 #ifdef SERIAL_ATTACHED
         printf ("init\n");                
         
@@ -152,7 +163,7 @@ main (int arc, char **argv)
             return -1;
         }
         
-    }
+    // }
 
     // should never be reached
     kw1281_close();    
