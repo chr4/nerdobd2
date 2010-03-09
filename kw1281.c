@@ -862,15 +862,21 @@ kw1281_init (int address)
     }
     */
     
+    
+#ifdef DEBUG
+    printf("emptying buffer...\n");
+#endif 
+    
     // empty receive buffer
-    printf("emptying buffer... ");
     kw1281_empty_buffer();
-    printf("done.\n");
+    
+
+#ifdef DEBUG    
+    printf("waiting idle time...\n");
+#endif    
     
     // wait the idle time
-    printf("waiting idle time... ");
     usleep(300000);
-    printf("done.\n");
     
     
     // prepare to send (clear dtr and rts)
@@ -930,7 +936,10 @@ kw1281_init (int address)
         return -1;
     }
 
+#ifdef DEBUG
     printf("found %d chars to ignore\n", in);
+#endif
+    
     while (in--)
     {
         if ( (c = kw1281_read_timeout()) == -1)
@@ -938,9 +947,9 @@ kw1281_init (int address)
             ajax_log("kw1281_init: read() error\n");
             return -1;
         }
-// #ifdef DEBUG
+#ifdef DEBUG
         printf ("ignore 0x%02x\n", c);
-// #endif
+#endif
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
@@ -1052,7 +1061,7 @@ kw1281_mainloop (void)
 
         // calculate consumption per hour
         if (speed > 5)
-            // below 5km/h, values get very high, which makes the graphs unreadable
+            // below 5km/h values get very high, which makes the graphs unreadable
             con_km = (con_h / speed) * 100;
         else
             con_km = -1;
@@ -1061,7 +1070,7 @@ kw1281_mainloop (void)
         rrdtool_update_consumption();
         rrdtool_update_speed();
 
-        // collect defunct processes from rrdtool thread
+        // collect defunct processes from rrdtool functions
         while(waitpid(-1, &status, WNOHANG) > 0);
          
         // request block 0x04
@@ -1076,7 +1085,7 @@ kw1281_mainloop (void)
     return 0;
 }
 
-/* this function prints the collected values */
+// this function prints the collected values 
 void
 kw1281_print (void)
 {
