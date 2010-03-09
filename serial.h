@@ -20,17 +20,16 @@
 #include <pthread.h>
 #include <sched.h>
 
-// include rrd stuff
-#include "rrd.h"
+// include rrd stuff (librrd-dev)
+#include <rrd.h>
 
 
-//#define SERIAL_ATTACHED
+#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
-// serial dump logs 15600ms before answer arrives maybe 7800 is better?
-#define WRITE_DELAY     5700
+#define WRITE_DELAY     5700    // serial dump logs 15600ms before answer arrives maybe 7800 is better?
 #define INIT_DELAY      200000
 
 #define PORT            8080
@@ -74,7 +73,7 @@ struct average
 } av_con, av_speed;
 
 
-char    debug[1024];    // debuging messages go here
+char    debug[1024];        // debuging messages go here
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;
