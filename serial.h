@@ -20,9 +20,11 @@
 #include <pthread.h>
 #include <sched.h>
 
+// include rrd stuff
+#include "rrd.h"
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"

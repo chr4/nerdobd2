@@ -863,14 +863,14 @@ kw1281_init (int address)
     */
     
     // empty receive buffer
-    printf("emptying buffer...");
+    printf("emptying buffer... ");
     kw1281_empty_buffer();
-    printf(" done.\n");
+    printf("done.\n");
     
     // wait the idle time
-    printf("waiting idle time...");
+    printf("waiting idle time... ");
     usleep(300000);
-    printf(" done.\n");
+    printf("done.\n");
     
     
     // prepare to send (clear dtr and rts)

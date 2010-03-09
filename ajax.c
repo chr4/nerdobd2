@@ -386,7 +386,11 @@ reset_counters(void)
 #endif    
 
     // init average consumption struct
-    memset(&av_con.array, '0', sizeof(av_con.array));
+    av_con.array_full = 0;
+    av_con.counter = 0;
+    av_con.average_short = 0; 
+    av_con.average_medium = 0;
+    av_con.average_long = 0;
     
     // write zero values to file to reset counters
     if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
@@ -399,7 +403,11 @@ reset_counters(void)
     
 
     // init average speed struct
-    memset(&av_speed.array, '0', sizeof(av_speed.array));
+    av_speed.array_full = 0;
+    av_speed.counter = 0;
+    av_speed.average_short = 0; 
+    av_speed.average_medium = 0;
+    av_speed.average_long = 0;
     
     // write zero values to file to reset counters
     if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
