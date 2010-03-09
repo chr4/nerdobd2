@@ -367,6 +367,7 @@ handle_client(int fd)
     return 0;
 }
 
+
 void
 ajax_log(char *s)
 {
@@ -375,6 +376,7 @@ ajax_log(char *s)
     
     return;   
 }
+
 
 void
 reset_counters(void)

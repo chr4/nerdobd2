@@ -18,6 +18,9 @@
  *
  * use shm instead of pthread shared variables (why?)
  *
+ * resetting counters works, but unlike the speed averages
+ * the consumption averages get updated on first new value
+ * instead of directly being set to 0 (wtf? code is the same.. )
  *
  * howto properly close serial port
  * (so we don't have timeout problems on reconnect)
@@ -36,16 +39,19 @@ init_values(void)
 {
     int fd;
     
-    /* init values with -2, so ajax socket can control if data is availiable */
-    speed = -2;
-    rpm = -2;
-    temp1 = -2;
-    temp2 = -2;
-    oil_press = -2;
-    inj_time = -2;
-    voltage = -2;
-    con_h = -2;
-    con_km = -2;
+    /* init values with -2
+     * so ajax socket can control 
+     * if data is availiable 
+     */
+    speed       = -2;
+    rpm         = -2;
+    temp1       = -2;
+    temp2       = -2;
+    oil_press   = -2;
+    inj_time    = -2;
+    voltage     = -2;
+    con_h       = -2;
+    con_km      = -2;
     
     
     // init average structs
@@ -132,10 +138,13 @@ main (int arc, char **argv)
     // create ajax socket in new thread for handling http connections
     pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
 
+    
     /* this loop is intended to restart the connection
      * on connection errors, unfortunately, somehow kw1281_open()
-     * only works before any threading and forking
+     * only works before any threading and forking, so its of 
+     * no use at the moment
      */
+    
     // for ( ; ; )
     // {
 #ifdef SERIAL_ATTACHED
