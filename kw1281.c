@@ -232,7 +232,9 @@ kw1281_inc_counter (void)
 int
 kw1281_recv_byte_ack (void)
 {
-    unsigned char c, d;
+    // we need int, so we can capture -1 as well
+    int c, d;
+    // unsigned char c, d;
 
     if ( (c = kw1281_read_timeout()) == -1)
     {
@@ -269,7 +271,9 @@ kw1281_recv_byte_ack (void)
 int
 kw1281_send_byte_ack (unsigned char c)
 {
-    unsigned char d;
+    // we need int, so we can capture -1 as well
+    int d;
+    // unsigned char d;
 
     usleep (WRITE_DELAY);
     
@@ -314,7 +318,9 @@ kw1281_send_byte_ack (unsigned char c)
 int
 kw1281_send_ack (void)
 {
-    unsigned char c;
+    // we need int, so we can capture -1 as well
+    int c;
+    // unsigned char c;
 
 #ifdef DEBUG
     printf ("send ACK block %d\n", counter);
@@ -361,7 +367,9 @@ kw1281_send_ack (void)
 int
 kw1281_send_block (unsigned char n)
 {
-    unsigned char c;
+    // we need int, so we can capture -1 as well
+    int c;
+    // unsigned char c;
 
 #ifdef DEBUG
     printf ("send group reading block %d\n", counter);
@@ -427,7 +435,11 @@ int
 kw1281_recv_block (unsigned char n)
 {
     int     i;
-    unsigned char c, l, t;
+    
+    // we need int, so we can capture -1 as well
+    int c, l, t;
+    //unsigned char c, l, t;
+    
     unsigned char buf[256];
 
     /* block length */
@@ -658,7 +670,10 @@ kw1281_recover(void)
      * reset counter (next block from ECU has counter 1)
      * recv_blocks()
      */
-    unsigned char c;
+    
+    // we need int, so we can capture -1 as well
+    int c;
+    // unsigned char c;
 
     
     if ( (c = kw1281_read_timeout()) == -1)
@@ -829,7 +844,9 @@ int
 kw1281_init (int address)
 {
     int     i, p, flags;
-    unsigned char c;
+
+    int c; // we need int so we can capture -1 as well
+    // unsigned char c;
     int     in;
     
     
@@ -846,10 +863,14 @@ kw1281_init (int address)
     */
     
     // empty receive buffer
+    printf("emptying buffer...");
     kw1281_empty_buffer();
-
+    printf(" done.\n");
+    
     // wait the idle time
+    printf("waiting idle time...");
     usleep(300000);
+    printf(" done.\n");
     
     
     // prepare to send (clear dtr and rts)
@@ -909,6 +930,7 @@ kw1281_init (int address)
         return -1;
     }
 
+    printf("found %d chars to ignore\n", in);
     while (in--)
     {
         if ( (c = kw1281_read_timeout()) == -1)
@@ -916,9 +938,9 @@ kw1281_init (int address)
             ajax_log("kw1281_init: read() error\n");
             return -1;
         }
-#ifdef DEBUG
+// #ifdef DEBUG
         printf ("ignore 0x%02x\n", c);
-#endif
+// #endif
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
