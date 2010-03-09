@@ -2,7 +2,7 @@
 
 /*
  * start like this:
- * $ while (true); do ./serial; done
+ * # while (true); do ./serial; done
  *
  * thanks: Florian Schäffer     http://www.blafusel.de/obd/obd2_kw1281.html
  *         Philipp aka pH5      http://www.blafusel.de/phpbb/viewtopic.php?t=223
@@ -14,9 +14,11 @@
  * create nice looking interface
  *  -> fonts?
  *
- * fix communication errors with ECU
+ * fix communication errors with ECU, resp recover on errors
  *
  * call rrdtool with rrdlib and not with exec()
+ *
+ * use shm instead of pthread shared variables (why?)
  *
  *
  * howto properly close serial port
@@ -25,7 +27,6 @@
  *
  * fastinit is unused atm (and not working)
  * recover is unused atm (and not working)
- *
  *
  */
 
