@@ -2,8 +2,8 @@ CC=gcc
 CC_OPTIONS=-Wall -lpthread -lrrd # -ggdb
 
 
-serial : main.o kw1281.o rrdtool.o ajax.o
-	$(CC) $(CC_OPTIONS) -o serial main.o kw1281.o rrdtool.o ajax.o
+nerdobd2 : main.o kw1281.o rrdtool.o ajax.o
+	$(CC) $(CC_OPTIONS) -o nerdobd2 main.o kw1281.o rrdtool.o ajax.o
 
 main.o : main.c
 	$(CC) $(CC_OPTIONS) -c main.c
@@ -19,4 +19,4 @@ ajax.o : ajax.c
 
 
 clean :
-	rm -f *.o serial
+	rm -f *.o nerdobd2

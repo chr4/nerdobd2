@@ -14,16 +14,10 @@
  * create nice looking interface
  *  -> fonts?
  *
- * fix communication errors with ECU, resp recover on errors
- *
- * use shm instead of pthread shared variables (why?)
  *
  * resetting counters works, but unlike the speed averages
  * the consumption averages get updated on first new value
  * instead of directly being set to 0 (wtf? code is the same.. )
- *
- * howto properly close serial port
- * (so we don't have timeout problems on reconnect)
  *
  *
  * fastinit is unused atm (and not working)
@@ -31,27 +25,47 @@
  *
  */
 
-void    init_values(void);
+int     init_values(void);
 
 
-void
+int
 init_values(void)
 {
-    int fd;
+    int     fd;
+    
+    int     shmid;
+    key_t   key = 1337;
+    
+    // setup shared values
+    if ( (shmid = shmget(key, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
+    {
+        perror("shmget");
+        return -1;
+    }
+    
+    if ( (gval = (struct values *) shmat(shmid, (void *) 0, 0)) == (void *) -1)
+    {
+        perror("shmat");
+        return -1;
+    }
+    
     
     /* init values with -2
      * so ajax socket can control 
      * if data is availiable 
      */
-    speed       = -2;
-    rpm         = -2;
-    temp1       = -2;
-    temp2       = -2;
-    oil_press   = -2;
-    inj_time    = -2;
-    voltage     = -2;
-    con_h       = -2;
-    con_km      = -2;
+    gval->speed     = -2;
+    gval->rpm       = -2;
+    gval->temp1     = -2;
+    gval->temp2     = -2;
+    gval->oil_press = -2;
+    gval->inj_time  = -2;
+    gval->voltage   = -2;
+    gval->con_h     = -2;
+    gval->con_km    = -2;
+
+    gval->av_con_timespan = 300;    // default timespan 5min (300sec)
+    gval->av_speed_timespan = 300;  // default timespan 5min (300sec)    
     
     
     // init average structs
@@ -60,6 +74,7 @@ init_values(void)
     av_con.average_short = 0; 
     av_con.average_medium = 0;
     av_con.average_long = 0;
+
     
     av_speed.array_full = 0;
     av_speed.counter = 0;
@@ -98,26 +113,17 @@ init_values(void)
     printf("speed averages: %.02f, %.02f, %.02f\n",
            av_speed.average_short, av_speed.average_medium, av_speed.average_long);    
 #endif  
+    
+    return 0;
 }
 
 int
 main (int arc, char **argv)
 {
-    pthread_t thread1;
+    pid_t   pid;
+    int     status;
+    int     ret;
     struct sched_param prio;
-    
-    // set realtime priority if we're running as root
-    if (getuid() == 0)
-    {
-        prio.sched_priority = 1;
-        
-        if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
-        {
-            perror("sched_setscheduler");
-        }
-    }
-    else
-        printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
     
     
 #ifdef SERIAL_ATTACHED
@@ -132,12 +138,33 @@ main (int arc, char **argv)
     rrdtool_create_speed ();
 
     // initialize values (if possible, load from file)
-    init_values();
+    if (init_values() == -1)
+        return -1;
 
     
-    // create ajax socket in new thread for handling http connections
-    pthread_create (&thread1, NULL, ajax_socket, (void *) PORT);
-
+    // create ajax socket in child process for handling http connections
+    if ( (pid = fork()) > 0)
+    {
+        ajax_socket(PORT);
+        exit(0);
+    }
+    
+    
+    // set realtime priority if we're running as root
+    if (getuid() == 0)
+    {
+        prio.sched_priority = 1;
+        
+        if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
+            perror("sched_setscheduler");
+        
+        if (nice(-19) == -1)
+            perror("nice failed\n");
+        
+    }
+    else
+        printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
+    
     
     /* this loop is intended to restart the connection
      * on connection errors, unfortunately, somehow kw1281_open()
@@ -145,34 +172,37 @@ main (int arc, char **argv)
      * no use at the moment
      */
     
-    // for ( ; ; )
-    // {
+    for ( ; ; )
+    {
 #ifdef SERIAL_ATTACHED
         printf ("init\n");                
         
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
-        if (kw1281_init (0x01) == -1)
-        //if (kw1281_fastinit (0x01) == -1)
+        ret = kw1281_init (0x01);
+        // ret = kw1281_fastinit (0x01);
+        
+        if (ret == -1)
         {
-            printf("init failed. exiting...\n");
+            printf("init failed, retrying...\n");
+            continue;
+        }
+        
+        else if (ret == -2)
+        {
+            printf("serial port error, exiting.\n");
             kw1281_close();
+            ajax_shutdown();
+            
+            waitpid(pid, &status, 0);
             return -1;
         }
 #endif
 
         if (kw1281_mainloop() == -1)
-        {
-            printf("errors. exiting...\n");
-            kw1281_close();
-            ajax_shutdown();
-            pthread_kill(thread1, SIGTERM);
-            pthread_join(thread1, NULL);
-            
-            return -1;
-        }
+            printf("errors. restarting...\n");
         
-    // }
+    }
 
     // should never be reached
     kw1281_close();    

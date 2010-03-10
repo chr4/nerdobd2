@@ -5,7 +5,6 @@
 char *rrdstyle[256] =
 { 
     "--slope-mode", "--height", "230", "--width", "490", "--full-size-mode", "--rigid",
-    "--x-grid", "SECOND:30:MINUTE:1:MINUTE:1:0:%R",
     "--color", "SHADEB#222222", "--color", "SHADEA#222222",
     "--color", "BACK#222222", "--color", "FRAME#222222",
     "--color", "GRID#aaaaaa00", "--color", "MGRID#aaaaaa00",
@@ -14,6 +13,11 @@ char *rrdstyle[256] =
     NULL    // array needs to be terminated with NULL
 };
 
+
+// define x-grid lines for 5min / 30min / 4h
+char xgrid_short[256]  = "SECOND:30:MINUTE:1:MINUTE:1:0:%R";
+char xgrid_medium[256] = "MINUTE:1:MINUTE:5:MINUTE:5:0:%R";
+char xgrid_long[256]   = "MINUTE:15:MINUTE:30:MINUTE:30:0:%R";
 
 void
 rrdtool_update_consumption (void)
@@ -28,10 +32,10 @@ rrdtool_update_consumption (void)
     float   tmp_medium = 0;    
     float   tmp_long = 0;
     
-    if (con_km < 0)
+    if (gval->con_km < 0)
     {
         snprintf (starttime, sizeof (starttime), "%d::%.2f", 
-                  (int) time (&t), con_h);
+                  (int) time (&t), gval->con_h);
     }
     else
     {
@@ -50,7 +54,7 @@ rrdtool_update_consumption (void)
             av_con.counter = 0;
         }
         
-        av_con.array[av_con.counter++] = con_km;
+        av_con.array[av_con.counter++] = gval->con_km;
         
 
         // calculate average for SHORT seconds
@@ -132,7 +136,7 @@ rrdtool_update_consumption (void)
         
         
         snprintf (starttime, sizeof (starttime), "%d:%.2f:%.2f", 
-                  (int) time (&t), con_km, con_h);
+                  (int) time (&t), gval->con_km, gval->con_h);
     }
     
     
@@ -155,7 +159,7 @@ rrdtool_update_consumption (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - 300); // now - 300s (5min)
+             (int) time (&t) - gval->av_con_timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -195,6 +199,19 @@ rrdtool_update_consumption (void)
             i++;
         }
         
+        // append xgrid setting
+        strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+        i++;
+        
+        if (gval->av_con_timespan < 900)        // 15min
+            strncpy(combined[i], xgrid_short, sizeof(combined[i]));
+        else if (gval->av_con_timespan < 3600)  // 1h
+            strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
+        else
+            strncpy(combined[i], xgrid_long, sizeof(combined[i]));
+        
+        i++;
+        
         // we need an array of pointers for execvp()
         for (n = 0; n < i; n++)
             args[n] = combined[n];
@@ -224,7 +241,7 @@ rrdtool_update_speed (void)
     float   tmp_medium = 0;    
     float   tmp_long = 0;
     
-    if (speed >= 0)
+    if (gval->speed >= 0)
     { 
         // read values from file (in case its been resetted)
         if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
@@ -241,7 +258,7 @@ rrdtool_update_speed (void)
             av_speed.counter = 0;
         }
 
-        av_speed.array[av_speed.counter++] = speed;
+        av_speed.array[av_speed.counter++] = gval->speed;
 
 
         // calculate average for SHORT seconds
@@ -321,7 +338,7 @@ rrdtool_update_speed (void)
         }
         
         snprintf (starttime, sizeof (starttime), "%d:%.1f", 
-                  (int) time (&t), speed);
+                  (int) time (&t), gval->speed);
         
         if (fork() == 0)
         {          
@@ -344,7 +361,7 @@ rrdtool_update_speed (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - 300); // now - 300s (5min)
+             (int) time (&t) - gval->av_speed_timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -380,6 +397,19 @@ rrdtool_update_speed (void)
             n++;
             i++;
         }
+        
+        // append xgrid setting
+        strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+        i++;
+        
+        if (gval->av_speed_timespan < 900)        // 15min
+            strncpy(combined[i], xgrid_short, sizeof(combined[i]));
+        else if (gval->av_speed_timespan < 3600)  // 1h
+            strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
+        else
+            strncpy(combined[i], xgrid_long, sizeof(combined[i]));
+        
+        i++;
         
         // we need an array of pointers for execvp()
         for (n = 0; n < i; n++)
@@ -421,9 +451,11 @@ rrdtool_create_consumption (void)
     {
         "create", "consumption.rrd",
         "--start", starttime, "--step", "1",
-        "DS:km:GAUGE:30:U:U", "DS:h:GAUGE:5:0:U",           // unknown after 30sec
-        "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:300:1",   // 5min
-        "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+        "DS:km:GAUGE:30:U:U",                   // unknown after 30sec
+        "DS:h:GAUGE:5:0:U",                     // unknown after 5sec
+        "RRA:AVERAGE:0.5:1:300",                // 5min 
+        "RRA:AVERAGE:0.5:5:360",                // 30min
+        "RRA:AVERAGE:0.5:40:360",               // 4h
         NULL
     };
     
@@ -462,9 +494,10 @@ rrdtool_create_speed (void)
         {
             "create", "speed.rrd",
             "--start", starttime, "--step", "1",
-            "DS:speed:GAUGE:30:0:200",                          // unknown after 30sec
-            "RRA:AVERAGE:0.5:1:300", "RRA:AVERAGE:0.5:300:1",   // 5min 
-            "RRA:AVERAGE:0.5:5:360", "RRA:AVERAGE:0.5:1800:1",  // 30min
+            "DS:speed:GAUGE:30:0:200",              // unknown after 30sec
+            "RRA:AVERAGE:0.5:1:300",                // 5min 
+            "RRA:AVERAGE:0.5:5:360",                // 30min
+            "RRA:AVERAGE:0.5:40:360",               // 4h
             NULL
         };
         
@@ -472,31 +505,6 @@ rrdtool_create_speed (void)
     for (i = 0; args[i] != NULL; i++);
 	if (rrd_create(i, args) == -1)
         printf("rrd_create() error\n");
-    
 
-    /*
-#ifndef LDOPEN
-	rrd_create(i, args);    
-#else
-    printf("def LDOPEN\n");
-    
-    void *sohandle = dlopen("librrd.so", RTLD_NOW | RTLD_GLOBAL);
-    int (*rrdcreate_function) (int, char **);
-    
-    if (sohandle == NULL) {
-        perror("rrd.so");
-        exit(-1);
-    }
-    
-    // lookup constructor
-    rrdcreate_function = dlsym(sohandle, "rrd_create");
-    
-    if (rrdcreate_function == NULL) {
-        fprintf(stderr, "Unable to find rrd_create\n");
-        exit(-1);
-    }
-    
-    (*rrdcreate_function) (i, args);
-#endif
-    */  
+    return;
 }

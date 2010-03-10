@@ -17,14 +17,19 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <signal.h>
-#include <pthread.h>
+
+// for priority settings
 #include <sched.h>
+
+// shm includes
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 // include rrd stuff (librrd-dev)
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -54,12 +59,34 @@ int     kw1281_fastinit (int);
 int     kw1281_mainloop (void);
 
 void    ajax_log(char *s);
-void   *ajax_socket (void *);
+void    ajax_socket(int);
 int     ajax_shutdown(void);
 
-float   speed, rpm, temp1, temp2, oil_press, inj_time, voltage;
-float   con_h;
-float   con_km;
+
+// global values
+struct values
+{
+    // values from obd2
+    float   speed;
+    float   rpm;
+    float   temp1;
+    float   temp2;
+    float   oil_press;
+    float   inj_time;
+    float   voltage;
+    
+    // calculated values
+    float   con_h;
+    float   con_km;
+    
+    // time span for rrdtool graph
+    int     av_con_timespan;
+    int     av_speed_timespan;
+    
+    // debuging messages go here
+    char    debug[1024];        
+} *gval;
+
 
 // averages
 struct average
@@ -69,11 +96,11 @@ struct average
     int     counter;
     float   average_short;  // average of short time period (SHORT)
     float   average_medium; // average of medium time period (MEDIUM)
-    float   average_long;   // average of long time period (LONG)  
+    float   average_long;   // average of long time period (LONG)
 } av_con, av_speed;
 
 
-char    debug[1024];        // debuging messages go here
+
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;

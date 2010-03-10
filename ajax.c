@@ -19,14 +19,12 @@ int     obd_send_debug(int);
 void    reset_counters(void);
 
 
-void   *
-ajax_socket (void *pport)
+void
+ajax_socket (int port)
 {
-    int     port;
     int     status;
     int     clisize;
     pid_t   pid;
-    port = (int) pport;
     int     cli;
     struct sockaddr_in cliaddr;
     
@@ -47,7 +45,7 @@ ajax_socket (void *pport)
             handle_client (cli);
             
             close (cli);
-            exit (0);
+            exit(-1);
         }
 
         // collect defunct processes (don't wait)
@@ -74,6 +72,7 @@ ajax_shutdown(void)
     }
     printf("done.\n");
     
+    exit(0);
     return 0;
 }
 
@@ -88,7 +87,7 @@ tcp_listen (int port)
     if ((srv = socket (AF_INET, SOCK_STREAM, 0)) == -1)
     {
         perror ("socket() failed");
-        pthread_exit (NULL);
+        exit(-1);
     }
 
     setsockopt (srv, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on));
@@ -108,7 +107,7 @@ tcp_listen (int port)
     if (listen (srv, 3) == -1)
     {
         perror ("listen() failed");
-        pthread_exit (NULL);
+        exit(-1);
     }
 
     return 0;
@@ -121,11 +120,11 @@ obd_send_debug(int fd)
 {
     char buf2[256];
 
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(gval->debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
-    send (fd, debug, strlen (debug), 0);
+    send (fd, gval->debug, strlen (gval->debug), 0);
 
     return 0;
 }
@@ -226,13 +225,13 @@ handle_client(int fd)
 #endif
         
         if (!strcmp(p, "speed") )
-            obd_send(fd, speed, "%.01f");
+            obd_send(fd, gval->speed, "%.01f");
         else if (!strcmp(p, "rpm") )
-            obd_send(fd, rpm, "%.00f");
+            obd_send(fd, gval->rpm, "%.00f");
         else if (!strcmp(p, "con_h") )
-            obd_send(fd, con_h, "%.02f");
+            obd_send(fd, gval->con_h, "%.02f");
         else if (!strcmp(p, "con_km") )
-            obd_send(fd, con_km, "%.02f");
+            obd_send(fd, gval->con_km, "%.02f");
         
         else if (!strcmp(p, "con_av_short") )
             obd_send(fd, av_con.average_short, "%.02f");
@@ -249,16 +248,30 @@ handle_client(int fd)
             obd_send(fd, av_speed.average_long, "%.02f");
         
         else if (!strcmp(p, "temp1") )
-            obd_send(fd, temp1, "%.01f");
+            obd_send(fd, gval->temp1, "%.01f");
         else if (!strcmp(p, "temp2") )
-            obd_send(fd, temp2, "%.01f");
+            obd_send(fd, gval->temp2, "%.01f");
         else if (!strcmp(p, "voltage") )
-            obd_send(fd, voltage, "%.02f");
+            obd_send(fd, gval->voltage, "%.02f");
         else if (!strcmp(p, "debug") )
             obd_send_debug(fd);        
         
         else if (!strcmp(p, "reset") )
             reset_counters();
+        
+        else if (!strcmp(p, "av_speed_graph:short") )
+            gval->av_speed_timespan = 300;
+        else if (!strcmp(p, "av_speed_graph:medium") )
+            gval->av_speed_timespan = 1800;
+        else if (!strcmp(p, "av_speed_graph:long") )
+            gval->av_speed_timespan = 14400;
+        
+        else if (!strcmp(p, "av_con_graph:short") )
+            gval->av_con_timespan = 300;            
+        else if (!strcmp(p, "av_con_graph:medium") )
+            gval->av_con_timespan = 1800;            
+        else if (!strcmp(p, "av_con_graph:long") )            
+            gval->av_con_timespan = 14400;
         
         else
         {
@@ -372,7 +385,7 @@ void
 ajax_log(char *s)
 {
     printf("%s", s);
-    snprintf(debug, sizeof(debug), "%s", s);
+    snprintf(gval->debug, sizeof(gval->debug), "%s", s);
     
     return;   
 }
