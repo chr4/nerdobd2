@@ -29,7 +29,7 @@
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -78,15 +78,15 @@ struct values
     // calculated values
     float   con_h;
     float   con_km;
-    
-    // time span for rrdtool graph
-    int     av_con_timespan;
-    int     av_speed_timespan;
-      
-} *gval;
 
-// debuging messages go here
-char    debug[1024];      
+    // time span for rrdtool graph
+    int     con_timespan;
+    int     speed_timespan;
+    
+    // debuging messages go here
+    char    *debug;  
+} *gval;
+    
 
 // averages
 struct average
@@ -97,7 +97,8 @@ struct average
     float   average_short;  // average of short time period (SHORT)
     float   average_medium; // average of medium time period (MEDIUM)
     float   average_long;   // average of long time period (LONG)
-} av_con, av_speed;
+    
+} *av_con, *av_speed;
 
 
 
