@@ -13,6 +13,7 @@ function update_variable(varname)
             // check if variable is valid (if not, don't update
             if (req.responseText)
             {
+
                 // set color back to normal
                 if (varname != "debug")
                     document.getElementById(varname).style.color = "#f00000";
@@ -60,6 +61,13 @@ function image_loaded(tmp, img)
         // show image
         replace = document.getElementById("img_" + img);
         replace.src = tmp.src;
+        
+        // hide the "loading" popup
+        if (tmp.src.search("consumption.png") != -1)
+            document.getElementById("update_popup_con").style.visibility = 'hidden'; 
+        else if (tmp.src.search("speed.png") != -1)
+            document.getElementById("update_popup_speed").style.visibility = 'hidden'; 
+        
     }
     else
     {
@@ -128,11 +136,15 @@ function reset_counters()
 // set graph to timespan: short, medium, long
 function av_con(timespan)
 {
+    // show "loading" popup
+    document.getElementById("update_popup_con").style.visibility = 'visible';
     update_variable("av_con_graph:" + timespan);
 }
 
 // set graph to timespan: short, medium, long
 function av_speed(timespan)
 {
+    // show "loading" popup
+    document.getElementById("update_popup_speed").style.visibility = 'visible';    
     update_variable("av_speed_graph:" + timespan);
 }
