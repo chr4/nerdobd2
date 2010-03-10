@@ -71,7 +71,6 @@ init_values(void)
     gval->av_con_timespan = 300;    // default timespan 5min (300sec)
     gval->av_speed_timespan = 300;  // default timespan 5min (300sec)    
     
-    
     // init average structs
     av_con.array_full = 0;
     av_con.counter = 0;
@@ -136,7 +135,7 @@ main (int arc, char **argv)
     if (kw1281_open (DEVICE) == -1)
        return -1;
 #endif
-
+    
     // create databases, unless they exist
     rrdtool_create_consumption ();
     rrdtool_create_speed ();

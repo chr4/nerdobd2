@@ -120,11 +120,11 @@ obd_send_debug(int fd)
 {
     char buf2[256];
 
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(gval->debug));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
-    send (fd, gval->debug, strlen (gval->debug), 0);
+    send (fd, debug, strlen (debug), 0);
 
     return 0;
 }
@@ -385,7 +385,7 @@ void
 ajax_log(char *s)
 {
     printf("%s", s);
-    snprintf(gval->debug, sizeof(gval->debug), "%s", s);
+    snprintf(debug, sizeof(debug), "%s", s);
     
     return;   
 }
