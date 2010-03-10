@@ -176,6 +176,11 @@ main (int arc, char **argv)
     struct sched_param prio;
     
     
+    // initialize values (if possible, load from file)
+    if (init_values() == -1)
+        return -1;
+    
+    
 #ifdef SERIAL_ATTACHED
     // kw1281_open() somehow has to be started
     // before any threading stuff.
@@ -186,10 +191,6 @@ main (int arc, char **argv)
     // create databases, unless they exist
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
-
-    // initialize values (if possible, load from file)
-    if (init_values() == -1)
-        return -1;
 
     
     // create ajax socket in child process for handling http connections
