@@ -120,11 +120,11 @@ obd_send_debug(int fd)
 {
     char buf2[256];
 
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(gval->debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
-    send (fd, debug, strlen (debug), 0);
+    send (fd, gval->debug, strlen (gval->debug), 0);
 
     return 0;
 }
@@ -234,18 +234,18 @@ handle_client(int fd)
             obd_send(fd, gval->con_km, "%.02f");
         
         else if (!strcmp(p, "con_av_short") )
-            obd_send(fd, av_con.average_short, "%.02f");
+            obd_send(fd, av_con->average_short, "%.02f");
         else if (!strcmp(p, "con_av_medium") )
-            obd_send(fd, av_con.average_medium, "%.02f");
+            obd_send(fd, av_con->average_medium, "%.02f");
         else if (!strcmp(p, "con_av_long") )
-            obd_send(fd, av_con.average_long, "%.02f");
+            obd_send(fd, av_con->average_long, "%.02f");
         
         else if (!strcmp(p, "speed_av_short") )
-            obd_send(fd, av_speed.average_short, "%.02f");
+            obd_send(fd, av_speed->average_short, "%.02f");
         else if (!strcmp(p, "speed_av_medium") )
-            obd_send(fd, av_speed.average_medium, "%.02f");
+            obd_send(fd, av_speed->average_medium, "%.02f");
         else if (!strcmp(p, "speed_av_long") )
-            obd_send(fd, av_speed.average_long, "%.02f");
+            obd_send(fd, av_speed->average_long, "%.02f");
         
         else if (!strcmp(p, "temp1") )
             obd_send(fd, gval->temp1, "%.01f");
@@ -260,18 +260,18 @@ handle_client(int fd)
             reset_counters();
         
         else if (!strcmp(p, "av_speed_graph:short") )
-            gval->av_speed_timespan = 300;
+            gval->speed_timespan = 300;
         else if (!strcmp(p, "av_speed_graph:medium") )
-            gval->av_speed_timespan = 1800;
+            gval->speed_timespan = 1800;
         else if (!strcmp(p, "av_speed_graph:long") )
-            gval->av_speed_timespan = 14400;
+            gval->speed_timespan = 14400;
         
         else if (!strcmp(p, "av_con_graph:short") )
-            gval->av_con_timespan = 300;            
+            gval->con_timespan = 300;            
         else if (!strcmp(p, "av_con_graph:medium") )
-            gval->av_con_timespan = 1800;            
+            gval->con_timespan = 1800;            
         else if (!strcmp(p, "av_con_graph:long") )            
-            gval->av_con_timespan = 14400;
+            gval->con_timespan = 14400;
         
         else
         {
@@ -385,7 +385,7 @@ void
 ajax_log(char *s)
 {
     printf("%s", s);
-    snprintf(debug, sizeof(debug), "%s", s);
+    //snprintf(gval->debug, 1024, "%s", s);
     
     return;   
 }
@@ -401,42 +401,42 @@ reset_counters(void)
 #endif    
 
     // init average consumption struct
-    av_con.array_full = 0;
-    av_con.counter = 0;
-    av_con.average_short = 0; 
-    av_con.average_medium = 0;
-    av_con.average_long = 0;
+    av_con->array_full = 0;
+    av_con->counter = 0;
+    av_con->average_short = 0; 
+    av_con->average_medium = 0;
+    av_con->average_long = 0;
     
     // write zero values to file to reset counters
     if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
         perror("couldn't open file:\n");
     else
     {
-        write(fd, &av_con, sizeof(av_con));
+        write(fd, av_con, sizeof(struct average));
         close(fd);
     }
     
 
     // init average speed struct
-    av_speed.array_full = 0;
-    av_speed.counter = 0;
-    av_speed.average_short = 0; 
-    av_speed.average_medium = 0;
-    av_speed.average_long = 0;
+    av_speed->array_full = 0;
+    av_speed->counter = 0;
+    av_speed->average_short = 0; 
+    av_speed->average_medium = 0;
+    av_speed->average_long = 0;
     
     // write zero values to file to reset counters
     if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
         perror("couldn't open file:\n");
     else
     {
-        write(fd, &av_speed, sizeof(av_speed));
+        write(fd, av_speed, sizeof(struct average));
         close(fd);
     }
 
 #ifdef DEBUG
     sleep(1);
     printf("values: %.02f %d %d %.02f\n", 
-           av_con.average_short, av_con.counter, av_speed.counter, av_speed.average_long);
+           av_con->average_short, av_con->counter, av_speed->counter, av_speed->average_long);
 #endif
     
     return;

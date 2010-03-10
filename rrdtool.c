@@ -43,86 +43,86 @@ rrdtool_update_consumption (void)
         // read values from file (in case its been resetted)
         if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
         {
-            read(fd, &av_con, sizeof(av_con));
+            read(fd, av_con, sizeof(struct average));
             close( fd );
         }
         
         // save consumption to average consumption array
-        if (av_con.counter == LONG)
+        if (av_con->counter == LONG)
         {
-            av_con.array_full = 1;
-            av_con.counter = 0;
+            av_con->array_full = 1;
+            av_con->counter = 0;
         }
         
-        av_con.array[av_con.counter++] = gval->con_km;
+        av_con->array[av_con->counter++] = gval->con_km;
         
 
         // calculate average for SHORT seconds
-        if (av_con.counter > SHORT)
+        if (av_con->counter > SHORT)
         {
-            for (i = av_con.counter - SHORT; i < av_con.counter; i++)
-                tmp_short += av_con.array[i];
+            for (i = av_con->counter - SHORT; i < av_con->counter; i++)
+                tmp_short += av_con->array[i];
         
-            av_con.average_short = tmp_short / SHORT;
+            av_con->average_short = tmp_short / SHORT;
         }
         else
         {                
-            for (i = 0; i < av_con.counter; i++)
-                tmp_short += av_con.array[i];
+            for (i = 0; i < av_con->counter; i++)
+                tmp_short += av_con->array[i];
         
             /* if array is full, but we don't have enough
              * values at the beginning of the array, take
              * the last values at the end of array
              */
-            if (av_con.array_full)
+            if (av_con->array_full)
             {
                 for (i = SHORT - i; i < LONG; i++)
-                    tmp_short += av_con.array[i];
+                    tmp_short += av_con->array[i];
                 
-                av_con.average_short = tmp_short / SHORT;
+                av_con->average_short = tmp_short / SHORT;
             }
             else
-                av_con.average_short = tmp_short / i;
+                av_con->average_short = tmp_short / i;
         }
         
         
         // calculate average for MEDIUM seconds
-        if (av_con.counter > MEDIUM)
+        if (av_con->counter > MEDIUM)
         {
-            for (i = av_con.counter - MEDIUM; i < av_con.counter; i++)
-                tmp_medium += av_con.array[i];
+            for (i = av_con->counter - MEDIUM; i < av_con->counter; i++)
+                tmp_medium += av_con->array[i];
 
-            av_con.average_medium = tmp_medium / MEDIUM;
+            av_con->average_medium = tmp_medium / MEDIUM;
         }
         else
         {
-            for (i = 0; i < av_con.counter; i++)
-                tmp_medium += av_con.array[i];
+            for (i = 0; i < av_con->counter; i++)
+                tmp_medium += av_con->array[i];
             
             /* if array is full, but we don't have enough
              * values at the beginning of the array, take
              * the last values at the end of array
              */
-            if (av_con.array_full)
+            if (av_con->array_full)
             {
                 for (i = MEDIUM - i; i < LONG; i++)
-                    tmp_medium += av_con.array[i];
+                    tmp_medium += av_con->array[i];
                 
-                av_con.average_medium = tmp_medium / MEDIUM;
+                av_con->average_medium = tmp_medium / MEDIUM;
             }
             else
-                av_con.average_medium = tmp_medium / i;
+                av_con->average_medium = tmp_medium / i;
         }
         
         // calculate average for LONG seconds
-        if (av_con.array_full)
+        if (av_con->array_full)
             for (i = 0; i < LONG; i++)
-                tmp_long += av_con.array[i];
+                tmp_long += av_con->array[i];
         else
-            for (i = 0; i < av_con.counter; i++)
-                tmp_long += av_con.array[i];
+            for (i = 0; i < av_con->counter; i++)
+                tmp_long += av_con->array[i];
         
-        av_con.average_long = tmp_long / i;
+        av_con->average_long = tmp_long / i;
 
 
         // save consumption array to file        
@@ -130,7 +130,7 @@ rrdtool_update_consumption (void)
             perror("couldn't open file:\n");
         else
         {
-            write(fd, &av_con, sizeof(av_con));
+            write(fd, av_con, sizeof(struct average));
             close(fd);
         }
         
@@ -159,7 +159,7 @@ rrdtool_update_consumption (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - gval->av_con_timespan); // now - timespan
+             (int) time (&t) - gval->con_timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -203,9 +203,9 @@ rrdtool_update_consumption (void)
         strncpy(combined[i], "--x-grid", sizeof(combined[i]));
         i++;
         
-        if (gval->av_con_timespan < 900)        // 15min
+        if (gval->con_timespan < 900)        // 15min
             strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (gval->av_con_timespan < 3600)  // 1h
+        else if (gval->con_timespan < 3600)  // 1h
             strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
         else
             strncpy(combined[i], xgrid_long, sizeof(combined[i]));
@@ -246,86 +246,86 @@ rrdtool_update_speed (void)
         // read values from file (in case its been resetted)
         if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
         {
-            read(fd, &av_speed, sizeof(av_speed));
+            read(fd, av_speed, sizeof(struct average));
             close( fd );
         }
 
 
         // save speed to average speed array
-        if (av_speed.counter == LONG)
+        if (av_speed->counter == LONG)
         {
-            av_speed.array_full = 1;
-            av_speed.counter = 0;
+            av_speed->array_full = 1;
+            av_speed->counter = 0;
         }
 
-        av_speed.array[av_speed.counter++] = gval->speed;
+        av_speed->array[av_speed->counter++] = gval->speed;
 
 
         // calculate average for SHORT seconds
-        if (av_speed.counter > SHORT)
+        if (av_speed->counter > SHORT)
         {
-            for (i = av_speed.counter - SHORT; i < av_speed.counter; i++)
-                tmp_short += av_speed.array[i];
+            for (i = av_speed->counter - SHORT; i < av_speed->counter; i++)
+                tmp_short += av_speed->array[i];
  
-             av_speed.average_short = tmp_short / SHORT;
+             av_speed->average_short = tmp_short / SHORT;
         }
         else
         {
-            for (i = 0; i < av_speed.counter; i++)
-                tmp_short += av_speed.array[i];
+            for (i = 0; i < av_speed->counter; i++)
+                tmp_short += av_speed->array[i];
 
             /* if array is full, but we don't have enough
              * values at the beginning of the array, take
              * the last values at the end of array
              */
-            if (av_speed.array_full)
+            if (av_speed->array_full)
             {
                 for (i = SHORT - i; i < LONG; i++)
-                    tmp_short += av_speed.array[i];
+                    tmp_short += av_speed->array[i];
                 
-                av_speed.average_short = tmp_short / SHORT;
+                av_speed->average_short = tmp_short / SHORT;
             }
             else
-                av_speed.average_short = tmp_short / i;
+                av_speed->average_short = tmp_short / i;
         }
 
         // calculate average for MEDIUM seconds
-        if (av_speed.counter > MEDIUM)
+        if (av_speed->counter > MEDIUM)
         {
-            for (i = av_speed.counter - MEDIUM; i < av_speed.counter; i++)
-                tmp_medium += av_speed.array[i];
+            for (i = av_speed->counter - MEDIUM; i < av_speed->counter; i++)
+                tmp_medium += av_speed->array[i];
             
-             av_speed.average_medium = tmp_short / MEDIUM;
+             av_speed->average_medium = tmp_short / MEDIUM;
         }
         else
         {
-            for (i = 0; i < av_speed.counter; i++)
-                tmp_medium += av_speed.array[i];
+            for (i = 0; i < av_speed->counter; i++)
+                tmp_medium += av_speed->array[i];
             
             /* if array is full, but we don't have enough
              * values at the beginning of the array, take
              * the last values at the end of array
              */
-            if (av_speed.array_full)
+            if (av_speed->array_full)
             {
                 for (i = MEDIUM - i; i < LONG; i++)
-                    tmp_medium += av_speed.array[i];
+                    tmp_medium += av_speed->array[i];
                 
-                av_speed.average_medium = tmp_medium / MEDIUM;
+                av_speed->average_medium = tmp_medium / MEDIUM;
             }
             else
-                av_speed.average_medium = tmp_medium / i;
+                av_speed->average_medium = tmp_medium / i;
         }
 
         // calculate average for LONG seconds
-        if (av_speed.array_full)
+        if (av_speed->array_full)
             for (i = 0; i < LONG; i++)
-                tmp_long += av_speed.array[i];
+                tmp_long += av_speed->array[i];
         else
-            for (i = 0; i < av_speed.counter; i++)
-                tmp_long += av_speed.array[i];
+            for (i = 0; i < av_speed->counter; i++)
+                tmp_long += av_speed->array[i];
 
-        av_speed.average_long = tmp_long / i;
+        av_speed->average_long = tmp_long / i;
 
 
         // save av_speed array to file    
@@ -333,7 +333,7 @@ rrdtool_update_speed (void)
             perror("couldn't open file:\n");
         else
         {
-            write(fd, &av_speed, sizeof(av_speed));
+            write(fd, av_speed, sizeof(struct average));
             close(fd);
         }
         
@@ -361,7 +361,7 @@ rrdtool_update_speed (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - gval->av_speed_timespan); // now - timespan
+             (int) time (&t) - gval->speed_timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -402,9 +402,9 @@ rrdtool_update_speed (void)
         strncpy(combined[i], "--x-grid", sizeof(combined[i]));
         i++;
         
-        if (gval->av_speed_timespan < 900)        // 15min
+        if (gval->speed_timespan < 900)        // 15min
             strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (gval->av_speed_timespan < 3600)  // 1h
+        else if (gval->speed_timespan < 3600)  // 1h
             strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
         else
             strncpy(combined[i], xgrid_long, sizeof(combined[i]));

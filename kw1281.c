@@ -1015,12 +1015,10 @@ kw1281_mainloop (void)
         gval->temp2++;
         gval->voltage += 0.15;
         gval->rpm += 100;
-        
-        //snprintf(debug, sizeof(debug), "debug test: %.01f", av_speed.average_short);
-        
+
         rrdtool_update_consumption();
         rrdtool_update_speed();
-        
+                
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
         
