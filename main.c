@@ -20,6 +20,9 @@
  * instead of directly being set to 0 (wtf? code is the same.. )
  *
  *
+ * create hover tooltips for switching graph timespans
+ * add "loading" image or text when switching timespans
+ *
  * fastinit is unused atm (and not working)
  * recover is unused atm (and not working)
  *
@@ -27,13 +30,14 @@
 
 int     init_values(void);
 
+// shmid has to be global, so we can destroy it on exit
+int     shmid;
+
 
 int
 init_values(void)
 {
     int     fd;
-    
-    int     shmid;
     key_t   key = 1337;
     
     // setup shared values
@@ -195,6 +199,12 @@ main (int arc, char **argv)
             ajax_shutdown();
             
             waitpid(pid, &status, 0);
+            
+            if (shmdt(gval) == -1)
+                perror("shmdt");
+            else if (shmctl(shmid, IPC_RMID, NULL) == -1)
+                perror("shmctl");
+            
             return -1;
         }
 #endif
