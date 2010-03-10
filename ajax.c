@@ -15,7 +15,7 @@
 int     tcp_listen (int);
 int     handle_client(int);
 int     obd_send(int, float, char *);
-int     obd_send_debug(int, char *);
+int     obd_send_debug(int);
 void    reset_counters(void);
 
 
@@ -116,19 +116,15 @@ tcp_listen (int port)
 
 
 int
-obd_send_debug(int fd, char *text)
+obd_send_debug(int fd)
 {
     char buf2[256];
 
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(text));
-    
-    printf("sending: %s\n", buf2);
-    printf("debug: %s\n", text);
-    
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
-    send (fd, text, strlen (text), 0);
+    send (fd, debug, strlen (debug), 0);
 
     return 0;
 }
@@ -258,10 +254,7 @@ handle_client(int fd)
         else if (!strcmp(p, "voltage") )
             obd_send(fd, gval->voltage, "%.02f");
         else if (!strcmp(p, "debug") )
-        {
-            printf("speed: %.02f | debug: %s\n", gval->speed, debug);
-            obd_send_debug(fd, debug);        
-        }
+            obd_send_debug(fd);        
         
         else if (!strcmp(p, "reset") )
             reset_counters();
@@ -392,7 +385,6 @@ void
 ajax_log(char *s)
 {
     printf("%s", s);
-    
     snprintf(debug, 1024, "%s", s);
     return;   
 }

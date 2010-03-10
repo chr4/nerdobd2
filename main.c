@@ -47,7 +47,7 @@ init_values(void)
     key_t   key2 = 31337;
     key_t   key3 = 31338;
     key_t   key4 = 1338;
-    
+
     // setup shared values
     if ( (shmid_gval = shmget(key1, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
     {
@@ -99,7 +99,7 @@ init_values(void)
         perror("shmat()");
         return -1;
     }
-
+    
     
     /* init values with -2
      * so ajax socket can control 
@@ -166,6 +166,8 @@ init_values(void)
     
     return 0;
 }
+
+
 
 int
 main (int arc, char **argv)
