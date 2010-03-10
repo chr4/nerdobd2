@@ -82,11 +82,10 @@ struct values
     // time span for rrdtool graph
     int     con_timespan;
     int     speed_timespan;
-    
-    // debuging messages go here
-    char    *debug;  
-} *gval;
-    
+};
+
+struct values *gval;
+
 
 // averages
 struct average
@@ -98,10 +97,13 @@ struct average
     float   average_medium; // average of medium time period (MEDIUM)
     float   average_long;   // average of long time period (LONG)
     
-} *av_con, *av_speed;
+};
+
+struct average *av_con, *av_speed;
 
 
-
+// debuging messages go here
+char    *debug; 
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;
