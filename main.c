@@ -37,6 +37,7 @@ int     init_values(void);
 int     shmid_gval;
 int     shmid_speed;
 int     shmid_con;
+int     shmid_debug;
 
 int
 init_values(void)
@@ -45,46 +46,60 @@ init_values(void)
     key_t   key1 = 1337;
     key_t   key2 = 31337;
     key_t   key3 = 31338;
+    key_t   key4 = 1338;
     
     // setup shared values
     if ( (shmid_gval = shmget(key1, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
     {
-        perror("1: shmget()");
+        perror("shmget()");
         return -1;
     }
     
     if ( (gval = (struct values *) shmat(shmid_gval, (void *) 0, 0)) == (void *) -1)
     {
-        perror("1: shmat()");
+        perror("shmat()");
         return -1;
     }
     
     // setup average speed shared values
     if ( (shmid_speed = shmget(key2, sizeof(struct average), 0666 | IPC_CREAT)) < 0)
     {
-        perror("2: shmget()");
+        perror("shmget()");
         return -1;
     }
     
     if ( (av_speed = (struct average *) shmat(shmid_speed, (void *) 0, 0)) == (void *) -1)
     {
-        perror("2: shmat()");
+        perror("shmat()");
         return -1;
     }
     
     // setup average consumption shared values
     if ( (shmid_con = shmget(key3, sizeof(struct average), 0666 | IPC_CREAT)) < 0)
     {
-        perror("3: shmget()");
+        perror("shmget()");
         return -1;
     }
     
     if ( (av_con = (struct average *) shmat(shmid_con, (void *) 0, 0)) == (void *) -1)
     {
-        perror("3: shmat()");
+        perror("shmat()");
         return -1;
     }
     
+    // setup debugging string
+    if ( (shmid_debug = shmget(key4, 1024, 0666 | IPC_CREAT)) < 0)
+    {
+        perror("shmget()");
+        return -1;
+    }
+    
+    if ( (debug = (char *) shmat(shmid_debug, (void *) 0, 0)) == (void *) -1)
+    {
+        perror("shmat()");
+        return -1;
+    }
+
     
     /* init values with -2
      * so ajax socket can control 
@@ -244,6 +259,11 @@ main (int arc, char **argv)
             if (shmdt(av_con) == -1)
                 perror("shmdt()");
             else if (shmctl(shmid_con, IPC_RMID, NULL) == -1)
+                perror("shmctl()");
+            
+            if (shmdt(debug) == -1)
+                perror("shmdt()");
+            else if (shmctl(shmid_debug, IPC_RMID, NULL) == -1)
                 perror("shmctl()");
             
             return -1;
