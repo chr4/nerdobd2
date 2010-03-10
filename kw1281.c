@@ -539,7 +539,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        rpm = 0.2 * buf[i + 1] * buf[i + 2];
+                        gval->rpm = 0.2 * buf[i + 1] * buf[i + 2];
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -555,26 +555,26 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
-                    inj_time = 0.01 * buf[i + 1] * buf[i + 2];
+                    gval->inj_time = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
 
                 case 0x12:        // absolute pressure
-                    oil_press = 0.04 * buf[i + 1] * buf[i + 2];
+                    gval->oil_press = 0.04 * buf[i + 1] * buf[i + 2];
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        temp1 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
+                        gval->temp1 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
                     if (i == 9)
-                        temp2 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
+                        gval->temp2 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
                     break;
 
                 case 0x07:        // speed
-                    speed = 0.01 * buf[i + 1] * buf[i + 2];
+                    gval->speed = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
 
                 case 0x15:        // battery voltage
-                    voltage = 0.001 * buf[i + 1] * buf[i + 2];
+                    gval->voltage = 0.001 * buf[i + 1] * buf[i + 2];
                     break;
 
                 default:
@@ -883,7 +883,7 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
         ajax_log("TIOCMGET failed.\n");
-        return -1;
+        return -2;
     }
     
     // save old flags so we can restore them later
@@ -894,7 +894,7 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
         ajax_log("TIOCMSET failed.\n");
-        return -1;
+        return -2;
     }
 
     usleep (INIT_DELAY);
@@ -919,14 +919,14 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
         ajax_log("TIOCMGET failed.\n");
-        return -1;
+        return -2;
     }
 
      flags |= TIOCM_DTR;
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
         ajax_log("TIOCMSET failed.\n");
-        return -1;
+        return -2;
     }
  
     // read bogus values, if any
@@ -997,24 +997,24 @@ kw1281_mainloop (void)
 
     sleep(1);
     ajax_log("incrementing values for testing purposes...\n");
-    speed = 10;
-    con_km = -1;
-    rpm = 1000;
-    con_h = 1.01;
-    temp1 = 20;
-    temp2 = 0;
-    voltage = 3.00;
+    gval->speed = 10;
+    gval->con_km = -1;
+    gval->rpm = 1000;
+    gval->con_h = 1.01;
+    gval->temp1 = 20;
+    gval->temp2 = 0;
+    gval->voltage = 3.00;
     
     for (;;)
     {
-        speed++;
-        con_km += 0.75;
-        con_h += 1.03;
+        gval->speed++;
+        gval->con_km += 0.75;
+        gval->con_h += 1.03;
         
-        temp1++;
-        temp2++;
-        voltage += 0.15;
-        rpm += 100;
+        gval->temp1++;
+        gval->temp2++;
+        gval->voltage += 0.15;
+        gval->rpm += 100;
         
         //snprintf(debug, sizeof(debug), "debug test: %.01f", av_speed.average_short);
         
@@ -1046,11 +1046,11 @@ kw1281_mainloop (void)
             return -1;
 
         // calculate consumption per hour
-        if (inj_time > const_inj_subtract)
-            con_h = 60 * 4 * const_multiplier *
-                rpm * (inj_time - const_inj_subtract);
+        if (gval->inj_time > const_inj_subtract)
+            gval->con_h = 60 * 4 * const_multiplier *
+                gval->rpm * (gval->inj_time - const_inj_subtract);
         else
-            con_h = 0;
+            gval->con_h = 0;
 
         // rrdtool_update ("rpm", rpm);
 
@@ -1060,11 +1060,11 @@ kw1281_mainloop (void)
             return -1;
 
         // calculate consumption per hour
-        if (speed > 5)
+        if (gval->speed > 5)
             // below 5km/h values get very high, which makes the graphs unreadable
-            con_km = (con_h / speed) * 100;
+            gval->con_km = (gval->con_h / gval->speed) * 100;
         else
-            con_km = -1;
+            gval->con_km = -1;
 
         // update rrdtool databases
         rrdtool_update_consumption();
@@ -1090,16 +1090,16 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
-    printf ("l/h\t\t%.2f\n", con_h);
-    printf ("l/100km\t\t%.2f\n", con_km);
-    printf ("speed\t\t%.1f km/h\n", speed);
-    printf ("rpm\t\t%.0f RPM\n", rpm);
-    printf ("inj on time\t%.2f ms\n", inj_time);
-    printf ("temp1\t\t%.1f °C\n", temp1);
-    printf ("temp2\t\t%.1f °C\n", temp2);
-    printf ("voltage\t\t%.2f V\n", voltage);
-    //printf ("load\t\t%.0f %%\n", load);
-    printf ("absolute press\t%.0f mbar\n", oil_press);
+    printf ("l/h\t\t%.2f\n", gval->con_h);
+    printf ("l/100km\t\t%.2f\n", gval->con_km);
+    printf ("speed\t\t%.1f km/h\n", gval->speed);
+    printf ("rpm\t\t%.0f RPM\n", gval->rpm);
+    printf ("inj on time\t%.2f ms\n", gval->inj_time);
+    printf ("temp1\t\t%.1f °C\n", gval->temp1);
+    printf ("temp2\t\t%.1f °C\n", gval->temp2);
+    printf ("voltage\t\t%.2f V\n", gval->voltage);
+    //printf ("load\t\t%.0f %%\n", gval->load);
+    printf ("absolute press\t%.0f mbar\n", gval->oil_press);
     printf ("counter\t\t%d\n", counter);
     printf ("\n");
     

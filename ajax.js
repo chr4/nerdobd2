@@ -123,3 +123,16 @@ function reset_counters()
 {
     update_variable("reset");
 }
+
+
+// set graph to timespan: short, medium, long
+function av_con(timespan)
+{
+    update_variable("av_con_graph:" + timespan);
+}
+
+// set graph to timespan: short, medium, long
+function av_speed(timespan)
+{
+    update_variable("av_speed_graph:" + timespan);
+}
