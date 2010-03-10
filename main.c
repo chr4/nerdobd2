@@ -21,7 +21,6 @@
  *
  *
  * create hover tooltips for switching graph timespans
- * add "loading" image or text when switching timespans
  *
  * add hotkeys for changing timespans and resetting counters
  *

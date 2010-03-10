@@ -38,6 +38,18 @@ body, html
     background-color:#222222;
 }
 
+/* the "updating graph" notification */
+#update_popup_speed, #update_popup_con
+{
+    position:relative;
+    top:-300px;
+    left:180px;
+    width:145px;
+    background-color:#333333;
+    color:#eeeeee;
+    visibility:hidden;
+}
+
 /* a line marking 6.55 liters 
  * rrdtool cannot create one fixed line
  * so i'm doing this with a css overlay
