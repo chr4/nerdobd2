@@ -2,7 +2,7 @@ function update_variable(varname)
 {
     var req = false;
     
-    // we only need support firefox / konqueror
+    // we only need support firefox / konqueror / chrome, etc
 	req = new XMLHttpRequest();
     
 	req.open("POST", "/get.obd?" + varname, true);
@@ -90,8 +90,8 @@ function update_image(img)
         /* only show image if its completely loaded
          * to prevent images from flickering
          */
-        if (tmp.complete)
-        {
+        if (tmp.complete && tmp.width)
+        {         
             replace = document.getElementById("img_" + img);
             replace.src = tmp.src;
         
