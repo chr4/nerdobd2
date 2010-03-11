@@ -98,6 +98,7 @@ body, html
     cursor:pointer;
 }
 
+
 /* unit layout for values underneath speed graph*/
 #av_unit
 {
@@ -105,6 +106,28 @@ body, html
     font-size:12px;
     color:#aaaaaa;
     
+}
+
+/* the tooltips for changing graph timespans */
+.tooltip
+{
+    display:none;
+}
+
+.tooltip_container:hover .tooltip
+{
+    display:block;
+    position:absolute;
+    cursor:pointer;
+    font-family:helvetica;
+    padding:4px;
+    font-size:12px;
+    top:-30px;
+    width:90px;
+    text-align:left;
+    color:#eeeeee;
+    background-color:#333333;       
+    z-index:100;
 }
 
 
