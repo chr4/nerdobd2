@@ -138,15 +138,12 @@ function update_debug()
     setTimeout ( "update_debug()", 500 );    
 }
 
-function start()
-{
-    update_all();
-    update_debug();
-}
+
 
 function reset_counters()
 {
     update_variable("reset");
+    document.getElementById("debug").innerHTML = "counters resetted.";
 }
 
 
@@ -164,4 +161,35 @@ function av_speed(timespan)
     // show "loading" popup
     document.getElementById("update_popup_speed").style.visibility = 'visible';    
     update_variable("av_speed_graph:" + timespan);
+}
+
+
+function start()
+{
+    update_all();
+    update_debug();
+    
+    // add shortcuts
+    document.onkeyup = function(e)
+    {      
+        // shortcut for resetting counters
+        if (e.which == 82)      // r
+            reset_counters();
+        
+        // shortcut for consumption graph timespans
+        else if (e.which == 81) // q
+            av_con("short");
+        else if (e.which == 65) // a
+            av_con("medium");
+        else if (e.which == 89 || e.which == 90) // y or z (to support qwertz/qwerty keyboards)
+            av_con("long");
+        
+        // shortcut for speed graph timespans
+        else if (e.which == 87) // w
+            av_speed("short");
+        else if (e.which == 83) // s
+            av_speed("medium");
+        else if (e.which == 88) // x
+            av_speed("long");
+    }
 }

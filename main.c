@@ -18,7 +18,7 @@
  *
  * create hover tooltips for switching graph timespans
  *
- * add hotkeys for changing timespans and resetting counters
+ * set baudrate, multiplicator value and other things via config file
  *
  */
 
