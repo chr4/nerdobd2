@@ -11,10 +11,6 @@
  *
  * TODO:
  * 
- * create nice looking interface
- *  -> fonts?
- *
- *
  * resetting counters works, but unlike the speed averages
  * the consumption averages get updated on first new value
  * instead of directly being set to 0 (wtf? code is the same.. )
@@ -23,12 +19,6 @@
  * create hover tooltips for switching graph timespans
  *
  * add hotkeys for changing timespans and resetting counters
- *
- * fix high cpu load.. ?
- *
- *
- * fastinit is unused atm (and not working)
- * recover is unused atm (and not working)
  *
  */
 
