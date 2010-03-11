@@ -10,7 +10,6 @@ int     kw1281_send_ack (void);
 int     kw1281_recv_byte_ack (void);
 int     kw1281_inc_counter (void);
 int     kw1281_get_ascii_blocks(void);
-int     kw1281_recover(void);
 int     kw1281_get_block (unsigned char);
 int     kw1281_empty_buffer(void);
 int     kw1281_read_timeout(void);
@@ -659,48 +658,6 @@ kw1281_get_ascii_blocks(void)
 }
 
 int
-kw1281_recover(void)
-{
-    /*
-     * on communication errors:
-     * read 0x0f (or 0x27) (already done)
-     * read 0x0f (or 0x27) (again)
-     * reply with ack 
-     * recv 0x55 0x01 0xa8 (send ack)
-     * reset counter (next block from ECU has counter 1)
-     * recv_blocks()
-     */
-    
-    // we need int, so we can capture -1 as well
-    int c;
-    // unsigned char c;
-
-    
-    if ( (c = kw1281_read_timeout()) == -1)
-    {
-        ajax_log("kw1281_init: read() error\n");
-        return -1;
-    }
-#ifdef DEBUG
-    printf ("read 0x%02x\n", c);
-#endif
-    
-    if ( (c = kw1281_recv_byte_ack ()) == -1)
-        return -1;
-    
-#ifdef DEBUG
-    printf ("read 0x%02x (and sent ack)\n", c);
-#endif
-    
-    counter = 1;
-    
-    if (kw1281_get_ascii_blocks() == -1)
-        return -1;
-    
-    return 0;
-}
-
-int
 kw1281_open (char *device)
 {
     struct termios newtio;
@@ -781,62 +738,6 @@ kw1281_close(void)
     }
 
     return 0;    
-}
-
-int
-kw1281_fastinit (int address)
-{
-    struct serial_struct nt;
-    char    c;
-        
-    
-    // empty receive buffer
-    kw1281_empty_buffer();    
-    
-    // wait the idle time
-    usleep(300000);
-    
-    
-    // get current settings
-    memcpy (&nt, &st, sizeof (st));
-    
-    // setting custom baud rate to 360 baud
-    nt.custom_divisor = st.baud_base / 360;
-    nt.flags &= ~ASYNC_SPD_MASK;
-    nt.flags |= ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
-    
-    if (ioctl (fd, TIOCSSERIAL, &nt) < 0)
-    {
-        ajax_log ("TIOCSSERIAL failed\n");
-        return -1;
-    }
-
-    // send 0x00 byte message
-    if (kw1281_write_timeout('\0') == -1)
-    {
-        ajax_log("kw1281_fastinit: write() error\n");
-        return -1;
-    }
-
-    // And read back the single byte echo, which shows TX completes
-    if ( (c = kw1281_read_timeout()) == -1)
-    {
-        ajax_log("kw1281_fastinit: read() error\n");
-        return -1;
-    }
-    
-    // wait for 24-26ms
-    usleep(24000);
-    
-    
-    // restore normal settings
-    if (ioctl (fd, TIOCSSERIAL, &st) < 0)
-    {
-        ajax_log ("TIOCSSERIAL failed\n");
-        return -1;
-    }    
-
-    return 0;
 }
 
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
