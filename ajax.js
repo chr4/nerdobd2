@@ -53,7 +53,6 @@ function update_variable(varname)
 // show image tmp in img after it is completely loaded
 function image_loaded(tmp, img)
 {
-    
     if (tmp.complete)
     {
         // document.getElementById("debug").innerHTML = "image loaded<br/>" + Date.parse(new Date());
@@ -81,12 +80,30 @@ function image_loaded(tmp, img)
 
 function update_image(img)
 {
-    tmp = new Image();
+    var tmp = new Image();
     tmp.style.visibility = 'hidden';
     
     tmp.src = "/" + img + ".png?" + Date.parse(new Date());
     
-    image_loaded(tmp, img);
+    tmp.onload = function()
+    {
+        /* only show image if its completely loaded
+         * to prevent images from flickering
+         */
+        if (tmp.complete)
+        {
+            replace = document.getElementById("img_" + img);
+            replace.src = tmp.src;
+        
+            // hide the "loading" popup
+            if (tmp.src.search("consumption.png") != -1)
+                document.getElementById("update_popup_con").style.visibility = 'hidden'; 
+            else if (tmp.src.search("speed.png") != -1)
+                document.getElementById("update_popup_speed").style.visibility = 'hidden';         
+        }
+    }
+    
+    // image_loaded(tmp, img);
 }
 
 
@@ -118,7 +135,7 @@ function update_all()
 function update_debug()
 {
     update_variable("debug");
-    setTimeout ( "update_debug()", 200 );    
+    setTimeout ( "update_debug()", 500 );    
 }
 
 function start()

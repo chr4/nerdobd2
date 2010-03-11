@@ -30,6 +30,7 @@
 
 
 #define SERIAL_ATTACHED
+#define HIGH_PRIORITY
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -44,8 +45,11 @@
 #define MEDIUM          1800    // last 30 minutes
 #define LONG            14400   // last 4 hours
 
-#define CON_AV_FILE     "consumption.data"
-#define SPEED_AV_FILE   "speed.data"
+// saving on ramdisk
+#define CON_AV_FILE     "/tmp/nerdobd2_consumption.data"
+#define SPEED_AV_FILE   "/tmp/nerdobd2_speed.data"
+#define SPEED_GRAPH     "/tmp/nerdobd2_speed.png"
+#define CON_GRAPH       "/tmp/nerdobd2_consumption.png"
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
