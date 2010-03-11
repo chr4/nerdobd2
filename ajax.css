@@ -43,10 +43,10 @@ body, html
 {
     position:relative;
     font-family:helvetica;
-    font-size:22px;
+    font-size:18px;
     top:-300px;
     left:180px;
-    width:145px;
+    width:155px;
     background-color:#333333;
     color:#eeeeee;
     visibility:hidden;
