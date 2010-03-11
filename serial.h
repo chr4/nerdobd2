@@ -29,8 +29,8 @@
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED
-#define HIGH_PRIORITY
+//#define SERIAL_ATTACHED
+//#define HIGH_PRIORITY
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
