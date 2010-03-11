@@ -23,19 +23,28 @@
                   <span id="av_unit">&#216; l/km:</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="con_av_short" onclick="av_con('short')">16.55</span>
+                  <div class="tooltip_container">                
+                    <span id="con_av_short" onclick="av_con('short')">16.55</span>
+                    <span class="tooltip">display graph for last 5min</span>
+                  </div>
                 </td>
                 <td align="left" valign="baseline">
                   <span id="av_unit">(5min)</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="con_av_medium" onclick="av_con('medium')">16.55</span>
+                  <div class="tooltip_container">
+                    <span id="con_av_medium" onclick="av_con('medium')">16.55</span>
+                    <span class="tooltip">display graph for last 30min</span>
+                  </div>
                 </td>
                 <td align="left"  valign="baseline">
                   <span id="av_unit">(30min)</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="con_av_long" onclick="av_con('long')">6.55</span>
+                  <div class="tooltip_container">
+                    <span id="con_av_long" onclick="av_con('long')">6.55</span>
+                    <span class="tooltip">display graph for last 4h</span>                    
+                  </div>
                 </td>
                 <td align="left" valign="baseline">
                   <span id="av_unit">(4h)</span>
@@ -55,19 +64,28 @@
                   <span id="av_unit">&#216; km/h:</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="speed_av_short" onclick="av_speed('short')">134.5</span>
+                  <div class="tooltip_container">
+                    <span id="speed_av_short" onclick="av_speed('short')">134.5</span>
+                    <span class="tooltip">display graph for last 5min</span>                    
+                  </div>                    
                 </td>
                 <td align="left" valign="baseline">
                   <span id="av_unit">(5min)</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="speed_av_medium" onclick="av_speed('medium')">95.4</span>
+                  <div class="tooltip_container">
+                    <span id="speed_av_medium" onclick="av_speed('medium')">95.4</span>
+                    <span class="tooltip">display graph for last 30min</span>                    
+                  </div>                    
                 </td>
                 <td align="left"  valign="baseline">
                   <span id="av_unit">(30min)</span>
                 </td>
                 <td align="right" width="55" valign="baseline">
-                  <span id="speed_av_long" onclick="av_speed('long')">70.4</span>
+                  <div class="tooltip_container">
+                    <span id="speed_av_long" onclick="av_speed('long')">70.4</span>
+                    <span class="tooltip">display graph for last 4h</span>                    
+                  </div>
                 </td>                  
                 <td align="left" valign="baseline">
                   <span id="av_unit">(4h)</span>
@@ -148,9 +166,6 @@
         <div class="footer">
           <div id="debug">initializing...</div>
           <div id="version">
-          <!--
-            <span style="background-color:#aaaaaa;cursor:pointer;" onclick="alert('thas')">reset counters</span>
-            -->
             <input type="button" style="border:0px;background-color:#333333;color:#eeeeee" value="reset counters" onclick="reset_counters()"/>
             nerdobd2 | v0.9.5
           </div>
