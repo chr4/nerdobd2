@@ -243,6 +243,21 @@ main (int arc, char **argv)
         if (ret == -1)
         {
             printf("init failed, retrying...\n");
+            
+            /* set values to -2 so ajax interfaces
+             * knows we're not having new values
+             * for a short while and can grey them out
+             */
+            gval->speed     = -2;
+            gval->rpm       = -2;
+            gval->temp1     = -2;
+            gval->temp2     = -2;
+            gval->oil_press = -2;
+            gval->inj_time  = -2;
+            gval->voltage   = -2;
+            gval->con_h     = -2;
+            gval->con_km    = -2;
+            
             continue;
         }
         
@@ -284,6 +299,5 @@ main (int arc, char **argv)
     }
 
     // should never be reached
-    kw1281_close();    
     return 0;
 }
