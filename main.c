@@ -24,6 +24,8 @@
  *
  * add hotkeys for changing timespans and resetting counters
  *
+ * fix high cpu load.. ?
+ *
  *
  * fastinit is unused atm (and not working)
  * recover is unused atm (and not working)
@@ -189,6 +191,10 @@ main (int arc, char **argv)
        return -1;
 #endif
     
+    // link speed.png and consumption.png into .
+    symlink(SPEED_GRAPH, "speed.png");
+    symlink(CON_GRAPH, "consumption.png");
+    
     // create databases, unless they exist
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
@@ -203,6 +209,7 @@ main (int arc, char **argv)
     
     
     // set realtime priority if we're running as root
+#ifdef HIGH_PRIORITY
     if (getuid() == 0)
     {
         prio.sched_priority = 1;
@@ -212,11 +219,10 @@ main (int arc, char **argv)
         
         if (nice(-19) == -1)
             perror("nice failed\n");
-        
     }
     else
         printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
-    
+#endif
     
     /* this loop is intended to restart the connection
      * on connection errors, unfortunately, somehow kw1281_open()

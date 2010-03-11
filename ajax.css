@@ -42,6 +42,8 @@ body, html
 #update_popup_speed, #update_popup_con
 {
     position:relative;
+    font-family:helvetica;
+    font-size:22px;
     top:-300px;
     left:180px;
     width:145px;
@@ -75,8 +77,7 @@ body, html
 #con_av_short, #con_av_medium, #con_av_long
 {
     font-family:helvetica;
-    line-height:22px;
-    font-size:18px;
+    font-size:16px;
     color:#f00000;
     cursor:pointer;
 }
@@ -92,7 +93,7 @@ body, html
 #speed_av_short, #speed_av_medium, #speed_av_long
 {
     font-family:helvetica;
-    font-size:18px;
+    font-size:16px;
     color:#f00000;
     cursor:pointer;
 }
@@ -101,7 +102,7 @@ body, html
 #av_unit
 {
     font-family:helvetica;
-    font-size:14px;
+    font-size:12px;
     color:#aaaaaa;
     
 }
@@ -122,7 +123,7 @@ body, html
 #con_km
 {
     font-family:helvetica;
-    font-size:76px;
+    font-size:68px;
     line-height:82px;
     color:#f00000;
 }
@@ -138,7 +139,7 @@ body, html
 #speed
 {
     font-family:helvetica;
-    font-size:76px;
+    font-size:68px;
     line-height:82px;
     color:#f00000;
 }
@@ -159,7 +160,7 @@ body, html
 #con_h, #rpm, #temp1, #temp2, #voltage
 {
     font-family:helvetica;
-    font-size:32px;
+    font-size:28px;
     line-height:38px;
     color:#f00000;
 }
@@ -186,7 +187,7 @@ body, html
 #debug
 {
     font-family:courier;
-    font-size:14px;
+    font-size:16px;
     margin-top:15px;
     margin-right:0px;
     padding-right:10px;
@@ -197,6 +198,8 @@ body, html
 
 #version
 {
+    font-family:courier;
+    font-size:14px;
     vertical-align:bottom;
     margin-top:5px;
     color:#ffffff;

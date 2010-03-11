@@ -172,7 +172,7 @@ rrdtool_update_consumption (void)
         
         char *args[256] =
         {             
-            "graph", "consumption.png",
+            "graph", CON_GRAPH,
             "--start", starttime, "--end", endtime,
             "--upper-limit", "19.5", "--lower-limit", "0", "--y-grid", "3.25:1",
             "DEF:con_km=consumption.rrd:km:AVERAGE", 
@@ -374,7 +374,7 @@ rrdtool_update_speed (void)
 
         char *args[256] =
         { 
-            "graph", "speed.png",
+            "graph", SPEED_GRAPH,
             "--start", starttime, "--end", endtime,
             "--upper-limit", "135", "--lower-limit", "0", "--y-grid", "7.5:2",
             "DEF:myspeed=speed.rrd:speed:AVERAGE",
