@@ -64,10 +64,11 @@ ajax_shutdown(void)
      * bind errors on direct relaunch
      */
      
-    printf("shutting down socket... ");
+    printf("shutting down socket...\n");
     if ( shutdown(srv, SHUT_RDWR) == -1)
     {
         perror("shutdown() failed:");
+        exit(-1);
         return -1;
     }
     printf("done.\n");
