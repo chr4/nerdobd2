@@ -15,8 +15,15 @@
  * the consumption averages get updated on first new value
  * instead of directly being set to 0 (wtf? code is the same.. )
  *
+ * check if "hang on socket shutdown" error is fixed
  *
- * create hover tooltips for switching graph timespans
+ * bigger font size for average values below graphs (done)
+ *
+ * kw1281_open() in for (;;)
+ *
+ * migrate /tmp files back to home (disable symlinks) (done)
+ *
+ * high priority / nice only for kw1281 process
  *
  * set baudrate, multiplicator value and other things via config file
  *
@@ -180,10 +187,6 @@ main (int arc, char **argv)
     if (kw1281_open (DEVICE) == -1)
        return -1;
 #endif
-    
-    // link speed.png and consumption.png into .
-    symlink(SPEED_GRAPH, "speed.png");
-    symlink(CON_GRAPH, "consumption.png");
     
     // create databases, unless they exist
     rrdtool_create_consumption ();
