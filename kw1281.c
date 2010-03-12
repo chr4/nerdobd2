@@ -56,9 +56,9 @@ kw1281_empty_buffer(void)
         res = select(fd + 1, &rfds, NULL, NULL, &timeout);
         
         if (errno == EINTR)
-            ajax_log("read: select() got EINTR");
+            ajax_log("read: select() got EINTR\n");
         if (res == -1)
-            ajax_log("read: select() failed");
+            ajax_log("read: select() failed\n");
         
     } while (res == -1 && errno == EINTR);
     
@@ -104,12 +104,12 @@ kw1281_read_timeout(void)
         if (res == -1)
         {
             if (errno == EINTR)
-                ajax_log("read: select() got EINTR");
+                ajax_log("read: select() got EINTR\n");
 
             else
-                ajax_log("read: select() failed");
+                ajax_log("read: select() failed\n");
         }
-        
+
     } while (res == -1 && errno == EINTR);
 
     if (res > 0)
@@ -159,10 +159,10 @@ kw1281_write_timeout(unsigned char c)
         if (res == -1)
         {
             if (errno == EINTR)
-                ajax_log("write: select() got EINTR");
+                ajax_log("write: select() got EINTR\n");
             
             else
-                ajax_log("write: select() failed");
+                ajax_log("write: select() failed\n");
         }
         
     } while (res == -1 && errno == EINTR);
@@ -887,7 +887,8 @@ kw1281_init (int address)
 int
 kw1281_mainloop (void)
 {
-    int status;
+    int    status;
+    int    file;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -969,9 +970,6 @@ kw1281_mainloop (void)
         rrdtool_update_consumption();
         rrdtool_update_speed();
 
-        // collect defunct processes from rrdtool functions
-        while(waitpid(-1, &status, WNOHANG) > 0);
-         
         // request block 0x04
         // (temperatures + voltage)
         if (kw1281_get_block(0x04) == -1)
@@ -979,6 +977,28 @@ kw1281_mainloop (void)
         
         // output values
         kw1281_print ();
+
+        // save consumption array to file        
+        if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(file, av_con, sizeof(struct average));
+            close(file);
+        }
+
+        // save av_speed array to file    
+        if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(file, av_speed, sizeof(struct average));
+            close(file);
+        }
+
+
+        // collect defunct processes from rrdtool functions
+        while(waitpid(-1, &status, WNOHANG) > 0);
     }
     
     return 0;

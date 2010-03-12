@@ -26,7 +26,6 @@ rrdtool_update_consumption (void)
     char    endtime[256];    
     time_t  t;
     int     i;
-    int     fd;
 
     float   tmp_short = 0;
     float   tmp_medium = 0;    
@@ -39,14 +38,6 @@ rrdtool_update_consumption (void)
     }
     else
     {
-
-        // read values from file (in case its been resetted)
-        if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
-        {
-            read(fd, av_con, sizeof(struct average));
-            close( fd );
-        }
-        
         // save consumption to average consumption array
         if (av_con->counter == LONG)
         {
@@ -124,19 +115,9 @@ rrdtool_update_consumption (void)
         
         av_con->average_long = tmp_long / i;
 
-
-        // save consumption array to file        
-        if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
-        {
-            write(fd, av_con, sizeof(struct average));
-            close(fd);
-        }
-        
-        
         snprintf (starttime, sizeof (starttime), "%d:%.2f:%.2f", 
                   (int) time (&t), gval->con_km, gval->con_h);
+
     }
     
     
@@ -235,7 +216,6 @@ rrdtool_update_speed (void)
     char    endtime[256];
     time_t  t;
     int     i;
-    int     fd;
 
     float   tmp_short = 0;
     float   tmp_medium = 0;    
@@ -243,14 +223,6 @@ rrdtool_update_speed (void)
     
     if (gval->speed >= 0)
     { 
-        // read values from file (in case its been resetted)
-        if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
-        {
-            read(fd, av_speed, sizeof(struct average));
-            close( fd );
-        }
-
-
         // save speed to average speed array
         if (av_speed->counter == LONG)
         {
@@ -327,19 +299,9 @@ rrdtool_update_speed (void)
 
         av_speed->average_long = tmp_long / i;
 
-
-        // save av_speed array to file    
-        if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
-        {
-            write(fd, av_speed, sizeof(struct average));
-            close(fd);
-        }
-        
         snprintf (starttime, sizeof (starttime), "%d:%.1f", 
                   (int) time (&t), gval->speed);
-        
+    
         if (fork() == 0)
         {          
             // rrdtool args

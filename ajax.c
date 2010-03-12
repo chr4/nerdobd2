@@ -394,8 +394,7 @@ ajax_log(char *s)
 void
 reset_counters(void)
 {
-    int     fd;
-   
+
 #ifdef DEBUG 
     printf("resetting counters...\n");
 #endif    
@@ -407,16 +406,6 @@ reset_counters(void)
     av_con->average_medium = 0;
     av_con->average_long = 0;
     
-    // write zero values to file to reset counters
-    if ( (fd = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-        perror("couldn't open file:\n");
-    else
-    {
-        write(fd, av_con, sizeof(struct average));
-        close(fd);
-    }
-    
-
     // init average speed struct
     av_speed->array_full = 0;
     av_speed->counter = 0;
@@ -424,15 +413,6 @@ reset_counters(void)
     av_speed->average_medium = 0;
     av_speed->average_long = 0;
     
-    // write zero values to file to reset counters
-    if ( (fd = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-        perror("couldn't open file:\n");
-    else
-    {
-        write(fd, av_speed, sizeof(struct average));
-        close(fd);
-    }
-
 #ifdef DEBUG
     sleep(1);
     printf("values: %.02f %d %d %.02f\n", 
