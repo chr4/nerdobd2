@@ -267,7 +267,7 @@ rrdtool_update_speed (void)
             for (i = av_speed->counter - MEDIUM; i < av_speed->counter; i++)
                 tmp_medium += av_speed->array[i];
             
-             av_speed->average_medium = tmp_short / MEDIUM;
+             av_speed->average_medium = tmp_medium / MEDIUM;
         }
         else
         {
