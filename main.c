@@ -98,7 +98,7 @@ init_values(void)
     av_speed->average_long = 0;
     av_speed->timespan = 300;
   
-/*
+
     // use & 
     // overwrite consumption inits from file, if present
     if ( (file = open( CON_AV_FILE, O_RDONLY )) != -1)
@@ -113,7 +113,7 @@ init_values(void)
         read(file, av_speed, sizeof(struct average));
         close( file );
     }
-*/    
+    
     
 #ifdef DEBUG  
     int i;
@@ -146,24 +146,18 @@ main (int arc, char **argv)
     struct sched_param prio;
     
     
-    // initialize values (if possible, load from file)
-    if (init_values() == -1)
-        return -1;
-    
-    
 #ifdef SERIAL_ATTACHED
     // kw1281_open() somehow has to be started
-    // before any threading stuff.
+    // before any fork() open()
     if (kw1281_open (DEVICE) == -1)
-    {
-        if (shmdt(p) == -1)
-            perror("shmdt()");
-        else if (shmctl(shmid, IPC_RMID, NULL) == -1)
-            perror("shmctl()");
-        
         return -1;
-    }
 #endif
+    
+    /* initialize values (if possible, load from file)
+     * has to be after kw1281_open somehow
+     */
+    if (init_values() == -1)
+        return -1;
     
     // create databases, unless they exist
     rrdtool_create_consumption ();
