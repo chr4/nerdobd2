@@ -77,7 +77,7 @@ body, html
 #con_av_short, #con_av_medium, #con_av_long
 {
     font-family:helvetica;
-    font-size:18px;
+    font-size:20px;
     color:#f00000;
     cursor:pointer;
 }
@@ -93,7 +93,7 @@ body, html
 #speed_av_short, #speed_av_medium, #speed_av_long
 {
     font-family:helvetica;
-    font-size:18px;
+    font-size:20px;
     color:#f00000;
     cursor:pointer;
 }
@@ -180,7 +180,7 @@ body, html
     margin-top:20px;
 }
 
-#con_h, #rpm, #temp1, #temp2, #voltage
+#con_h, #rpm, #temp1, #temp2, #voltage, #liters
 {
     font-family:helvetica;
     font-size:28px;

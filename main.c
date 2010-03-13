@@ -41,10 +41,10 @@ int
 init_values(void)
 {
     int     fd;
-    key_t   key1 = 21337;
-    key_t   key2 = 231337;
-    key_t   key3 = 231338;
-    key_t   key4 = 21338;
+    key_t   key1 = 41337;
+    key_t   key2 = 4231337;
+    key_t   key3 = 4231338;
+    key_t   key4 = 41338;
 
     // setup shared values
     if ( (shmid_gval = shmget(key1, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
@@ -112,6 +112,7 @@ init_values(void)
     gval->voltage   = -2;
     gval->con_h     = -2;
     gval->con_km    = -2;
+    gval->liters    =  0;
     
     // init average structs
     av_con->array_full = 0;

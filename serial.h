@@ -81,6 +81,7 @@ struct values
     // calculated values
     float   con_h;
     float   con_km;
+    float   liters;   
 };
 
 struct values *gval;
@@ -95,7 +96,7 @@ struct average
     float   average_short;  // average of short time period (SHORT)
     float   average_medium; // average of medium time period (MEDIUM)
     float   average_long;   // average of long time period (LONG)
-    
+
     int     timespan;       // time span for rrdtool graph
 };
 

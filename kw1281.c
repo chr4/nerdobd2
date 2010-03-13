@@ -952,7 +952,7 @@ kw1281_mainloop (void)
         else
             gval->con_h = 0;
 
-        // rrdtool_update ("rpm", rpm);
+        gval->liters += gval->con_h / 3600;
 
         // request block 0x05
         // (speed)
@@ -1009,6 +1009,7 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
+    printf ("l abs.\t\t%.3f\n", gval->liters);
     printf ("l/h\t\t%.2f\n", gval->con_h);
     printf ("l/100km\t\t%.2f\n", gval->con_km);
     printf ("speed\t\t%.1f km/h\n", gval->speed);
