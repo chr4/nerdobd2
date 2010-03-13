@@ -25,6 +25,9 @@
  *
  * high priority / nice only for kw1281 process
  *
+ * suddenly high error rate and only works with DEBUG on. WTF?
+ *   only change -> timespan->average struct and added gval liters
+ *
  * set baudrate, multiplicator value and other things via config file
  *
  */
@@ -32,71 +35,38 @@
 int     init_values(void);
 
 // shmid has to be global, so we can destroy it on exit
-int     shmid_gval;
-int     shmid_speed;
-int     shmid_con;
-int     shmid_debug;
+int     shmid;
+void   *p;
+
 
 int
 init_values(void)
 {
     int     fd;
-    key_t   key1 = 41337;
-    key_t   key2 = 4231337;
-    key_t   key3 = 4231338;
-    key_t   key4 = 41338;
+    key_t   key = 51337;
 
     // setup shared values
-    if ( (shmid_gval = shmget(key1, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
+    if ( (shmid = shmget(key,
+                         sizeof (struct values) +
+                         2 * sizeof(struct average) +
+                         1024, // sizeof debug 
+                         0666 | IPC_CREAT)) < 0)
     {
         perror("shmget()");
         return -1;
     }
     
-    if ( (gval = (struct values *) shmat(shmid_gval, (void *) 0, 0)) == (void *) -1)
+    if ( (p = shmat(shmid, NULL, 0)) == (void *) -1)
     {
         perror("shmat()");
         return -1;
     }
     
-    // setup average speed shared values
-    if ( (shmid_speed = shmget(key2, sizeof(struct average), 0666 | IPC_CREAT)) < 0)
-    {
-        perror("shmget()");
-        return -1;
-    }
-    
-    if ( (av_speed = (struct average *) shmat(shmid_speed, (void *) 0, 0)) == (void *) -1)
-    {
-        perror("shmat()");
-        return -1;
-    }
-    
-    // setup average consumption shared values
-    if ( (shmid_con = shmget(key3, sizeof(struct average), 0666 | IPC_CREAT)) < 0)
-    {
-        perror("shmget()");
-        return -1;
-    }
-    
-    if ( (av_con = (struct average *) shmat(shmid_con, (void *) 0, 0)) == (void *) -1)
-    {
-        perror("shmat()");
-        return -1;
-    }
-    
-    // setup debugging string
-    if ( (shmid_debug = shmget(key4, 1024, 0666 | IPC_CREAT)) < 0)
-    {
-        perror("shmget()");
-        return -1;
-    }
-    
-    if ( (debug = (char *) shmat(shmid_debug, (void *) 0, 0)) == (void *) -1)
-    {
-        perror("shmat()");
-        return -1;
-    }
+    // attach variables to shared memory space
+    gval     = (struct values *) p;
+    av_speed = (struct average *) (p + sizeof(struct values));
+    av_con   = (struct average *) (p + sizeof(struct values) + sizeof(struct average));
+    debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));
     
     
     /* init values with -2
@@ -261,24 +231,9 @@ main (int arc, char **argv)
             
             waitpid(pid, &status, 0);
             
-            if (shmdt(gval) == -1)
+            if (shmdt(p) == -1)
                 perror("shmdt()");
-            else if (shmctl(shmid_gval, IPC_RMID, NULL) == -1)
-                perror("shmctl()");
-            
-            if (shmdt(av_speed) == -1)
-                perror("shmdt()");
-            else if (shmctl(shmid_speed, IPC_RMID, NULL) == -1)
-                perror("shmctl()");
-            
-            if (shmdt(av_con) == -1)
-                perror("shmdt()");
-            else if (shmctl(shmid_con, IPC_RMID, NULL) == -1)
-                perror("shmctl()");
-            
-            if (shmdt(debug) == -1)
-                perror("shmdt()");
-            else if (shmctl(shmid_debug, IPC_RMID, NULL) == -1)
+            else if (shmctl(shmid, IPC_RMID, NULL) == -1)
                 perror("shmctl()");
             
             return -1;
