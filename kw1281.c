@@ -22,7 +22,6 @@ float   const_inj_subtract = 0.1;
 int     fd;
 int     counter;                // kw1281 protocol block counter
 char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
-char    dev_awake = 0;          // flag (true if ECU is already awake, thus 5 baud init not needed)
 
 // save old values
 struct termios oldtio;
@@ -751,19 +750,6 @@ kw1281_init (int address)
     int     in;
     
     
-    // check if device is already awake
-    // if so, call recover and return, no 5 baud init needed
-    /*
-    if (dev_awake)
-    {
-        if (kw1281_recover() == -1)
-            return -1;
-        else
-            return 0;
-    }
-    */
-    
-    
 #ifdef DEBUG
     printf("emptying buffer...\n");
 #endif 
@@ -879,7 +865,6 @@ kw1281_init (int address)
 #endif
     
     counter = 1;
-    dev_awake = 1;
     
     return 0;
 }
@@ -918,8 +903,28 @@ kw1281_mainloop (void)
         gval->voltage += 0.15;
         gval->rpm += 100;
 
+        // update rrdtool databases
         rrdtool_update_consumption();
         rrdtool_update_speed();
+        
+        
+        // save consumption array to file        
+        if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(file, av_con, sizeof(struct average));
+            close(file);
+        }
+        
+        // save av_speed array to file    
+        if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+            perror("couldn't open file:\n");
+        else
+        {
+            write(file, av_speed, sizeof(struct average));
+            close(file);
+        }
         
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
@@ -945,59 +950,67 @@ kw1281_mainloop (void)
         if (kw1281_get_block(0x02) == -1)
             return -1;
 
-        // calculate consumption per hour
-        if (gval->inj_time > const_inj_subtract)
-            gval->con_h = 60 * 4 * const_multiplier *
-                gval->rpm * (gval->inj_time - const_inj_subtract);
-        else
-            gval->con_h = 0;
-
-        gval->liters += gval->con_h / 3600;
-
         // request block 0x05
         // (speed)
         if (kw1281_get_block(0x05) == -1)
             return -1;
-
-        // calculate consumption per hour
-        if (gval->speed > 5)
-            // below 5km/h values get very high, which makes the graphs unreadable
-            gval->con_km = (gval->con_h / gval->speed) * 100;
-        else
-            gval->con_km = -1;
-
-        // update rrdtool databases
-        rrdtool_update_consumption();
-        rrdtool_update_speed();
 
         // request block 0x04
         // (temperatures + voltage)
         if (kw1281_get_block(0x04) == -1)
             return -1;
         
-        // output values
-        kw1281_print ();
-
-        // save consumption array to file        
-        if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
+        
+        /* fork so we don't disrupt time critical
+         * serial communication
+         */
+        if (fork() > 0)
         {
-            write(file, av_con, sizeof(struct average));
-            close(file);
+            // calculate consumption per hour
+            if (gval->inj_time > const_inj_subtract)
+                gval->con_h = 60 * 4 * const_multiplier *
+                gval->rpm * (gval->inj_time - const_inj_subtract);
+            else
+                gval->con_h = 0;
+            
+            gval->liters += gval->con_h / 3600;
+            
+            // calculate consumption per hour
+            if (gval->speed > 5)
+                // below 5km/h values get very high, which makes the graphs unreadable
+                gval->con_km = (gval->con_h / gval->speed) * 100;
+            else
+                gval->con_km = -1;
+            
+        
+            // output values
+            kw1281_print ();
+            
+            // update rrdtool databases
+            rrdtool_update_consumption();
+            rrdtool_update_speed();
+            
+
+            // save consumption array to file        
+            if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+                perror("couldn't open file:\n");
+            else
+            {
+                write(file, av_con, sizeof(struct average));
+                close(file);
+            }
+
+            // save av_speed array to file    
+            if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
+                perror("couldn't open file:\n");
+            else
+            {
+                write(file, av_speed, sizeof(struct average));
+                close(file);
+            }
         }
 
-        // save av_speed array to file    
-        if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
-        {
-            write(file, av_speed, sizeof(struct average));
-            close(file);
-        }
-
-
-        // collect defunct processes from rrdtool functions
+        // collect defunct processes functions
         while(waitpid(-1, &status, WNOHANG) > 0);
     }
     
