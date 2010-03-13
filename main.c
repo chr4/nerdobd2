@@ -23,6 +23,8 @@
  *
  * cleanup function, catch sigint, shutdown ajax server
  *
+ * fix liters calculation with measuring time between calls
+ *
  * only works as long as writing to file is disabled. WTF
  *
  * set baudrate, multiplicator value and other things via config file
@@ -96,7 +98,8 @@ init_values(void)
     av_speed->average_long = 0;
     av_speed->timespan = 300;
   
-/* 
+/*
+    // use & 
     // overwrite consumption inits from file, if present
     if ( (file = open( CON_AV_FILE, O_RDONLY )) != -1)
     {
