@@ -190,7 +190,7 @@ rrdtool_update_consumption (void)
     for (i = 0; args_graph[i] != NULL; i++);
 
     if (rrd_graph_v(i, args_graph) == NULL)
-        printf("rrd_graph() error\n");
+        printf("rrd_graph_v() error\n");
     
     return;
 }
