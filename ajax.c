@@ -261,18 +261,18 @@ handle_client(int fd)
             reset_counters();
         
         else if (!strcmp(p, "av_speed_graph:short") )
-            gval->speed_timespan = 300;
+            av_speed->timespan = 300;
         else if (!strcmp(p, "av_speed_graph:medium") )
-            gval->speed_timespan = 1800;
+            av_speed->timespan = 1800;
         else if (!strcmp(p, "av_speed_graph:long") )
-            gval->speed_timespan = 14400;
+            av_speed->timespan = 14400;
         
         else if (!strcmp(p, "av_con_graph:short") )
-            gval->con_timespan = 300;            
+            av_con->timespan = 300;            
         else if (!strcmp(p, "av_con_graph:medium") )
-            gval->con_timespan = 1800;            
+            av_con->timespan = 1800;            
         else if (!strcmp(p, "av_con_graph:long") )            
-            gval->con_timespan = 14400;
+            av_con->timespan = 14400;
         
         else
         {
