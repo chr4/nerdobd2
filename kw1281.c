@@ -961,8 +961,8 @@ kw1281_mainloop (void)
         /* fork so we don't disrupt time critical
          * serial communication
          */
-        if (fork() > 0)
-        {
+//        if (fork() > 0)
+//        {
             // calculate consumption per hour
             if (gval->inj_time > INJ_SUBTRACT)
                 gval->con_h = 60 * 4 * MULTIPLIER *
@@ -986,12 +986,12 @@ kw1281_mainloop (void)
         
             // output values
             kw1281_print ();
-            
+
+/*
             // update rrdtool databases
             rrdtool_update_consumption();
             rrdtool_update_speed();
-            
-
+    
             // save consumption array to file        
             if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
                 perror("couldn't open file:\n");
@@ -1009,11 +1009,12 @@ kw1281_mainloop (void)
                 write(file, av_speed, sizeof(struct average));
                 close(file);
             }
+*/ 
         }
 
         // collect defunct processes functions
-        while(waitpid(-1, &status, WNOHANG) > 0);
-    }
+//        while(waitpid(-1, &status, WNOHANG) > 0);
+//    }
     
     return 0;
 }

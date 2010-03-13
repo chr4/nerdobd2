@@ -23,8 +23,7 @@
  *
  * cleanup function, catch sigint, shutdown ajax server
  *
- * suddenly high error rate and only works with DEBUG on. WTF?
- *   only change -> timespan->average struct and added gval liters
+ * only works as long as writing to file is disabled. WTF
  *
  * set baudrate, multiplicator value and other things via config file
  *
@@ -40,8 +39,8 @@ void   *p;
 int
 init_values(void)
 {
-    int     fd;
-    key_t   key = 51337;
+    int     file;
+    key_t   key = 13337;
 
     // setup shared values
     if ( (shmid = shmget(key,
@@ -64,7 +63,7 @@ init_values(void)
     gval     = (struct values *) p;
     av_speed = (struct average *) (p + sizeof(struct values));
     av_con   = (struct average *) (p + sizeof(struct values) + sizeof(struct average));
-    debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));
+    debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));    
     
     
     /* init values with -2
@@ -96,21 +95,22 @@ init_values(void)
     av_speed->average_medium = 0;
     av_speed->average_long = 0;
     av_speed->timespan = 300;
-    
-    
+  
+/* 
     // overwrite consumption inits from file, if present
-    if ( (fd = open( CON_AV_FILE, O_RDONLY )) != -1)
+    if ( (file = open( CON_AV_FILE, O_RDONLY )) != -1)
     {
-        read(fd, av_con, sizeof(struct average));
-        close( fd );
+        read(file, av_con, sizeof(struct average));
+        close( file );
     }
     
     // overwrite speed inits from file, if present
-    if ( (fd = open( SPEED_AV_FILE, O_RDONLY )) != -1)
+    if ( (file = open( SPEED_AV_FILE, O_RDONLY )) != -1)
     {
-        read(fd, av_speed, sizeof(struct average));
-        close( fd );
+        read(file, av_speed, sizeof(struct average));
+        close( file );
     }
+*/    
     
 #ifdef DEBUG  
     int i;
@@ -191,11 +191,6 @@ main (int arc, char **argv)
         printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
 #endif
     
-    /* this loop is intended to restart the connection
-     * on connection errors, unfortunately, somehow kw1281_open()
-     * only works before any threading and forking, so its of 
-     * no use at the moment
-     */
     
     for ( ; ; )
     {
@@ -205,7 +200,6 @@ main (int arc, char **argv)
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
         ret = kw1281_init (0x01);
-        // ret = kw1281_fastinit (0x01);
         
         if (ret == -1)
         {
