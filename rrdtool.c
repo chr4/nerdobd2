@@ -140,7 +140,7 @@ rrdtool_update_consumption (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - gval->con_timespan); // now - timespan
+             (int) time (&t) - av_con->timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -184,9 +184,9 @@ rrdtool_update_consumption (void)
         strncpy(combined[i], "--x-grid", sizeof(combined[i]));
         i++;
         
-        if (gval->con_timespan < 900)        // 15min
+        if (av_con->timespan < 900)        // 15min
             strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (gval->con_timespan < 3600)  // 1h
+        else if (av_con->timespan < 3600)  // 1h
             strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
         else
             strncpy(combined[i], xgrid_long, sizeof(combined[i]));
@@ -323,7 +323,7 @@ rrdtool_update_speed (void)
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
-             (int) time (&t) - gval->speed_timespan); // now - timespan
+             (int) time (&t) - av_speed->timespan); // now - timespan
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
@@ -364,9 +364,9 @@ rrdtool_update_speed (void)
         strncpy(combined[i], "--x-grid", sizeof(combined[i]));
         i++;
         
-        if (gval->speed_timespan < 900)        // 15min
+        if (av_speed->timespan < 900)        // 15min
             strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (gval->speed_timespan < 3600)  // 1h
+        else if (av_speed->timespan < 3600)  // 1h
             strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
         else
             strncpy(combined[i], xgrid_long, sizeof(combined[i]));

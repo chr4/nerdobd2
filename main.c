@@ -41,10 +41,10 @@ int
 init_values(void)
 {
     int     fd;
-    key_t   key1 = 1337;
-    key_t   key2 = 31337;
-    key_t   key3 = 31338;
-    key_t   key4 = 1338;
+    key_t   key1 = 21337;
+    key_t   key2 = 231337;
+    key_t   key3 = 231338;
+    key_t   key4 = 21338;
 
     // setup shared values
     if ( (shmid_gval = shmget(key1, sizeof(struct values), 0666 | IPC_CREAT)) < 0)
@@ -113,22 +113,20 @@ init_values(void)
     gval->con_h     = -2;
     gval->con_km    = -2;
     
-    // default timespan 5min (300sec)
-    gval->con_timespan = 300;    
-    gval->speed_timespan = 300;
-    
     // init average structs
     av_con->array_full = 0;
     av_con->counter = 0;
     av_con->average_short = 0; 
     av_con->average_medium = 0;
     av_con->average_long = 0;
+    av_con->timespan = 300;    
     
     av_speed->array_full = 0;
     av_speed->counter = 0;
     av_speed->average_short = 0; 
     av_speed->average_medium = 0;
     av_speed->average_long = 0;
+    av_speed->timespan = 300;
     
     
     // overwrite consumption inits from file, if present
@@ -154,7 +152,7 @@ init_values(void)
     printf("av_con averages: %.02f, %.02f, %.02f\n",
            av_con->average_short, av_con->average_medium, av_con->average_long);
 
-    printf("av_speed->counter: %d\n", consumption.counter);
+    printf("av_speed->counter: %d\n", av_speed->counter);
     for (i = 0; i < av_speed->counter; i++)
         printf("%.02f ", av_speed->array[i]);
     printf("array full? (%d)\n", av_speed->array_full);

@@ -31,7 +31,7 @@
 
 #define SERIAL_ATTACHED
 #define HIGH_PRIORITY
-//#define DEBUG
+#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
@@ -81,10 +81,6 @@ struct values
     // calculated values
     float   con_h;
     float   con_km;
-
-    // time span for rrdtool graph
-    int     con_timespan;
-    int     speed_timespan;
 };
 
 struct values *gval;
@@ -100,6 +96,7 @@ struct average
     float   average_medium; // average of medium time period (MEDIUM)
     float   average_long;   // average of long time period (LONG)
     
+    int     timespan;       // time span for rrdtool graph
 };
 
 struct average *av_con, *av_speed;
