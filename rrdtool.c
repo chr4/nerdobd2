@@ -25,11 +25,14 @@ rrdtool_update_consumption (void)
     char    starttime[256];
     char    endtime[256];    
     time_t  t;
-    int     i;
+    int     i, n;
 
     float   tmp_short = 0;
     float   tmp_medium = 0;    
     float   tmp_long = 0;
+    
+    char combined[256][256];
+    
     
     if (gval->con_km < 0)
     {
@@ -120,23 +123,17 @@ rrdtool_update_consumption (void)
 
     }
     
-    
-    if (fork() == 0)
+    // rrdtool args
+    char *args_update[256] = 
     {
-        // rrdtool args
-        char *args[] = 
-        {
-            "update", "consumption.rrd", starttime,
-            NULL
-        };
-        
-        
-        for (i = 0; args[i] != NULL; i++);
-        if (rrd_update(i, args) == -1)
-            printf("rrd_update() error\n");
+        "update", "consumption.rrd", starttime,
+        NULL
+    };
+    
+    for (i = 0; args_update[i] != NULL; i++);
+    if (rrd_update(i, args_update) == -1)
+        printf("rrd_update() error\n");
 
-        exit(0);
-    }
     
     // we want to graph the last 5 mins
     snprintf(starttime, sizeof(starttime), "%d",
@@ -144,70 +141,60 @@ rrdtool_update_consumption (void)
     
     snprintf(endtime, sizeof(endtime), "%d",
              (int) time (&t));
-    
-    
-    if (fork() == 0)
+        
+    char *args_graph[256] =
+    {             
+        "graph", CON_GRAPH,
+        "--start", starttime, "--end", endtime,
+        "--upper-limit", "19.5", "--lower-limit", "0", "--y-grid", "3.25:1",
+        "DEF:con_km=consumption.rrd:km:AVERAGE", 
+        "DEF:con_h=consumption.rrd:h:AVERAGE", 
+        "AREA:con_km#f00000ee:l/100km", 
+        "LINE2:con_h#aaaaaaee:l/h",
+        NULL    // array needs to be terminated with NULL
+    };
+        
+    // append args to combined
+    while (args_graph[i] != NULL) 
     {
-        int i = 0, n = 0;
-        char combined[256][256];
-        
-        char *args[256] =
-        {             
-            "graph", CON_GRAPH,
-            "--start", starttime, "--end", endtime,
-            "--upper-limit", "19.5", "--lower-limit", "0", "--y-grid", "3.25:1",
-            "DEF:con_km=consumption.rrd:km:AVERAGE", 
-            "DEF:con_h=consumption.rrd:h:AVERAGE", 
-            "AREA:con_km#f00000ee:l/100km", 
-            "LINE2:con_h#aaaaaaee:l/h",
-            NULL    // array needs to be terminated with NULL
-        };
-        
-        
-        
-        // append args to combined
-        while (args[i] != NULL) 
-        {
-            strncpy(combined[i], args[i], sizeof(combined[i]));
-            i++;
-        }
-        
-        // append rrdstyle to combined
-        while (rrdstyle[n] != NULL) 
-        {
-            strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
-            n++;
-            i++;
-        }
-        
-        // append xgrid setting
-        strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+        strncpy(combined[i], args_graph[i], sizeof(combined[i]));
         i++;
-        
-        if (av_con->timespan < 900)        // 15min
-            strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (av_con->timespan < 3600)  // 1h
-            strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
-        else
-            strncpy(combined[i], xgrid_long, sizeof(combined[i]));
-        
-        i++;
-        
-        // we need an array of pointers for execvp()
-        for (n = 0; n < i; n++)
-            args[n] = combined[n];
-        
-        
-        for (i = 0; args[i] != NULL; i++);
-
-        if (rrd_graph_v(i, args) == NULL)
-            printf("rrd_graph() error\n");
-        
-        exit(0);
     }
+    
+    // append rrdstyle to combined
+    while (rrdstyle[n] != NULL) 
+    {
+        strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
+        n++;
+        i++;
+    }
+    
+    // append xgrid setting
+    strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+    i++;
+    
+    if (av_con->timespan < 900)        // 15min
+        strncpy(combined[i], xgrid_short, sizeof(combined[i]));
+    else if (av_con->timespan < 3600)  // 1h
+        strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
+    else
+        strncpy(combined[i], xgrid_long, sizeof(combined[i]));
+    
+    i++;
+    
+    // we need an array of pointers for execvp()
+    for (n = 0; n < i; n++)
+        args_graph[n] = combined[n];
+    
+    
+    for (i = 0; args_graph[i] != NULL; i++);
+
+    if (rrd_graph_v(i, args_graph) == NULL)
+        printf("rrd_graph() error\n");
     
     return;
 }
+
 
 void
 rrdtool_update_speed (void)
@@ -215,11 +202,14 @@ rrdtool_update_speed (void)
     char    starttime[256];
     char    endtime[256];
     time_t  t;
-    int     i;
+    int     i, n;
 
     float   tmp_short = 0;
     float   tmp_medium = 0;    
     float   tmp_long = 0;
+    
+    char    combined[256][256];
+    
     
     if (gval->speed >= 0)
     { 
@@ -301,23 +291,18 @@ rrdtool_update_speed (void)
 
         snprintf (starttime, sizeof (starttime), "%d:%.1f", 
                   (int) time (&t), gval->speed);
-    
-        if (fork() == 0)
-        {          
-            // rrdtool args
-            char *args[] = 
-            {
-                "update", "speed.rrd", starttime,
-                NULL
-            };
-            
-            
-            for (i = 0; args[i] != NULL; i++);
-            if (rrd_update(i, args) == -1)
-                printf("rrd_update() error\n");
-            
-            exit(0);
-        }
+        
+        
+        // rrdtool args
+        char *args_update[256] = 
+        {
+            "update", "speed.rrd", starttime,
+            NULL
+        };
+        
+        for (i = 0; args_update[i] != NULL; i++);
+        if (rrd_update(i, args_update) == -1)
+            printf("rrd_update() error\n");
     }
     
     
@@ -329,61 +314,52 @@ rrdtool_update_speed (void)
              (int) time (&t));
     
     
-    if (fork() == 0)
+    char *args_graph[256] =
+    { 
+        "graph", SPEED_GRAPH,
+        "--start", starttime, "--end", endtime,
+        "--upper-limit", "135", "--lower-limit", "0", "--y-grid", "7.5:2",
+        "DEF:myspeed=speed.rrd:speed:AVERAGE",
+        "AREA:myspeed#f00000ee:km/h", 
+        NULL    // array needs to be terminated with NULL
+    };
+    
+    // append args to combined
+    while (args_graph[i] != NULL) 
     {
-        int i = 0, n = 0;
-        char combined[256][256];
-
-        char *args[256] =
-        { 
-            "graph", SPEED_GRAPH,
-            "--start", starttime, "--end", endtime,
-            "--upper-limit", "135", "--lower-limit", "0", "--y-grid", "7.5:2",
-            "DEF:myspeed=speed.rrd:speed:AVERAGE",
-            "AREA:myspeed#f00000ee:km/h", 
-            NULL    // array needs to be terminated with NULL
-        };
-        
-        
-        // append args to combined
-        while (args[i] != NULL) 
-        {
-            strncpy(combined[i], args[i], sizeof(combined[i]));
-            i++;
-        }
-        
-        // append rrdstyle to combined
-        while (rrdstyle[n] != NULL) 
-        {
-            strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
-            n++;
-            i++;
-        }
-        
-        // append xgrid setting
-        strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+        strncpy(combined[i], args_graph[i], sizeof(combined[i]));
         i++;
-        
-        if (av_speed->timespan < 900)        // 15min
-            strncpy(combined[i], xgrid_short, sizeof(combined[i]));
-        else if (av_speed->timespan < 3600)  // 1h
-            strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
-        else
-            strncpy(combined[i], xgrid_long, sizeof(combined[i]));
-        
-        i++;
-        
-        // we need an array of pointers for execvp()
-        for (n = 0; n < i; n++)
-            args[n] = combined[n];
-        
-        
-        for (i = 0; args[i] != NULL; i++);
-         if (rrd_graph_v(i, args) == NULL)
-            printf("rrd_graph_v() error\n");
-        
-        exit(0);
     }
+    
+    // append rrdstyle to combined
+    while (rrdstyle[n] != NULL) 
+    {
+        strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
+        n++;
+        i++;
+    }
+    
+    // append xgrid setting
+    strncpy(combined[i], "--x-grid", sizeof(combined[i]));
+    i++;
+    
+    if (av_speed->timespan < 900)        // 15min
+        strncpy(combined[i], xgrid_short, sizeof(combined[i]));
+    else if (av_speed->timespan < 3600)  // 1h
+        strncpy(combined[i], xgrid_medium, sizeof(combined[i]));
+    else
+        strncpy(combined[i], xgrid_long, sizeof(combined[i]));
+    
+    i++;
+    
+    // we need an array of pointers for execvp()
+    for (n = 0; n < i; n++)
+        args_graph[n] = combined[n];
+    
+    
+    for (i = 0; args_graph[i] != NULL; i++);
+     if (rrd_graph_v(i, args_graph) == NULL)
+        printf("rrd_graph_v() error\n");
     
     return;
 }
@@ -409,7 +385,7 @@ rrdtool_create_consumption (void)
 
     snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
         
-    char *args[] = 
+    char *args[256] = 
     {
         "create", "consumption.rrd",
         "--start", starttime, "--step", "1",
@@ -452,7 +428,7 @@ rrdtool_create_speed (void)
     snprintf (starttime, sizeof (starttime), "%d", (int) time (&t));
     
     // rrdtool create
-    char *args[] = 
+    char *args[256] = 
         {
             "create", "speed.rrd",
             "--start", starttime, "--step", "1",

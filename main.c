@@ -154,7 +154,14 @@ main (int arc, char **argv)
     // kw1281_open() somehow has to be started
     // before any threading stuff.
     if (kw1281_open (DEVICE) == -1)
-       return -1;
+    {
+        if (shmdt(p) == -1)
+            perror("shmdt()");
+        else if (shmctl(shmid, IPC_RMID, NULL) == -1)
+            perror("shmctl()");
+        
+        return -1;
+    }
 #endif
     
     // create databases, unless they exist
