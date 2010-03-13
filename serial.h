@@ -35,9 +35,21 @@
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
-#define WRITE_DELAY     5700    // serial dump logs 15600ms before answer arrives maybe 7800 is better?
+//#define WRITE_DELAY     5700    // serial dump logs 15600ms before answer arrives maybe 7800 is better?
+#define WRITE_DELAY     7800
 #define INIT_DELAY      200000
 
+/* constants for calculating consumption
+ * out of injection time, rpm and speed
+ *
+ * consumption per hour = 
+ *    60 (minutes) * 4 (zylinders) * 
+ *    MULTIPLIER * rpm * (injection time - INJ_SUBTRACT)
+ */
+#define MULTIPLIER      0.00000089
+#define INJ_SUBTRACT    0.1
+
+// the port where to local ajax server listens
 #define PORT            8080
 
 // measure length in seconds (for calculating averages)
@@ -80,8 +92,7 @@ struct values
     
     // calculated values
     float   con_h;
-    float   con_km;
-    float   liters;   
+    float   con_km; 
 };
 
 struct values *gval;
@@ -98,6 +109,8 @@ struct average
     float   average_long;   // average of long time period (LONG)
 
     int     timespan;       // time span for rrdtool graph
+    
+    float   liters;         // only av_con uses this, absolute consumption
 };
 
 struct average *av_con, *av_speed;

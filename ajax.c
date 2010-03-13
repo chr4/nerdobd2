@@ -255,7 +255,7 @@ handle_client(int fd)
         else if (!strcmp(p, "voltage") )
             obd_send(fd, gval->voltage, "%.02f");
         else if (!strcmp(p, "liters") )
-            obd_send(fd, gval->liters, "%.03f");
+            obd_send(fd, av_con->liters, "%.03f");
 
 
         else if (!strcmp(p, "debug") )

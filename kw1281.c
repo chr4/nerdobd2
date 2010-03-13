@@ -16,9 +16,6 @@ int     kw1281_read_timeout(void);
 int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
 
-float   const_multiplier = 0.00000089;
-float   const_inj_subtract = 0.1;
-
 int     fd;
 int     counter;                // kw1281 protocol block counter
 char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
@@ -967,13 +964,17 @@ kw1281_mainloop (void)
         if (fork() > 0)
         {
             // calculate consumption per hour
-            if (gval->inj_time > const_inj_subtract)
-                gval->con_h = 60 * 4 * const_multiplier *
-                gval->rpm * (gval->inj_time - const_inj_subtract);
+            if (gval->inj_time > INJ_SUBTRACT)
+                gval->con_h = 60 * 4 * MULTIPLIER *
+                              gval->rpm * (gval->inj_time - INJ_SUBTRACT);
             else
                 gval->con_h = 0;
             
-            gval->liters += gval->con_h / 3600;
+            /* calculate how much liters we consumed this second
+             * and add it to absolute consumption counter
+             */
+            av_con->liters += gval->con_h / 3600;
+            
             
             // calculate consumption per hour
             if (gval->speed > 5)
@@ -1022,7 +1023,7 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
-    printf ("l abs.\t\t%.3f\n", gval->liters);
+    printf ("l abs.\t\t%.3f\n", av_con->liters);
     printf ("l/h\t\t%.2f\n", gval->con_h);
     printf ("l/100km\t\t%.2f\n", gval->con_km);
     printf ("speed\t\t%.1f km/h\n", gval->speed);

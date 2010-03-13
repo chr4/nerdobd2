@@ -17,13 +17,11 @@
  *
  * check if "hang on socket shutdown" error is fixed
  *
- * bigger font size for average values below graphs (done)
- *
  * kw1281_open() in for (;;)
  *
- * migrate /tmp files back to home (disable symlinks) (done)
- *
  * high priority / nice only for kw1281 process
+ *
+ * cleanup function, catch sigint, shutdown ajax server
  *
  * suddenly high error rate and only works with DEBUG on. WTF?
  *   only change -> timespan->average struct and added gval liters
@@ -82,7 +80,6 @@ init_values(void)
     gval->voltage   = -2;
     gval->con_h     = -2;
     gval->con_km    = -2;
-    gval->liters    =  0;
     
     // init average structs
     av_con->array_full = 0;
@@ -90,6 +87,7 @@ init_values(void)
     av_con->average_short = 0; 
     av_con->average_medium = 0;
     av_con->average_long = 0;
+    av_con->liters = 0;
     av_con->timespan = 300;    
     
     av_speed->array_full = 0;
@@ -140,7 +138,7 @@ int
 main (int arc, char **argv)
 {
     pid_t   pid;
-    int     status;
+    //int     status;
     int     ret;
     struct sched_param prio;
     
@@ -234,9 +232,13 @@ main (int arc, char **argv)
         {
             printf("serial port error, exiting.\n");
             kw1281_close();
-            ajax_shutdown();
             
-            waitpid(pid, &status, 0);
+            /*
+             * we can't call ajax_shutdown() directly
+             * because its running in another process
+             */
+            // ajax_shutdown();
+            // waitpid(pid, &status, 0);
             
             if (shmdt(p) == -1)
                 perror("shmdt()");
