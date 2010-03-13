@@ -31,7 +31,7 @@
 
 #define SERIAL_ATTACHED
 #define HIGH_PRIORITY
-#define DEBUG
+//#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400
