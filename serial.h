@@ -4,7 +4,7 @@
 #include <sys/wait.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <time.h>
+#include <sys/time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>

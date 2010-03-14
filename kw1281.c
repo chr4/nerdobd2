@@ -874,6 +874,7 @@ kw1281_mainloop (void)
 {
     int    status;
     int    file;
+    struct timeval a, b;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -891,9 +892,11 @@ kw1281_mainloop (void)
     gval->temp1 = 20;
     gval->temp2 = 0;
     gval->voltage = 3.00;
-    
+
     for (;;)
     {
+        gettimeofday(&a, NULL);
+
         gval->speed++;
         gval->con_km += 0.75;
         gval->con_h += 1.03;
@@ -926,10 +929,14 @@ kw1281_mainloop (void)
             close(file);
         }
 
+        usleep(1500000);
+        gettimeofday(&b, NULL);
+        av_con->liters += (float) ( gval->con_h / 3600 * 
+                                   ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) - 
+                                     ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) ) );
+
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
-        
-        sleep(1);
     }
 #endif
 
@@ -945,6 +952,8 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( ; ; )
     {
+        gettimeofday(&a, NULL);
+
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
@@ -977,7 +986,10 @@ kw1281_mainloop (void)
              * multiply that by the time since last value
              * and add it to absolute consumption counter
              */
-            av_con->liters += (gval->con_h / 3600);
+            gettimeofday(&b, NULL);
+            av_con->liters += (float) ( gval->con_h / 3600 *
+                                      ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) -
+                                        ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) ) );
             
             
             // calculate consumption per hour

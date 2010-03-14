@@ -388,6 +388,7 @@ reset_counters(void)
     av_con->average_short = 0; 
     av_con->average_medium = 0;
     av_con->average_long = 0;
+    av_con->liters = 0;
     
     // init average speed struct
     av_speed->array_full = 0;
