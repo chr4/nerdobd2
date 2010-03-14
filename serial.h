@@ -4,12 +4,11 @@
 #include <sys/wait.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <sys/timeb.h>
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
