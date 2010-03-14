@@ -11,17 +11,9 @@
  *
  * TODO:
  * 
- * resetting counters works, but unlike the speed averages
- * the consumption averages get updated on first new value
- * instead of directly being set to 0 (wtf? code is the same.. )
- *
- * check if "hang on socket shutdown" error is fixed
- *
- * kw1281_open() in for (;;)
- *
  * high priority / nice only for kw1281 process
  *
- * cleanup function, catch sigint, shutdown ajax server
+ * cleanup function, catch sigint
  *
  * fix liters calculation with measuring time between calls
  *
@@ -30,6 +22,8 @@
  */
 
 int     init_values(void);
+void	reset_values(void);
+
 
 // shmid has to be global, so we can destroy it on exit
 int     shmid;
@@ -65,21 +59,8 @@ init_values(void)
     av_con   = (struct average *) (p + sizeof(struct values) + sizeof(struct average));
     debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));    
     
-    
-    /* init values with -2
-     * so ajax socket can control 
-     * if data is availiable 
-     */
-    gval->speed     = -2;
-    gval->rpm       = -2;
-    gval->temp1     = -2;
-    gval->temp2     = -2;
-    gval->oil_press = -2;
-    gval->inj_time  = -2;
-    gval->voltage   = -2;
-    gval->con_h     = -2;
-    gval->con_km    = -2;
-    
+    reset_values();   
+ 
     // init average structs
     av_con->array_full = 0;
     av_con->counter = 0;
@@ -133,6 +114,24 @@ init_values(void)
     return 0;
 }
 
+
+void
+reset_values(void)
+{
+    /* set values to -2 so ajax interfaces
+     * knows we're not having new values
+     * for a short while and can grey them out
+     */
+    gval->speed     = -2;
+    gval->rpm       = -2;
+    gval->temp1     = -2;
+    gval->temp2     = -2;
+    gval->oil_press = -2;
+    gval->inj_time  = -2;
+    gval->voltage   = -2;
+    gval->con_h     = -2;
+    gval->con_km    = -2;
+}
 
 
 int
@@ -194,40 +193,24 @@ main (int arc, char **argv)
         // send 5baud address, read sync byte + key word
         ret = kw1281_init (0x01);
         
+        // soft error, e.g. communication error
         if (ret == -1)
         {
             printf("init failed, retrying...\n");
-            
-            /* set values to -2 so ajax interfaces
-             * knows we're not having new values
-             * for a short while and can grey them out
-             */
-            gval->speed     = -2;
-            gval->rpm       = -2;
-            gval->temp1     = -2;
-            gval->temp2     = -2;
-            gval->oil_press = -2;
-            gval->inj_time  = -2;
-            gval->voltage   = -2;
-            gval->con_h     = -2;
-            gval->con_km    = -2;
-            
+            reset_values();
             continue;
         }
         
+        // hard error (e.g. serial cable unplugged)
         else if (ret == -2)
         {
             printf("serial port error, exiting.\n");
             kw1281_close();
             
-            /*
-             * we can't call ajax_shutdown() directly
-             * because its running in another process
-             */
-            // ajax_shutdown();
-            // waitpid(pid, &status, 0);
+            // send kill to ajax server 
             kill(pid, SIGTERM);
  
+            // free shm memory segment
             if (shmdt(p) == -1)
                 perror("shmdt()");
             else if (shmctl(shmid, IPC_RMID, NULL) == -1)
@@ -240,20 +223,8 @@ main (int arc, char **argv)
         if (kw1281_mainloop() == -1)
         {
             printf("errors. restarting...\n");
-
-            /* set values to -2 so ajax interfaces
-             * knows we're not having new values
-             * for a short while and can grey them out
-             */
-            gval->speed     = -2;
-            gval->rpm       = -2;
-            gval->temp1     = -2;
-            gval->temp2     = -2;
-            gval->oil_press = -2;
-            gval->inj_time  = -2;
-            gval->voltage   = -2;
-            gval->con_h     = -2;
-            gval->con_km    = -2;
+            reset_values();
+            continue;
         }
         
     }
