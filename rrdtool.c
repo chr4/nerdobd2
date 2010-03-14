@@ -131,6 +131,7 @@ rrdtool_update_consumption (void)
     };
     
     for (i = 0; args_update[i] != NULL; i++);
+
     if (rrd_update(i, args_update) == -1)
         printf("rrd_update() error\n");
 
@@ -155,19 +156,12 @@ rrdtool_update_consumption (void)
     };
         
     // append args to combined
-    while (args_graph[i] != NULL) 
-    {
+    for (i = 0; args_graph[i] != NULL; i++) 
         strncpy(combined[i], args_graph[i], sizeof(combined[i]));
-        i++;
-    }
     
     // append rrdstyle to combined
-    while (rrdstyle[n] != NULL) 
-    {
+    for (n = 0; rrdstyle[n] != NULL; n++, i++) 
         strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
-        n++;
-        i++;
-    }
     
     // append xgrid setting
     strncpy(combined[i], "--x-grid", sizeof(combined[i]));
@@ -301,6 +295,7 @@ rrdtool_update_speed (void)
         };
         
         for (i = 0; args_update[i] != NULL; i++);
+
         if (rrd_update(i, args_update) == -1)
             printf("rrd_update() error\n");
     }
@@ -325,19 +320,12 @@ rrdtool_update_speed (void)
     };
     
     // append args to combined
-    while (args_graph[i] != NULL) 
-    {
+    for (i = 0; args_graph[i] != NULL; i++) 
         strncpy(combined[i], args_graph[i], sizeof(combined[i]));
-        i++;
-    }
     
     // append rrdstyle to combined
-    while (rrdstyle[n] != NULL) 
-    {
+    for (n = 0; rrdstyle[n] != NULL; n++, i++) 
         strncpy(combined[i], rrdstyle[n], sizeof(combined[i]));
-        n++;
-        i++;
-    }
     
     // append xgrid setting
     strncpy(combined[i], "--x-grid", sizeof(combined[i]));
@@ -358,7 +346,8 @@ rrdtool_update_speed (void)
     
     
     for (i = 0; args_graph[i] != NULL; i++);
-     if (rrd_graph_v(i, args_graph) == NULL)
+
+    if (rrd_graph_v(i, args_graph) == NULL)
         printf("rrd_graph_v() error\n");
     
     return;

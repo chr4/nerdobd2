@@ -153,9 +153,7 @@ main (int arc, char **argv)
         return -1;
 #endif
     
-    /* initialize values (if possible, load from file)
-     * has to be after kw1281_open somehow
-     */
+    // initialize values (if possible, load from file)
     if (init_values() == -1)
         return -1;
     
