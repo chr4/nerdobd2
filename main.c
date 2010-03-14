@@ -25,8 +25,6 @@
  *
  * fix liters calculation with measuring time between calls
  *
- * only works as long as writing to file is disabled. WTF
- *
  * set baudrate, multiplicator value and other things via config file
  *
  */

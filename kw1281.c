@@ -661,6 +661,9 @@ kw1281_open (char *device)
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
+        /* we cannot use ajax_log() in this function
+         * because shm vars will be initialized afterwards..
+         */
         printf ("couldn't open serial device\n");
         sleep(1);
         return -1;
@@ -871,6 +874,7 @@ kw1281_mainloop (void)
 {
     int    status;
     int    file;
+    time_t t;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -942,6 +946,8 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( ; ; )
     {
+	time (&t); // save timed
+
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
@@ -970,10 +976,11 @@ kw1281_mainloop (void)
             else
                 gval->con_h = 0;
             
-            /* calculate how much liters we consumed this second
+            /* calculate how much liters we consumed per second
+             * multiply that by the time since last value
              * and add it to absolute consumption counter
              */
-            av_con->liters += gval->con_h / 3600;
+            av_con->liters += (gval->con_h / 3600) * (int) (time(NULL) - t);
             
             
             // calculate consumption per hour
