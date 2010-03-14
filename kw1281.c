@@ -661,14 +661,14 @@ kw1281_open (char *device)
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
-        ajax_log ("couldn't open serial device\n");
+        printf ("couldn't open serial device\n");
         sleep(1);
         return -1;
     }
 
     if (ioctl (fd, TIOCGSERIAL, &ot) < 0)
     {
-        ajax_log ("getting tio failed\n");
+        printf ("getting tio failed\n");
         return -1;
     }
     memcpy (&st, &ot, sizeof (ot));
@@ -679,7 +679,7 @@ kw1281_open (char *device)
     st.flags |= ASYNC_SPD_CUST | ASYNC_LOW_LATENCY;
     if (ioctl (fd, TIOCSSERIAL, &st) < 0)
     {
-        ajax_log ("TIOCSSERIAL failed\n");
+        printf ("TIOCSSERIAL failed\n");
         return -1;
     }
     
@@ -694,7 +694,7 @@ kw1281_open (char *device)
     tcflush (fd, TCIFLUSH);
     if (tcsetattr (fd, TCSANOW, &newtio) == -1)
     {
-        ajax_log("tcsetattr() failed.\n");
+        printf ("tcsetattr() failed.\n");
         return -1;
     }
 
