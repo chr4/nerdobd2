@@ -57,27 +57,6 @@ ajax_socket (int port)
 
 
 int
-ajax_shutdown(void)
-{
-    /*
-     * we need to shutdown the socket to prevent
-     * bind errors on direct relaunch
-     */
-     
-    printf("shutting down socket...\n");
-    if ( shutdown(srv, SHUT_RDWR) == -1)
-    {
-        perror("shutdown() failed:");
-        exit(-1);
-        return -1;
-    }
-    printf("done.\n");
-    
-    exit(0);
-    return 0;
-}
-
-int
 tcp_listen (int port)
 {
 

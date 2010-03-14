@@ -226,7 +226,8 @@ main (int arc, char **argv)
              */
             // ajax_shutdown();
             // waitpid(pid, &status, 0);
-            
+            kill(pid, SIGTERM);
+ 
             if (shmdt(p) == -1)
                 perror("shmdt()");
             else if (shmctl(shmid, IPC_RMID, NULL) == -1)

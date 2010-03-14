@@ -74,7 +74,6 @@ int     kw1281_mainloop (void);
 
 void    ajax_log(char *s);
 void    ajax_socket(int);
-int     ajax_shutdown(void);
 
 
 // global values
