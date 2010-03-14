@@ -874,7 +874,6 @@ kw1281_mainloop (void)
 {
     int    status;
     int    file;
-    struct timeb a, b;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -926,7 +925,7 @@ kw1281_mainloop (void)
             write(file, av_speed, sizeof(struct average));
             close(file);
         }
-        
+
         // collect defunct processes from rrdtool
         while(waitpid(-1, &status, WNOHANG) > 0);
         
@@ -946,8 +945,6 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( ; ; )
     {
-	ftime(&a); // save timed
-
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
@@ -980,8 +977,7 @@ kw1281_mainloop (void)
              * multiply that by the time since last value
              * and add it to absolute consumption counter
              */
-            ftime(&b);
-            av_con->liters += (gval->con_h / 3600) * (float) ( a.time + (a.millitm / 1000) - b.time + (b.millitm / 1000) );
+            av_con->liters += (gval->con_h / 3600);
             
             
             // calculate consumption per hour
