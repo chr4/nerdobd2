@@ -874,7 +874,7 @@ kw1281_mainloop (void)
 {
     int    status;
     int    file;
-    time_t t;
+    struct timeb a, b;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -946,7 +946,7 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( ; ; )
     {
-	time (&t); // save timed
+	ftime(&a); // save timed
 
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
@@ -980,7 +980,8 @@ kw1281_mainloop (void)
              * multiply that by the time since last value
              * and add it to absolute consumption counter
              */
-            av_con->liters += (gval->con_h / 3600) * (int) (time(NULL) - t);
+            ftime(&b);
+            av_con->liters += (gval->con_h / 3600) * (float) ( a.time + (a.millitm / 1000) - b.time + (b.millitm / 1000) );
             
             
             // calculate consumption per hour
