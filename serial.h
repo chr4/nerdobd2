@@ -29,7 +29,7 @@
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED
+//#define SERIAL_ATTACHED
 #define HIGH_PRIORITY
 //#define DEBUG
 
