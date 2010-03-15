@@ -11,11 +11,11 @@
  *
  * TODO:
  * 
- * high priority / nice only for kw1281 process
- *
  * cleanup function, catch sigint
  *
  * fix liters calculation with measuring time between calls
+ * 
+ * tooltips for everything
  *
  * set baudrate, multiplicator value and other things via config file
  *
@@ -23,11 +23,17 @@
 
 int     init_values(void);
 void	reset_values(void);
-
+void	cleanup (int);
 
 // shmid has to be global, so we can destroy it on exit
 int     shmid;
 void   *p;
+
+// pid of ajax server
+pid_t   pid;
+
+// flag for cleanup function
+char	cleaning_up = 0;
 
 
 int
@@ -133,14 +139,43 @@ reset_values(void)
     gval->con_km    = -2;
 }
 
+void
+cleanup (int signo)
+{
+	// if we're already cleaning up, do nothing
+	if (cleaning_up)
+		return;
+	
+	cleaning_up = 1;
+	
+	printf("\ncleaning up:\n");
+	
+#ifdef SERIAL_ATTACHED		
+	printf("closing serial port...\n");
+	kw1281_close();
+#endif
+	
+	// send kill to ajax server 
+	printf("sending SIGTERM to ajax server...\n");
+	kill(pid, SIGTERM);
+	
+	printf("freeing shm memory...\n");
+	// free shm memory segment
+	if (shmdt(p) == -1)
+		perror("shmdt()");
+	else if (shmctl(shmid, IPC_RMID, NULL) == -1)
+		perror("shmctl()");
+	
+	printf("exiting.\n");
+	exit(0);
+}
+
 
 int
 main (int arc, char **argv)
 {
-    pid_t   pid;
     //int     status;
     int     ret;
-    struct sched_param prio;
     
     
 #ifdef SERIAL_ATTACHED
@@ -166,9 +201,16 @@ main (int arc, char **argv)
         exit(0);
     }
     
+	
+	// add signal handler for cleanup function
+	signal(SIGINT, cleanup);
+	signal(SIGTERM, cleanup);	
+	
     
     // set realtime priority if we're running as root
 #ifdef HIGH_PRIORITY
+	struct sched_param prio;
+	
     if (getuid() == 0)
     {
         prio.sched_priority = 1;
@@ -196,33 +238,23 @@ main (int arc, char **argv)
         // soft error, e.g. communication error
         if (ret == -1)
         {
-            printf("init failed, retrying...\n");
+            ajax_log("init failed, retrying...\n");
             reset_values();
             continue;
         }
         
         // hard error (e.g. serial cable unplugged)
         else if (ret == -2)
-        {
-            printf("serial port error, exiting.\n");
-            kw1281_close();
-            
-            // send kill to ajax server 
-            kill(pid, SIGTERM);
- 
-            // free shm memory segment
-            if (shmdt(p) == -1)
-                perror("shmdt()");
-            else if (shmctl(shmid, IPC_RMID, NULL) == -1)
-                perror("shmctl()");
-            
-            return -1;
-        }
+		{
+			ajax_log("serial port error\n");
+            cleanup(0);
+		}
+
 #endif
 
         if (kw1281_mainloop() == -1)
         {
-            printf("errors. restarting...\n");
+            ajax_log("errors. restarting...\n");
             reset_values();
             continue;
         }

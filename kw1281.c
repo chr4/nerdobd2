@@ -975,6 +975,29 @@ kw1281_mainloop (void)
          */
         if (fork() > 0)
         {
+			/*
+			 * this seems to be of no use
+			 * even if we nice to +19 and set a sched_prio of 99 SCHED_OTHER
+			 * system is still lagging
+			 *
+			 */
+/*
+#ifdef HIGH_PRIORITY
+			// we reduce priority in this process to prevent lagging
+			struct sched_param prio;
+			
+			if (getuid() == 0)
+			{
+				prio.sched_priority = 99;
+				
+				if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
+					perror("sched_setscheduler");
+				
+				if (nice(19) == -1)
+					perror("nice failed\n");
+			}
+#endif
+ */
             // calculate consumption per hour
             if (gval->inj_time > INJ_SUBTRACT)
                 gval->con_h = 60 * 4 * MULTIPLIER *

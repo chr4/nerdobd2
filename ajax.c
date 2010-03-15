@@ -45,7 +45,7 @@ ajax_socket (int port)
             handle_client (cli);
             
             close (cli);
-            exit(-1);
+            exit(0);
         }
 
         // collect defunct processes (don't wait)
