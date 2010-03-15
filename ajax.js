@@ -17,6 +17,11 @@ function update_variable(varname)
                 // set color back to normal
                 if (varname != "debug")
                     document.getElementById(varname).style.color = "#f00000";
+				
+				// colorize liters on con_h receive
+				if (varname == "con_h")
+					document.getElementById("liters").style.color = "#f00000";
+				
                 
                 if (varname == "con_km")
                 {
@@ -42,6 +47,10 @@ function update_variable(varname)
             {    
                 if (varname != "debug")
                     document.getElementById(varname).style.color = "#888888";
+				
+				// grey out liters if there's no con_h received
+				if (varname == "con_h")
+					document.getElementById("liters").style.color = "#888888";
             }
         }
     }

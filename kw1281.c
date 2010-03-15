@@ -20,6 +20,12 @@ int     fd;
 int     counter;                // kw1281 protocol block counter
 char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
 
+// for measuring time between readings
+struct	timeval a, b;
+float	duration;
+char	first = 1;
+
+
 // save old values
 struct termios oldtio;
 struct serial_struct ot, st;
@@ -550,6 +556,18 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
+
+					// measure time since last injection read
+					if (!first)
+					{
+						gettimeofday(&b, NULL);
+						duration = (float) ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) -
+											 ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) );
+					}
+					first = 0;
+					gettimeofday(&a, NULL);
+					
+
                     gval->inj_time = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
 
@@ -872,9 +890,9 @@ kw1281_init (int address)
 int
 kw1281_mainloop (void)
 {
-    int    status;
-    int    file;
-    struct timeval a, b;
+    int		status;
+    int		file;
+	int		i = 0;
     
 #ifndef SERIAL_ATTACHED
     /* 
@@ -952,8 +970,6 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( ; ; )
     {
-        gettimeofday(&a, NULL);
-
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
@@ -964,11 +980,21 @@ kw1281_mainloop (void)
         if (kw1281_get_block(0x05) == -1)
             return -1;
 
-        // request block 0x04
-        // (temperatures + voltage)
-        if (kw1281_get_block(0x04) == -1)
-            return -1;
-        
+		/* we request voltage and temperatures
+		 * not so often
+		 */
+		if (i > 5)
+			i = 0;
+		
+		if (i == 0)
+		{
+			// request block 0x04
+			// (temperatures + voltage)
+			if (kw1281_get_block(0x04) == -1)
+				return -1;
+        }
+		i++;
+		
         
         /* fork so we don't disrupt time critical
          * serial communication
@@ -1009,10 +1035,7 @@ kw1281_mainloop (void)
              * multiply that by the time since last value
              * and add it to absolute consumption counter
              */
-            gettimeofday(&b, NULL);
-            av_con->liters += (float) ( gval->con_h / 3600 *
-                                      ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) -
-                                        ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) ) );
+            av_con->liters += ( gval->con_h / 3600 ) * duration;
             
             
             // calculate consumption per hour
