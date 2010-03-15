@@ -14,14 +14,7 @@ function update_variable(varname)
             if (req.responseText)
             {
 
-                // set color back to normal
-                if (varname != "debug")
-                    document.getElementById(varname).style.color = "#f00000";
-				
-				// colorize liters on con_h receive
-				if (varname == "con_h")
-					document.getElementById("liters").style.color = "#f00000";
-				
+				setcolor("#f00000");				
                 
                 if (varname == "con_km")
                 {
@@ -45,12 +38,7 @@ function update_variable(varname)
             }
             else
             {    
-                if (varname != "debug")
-                    document.getElementById(varname).style.color = "#888888";
-				
-				// grey out liters if there's no con_h received
-				if (varname == "con_h")
-					document.getElementById("liters").style.color = "#888888";
+                setcolor("#888888");	
             }
         }
     }
@@ -58,6 +46,18 @@ function update_variable(varname)
     req.send('\n');
 }
 
+
+function setcolor(color)
+{
+	document.getElementById("con_km").style.color = color;
+	document.getElementById("con_h").style.color = color;
+	document.getElementById("liters").style.color = color;
+	document.getElementById("speed").style.color = color;
+	document.getElementById("rpm").style.color = color;
+	document.getElementById("temp1").style.color = color;
+	document.getElementById("temp2").style.color = color;	
+	document.getElementById("voltage").style.color = color;	
+}
 
 // show image tmp in img after it is completely loaded
 function image_loaded(tmp, img)
