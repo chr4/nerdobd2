@@ -19,6 +19,7 @@ char xgrid_short[256]  = "SECOND:30:MINUTE:1:MINUTE:1:0:%R";
 char xgrid_medium[256] = "MINUTE:1:MINUTE:5:MINUTE:5:0:%R";
 char xgrid_long[256]   = "MINUTE:15:MINUTE:30:MINUTE:30:0:%R";
 
+
 void
 rrdtool_update_consumption (void)
 {
