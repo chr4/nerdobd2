@@ -894,108 +894,85 @@ kw1281_mainloop (void)
     int		file;
 	int		i = 0;
     
-#ifndef SERIAL_ATTACHED
-    /* 
-     * this block is for testing purposes
-     * when the car is too far to test
-     * the html interface / ajax server
-     */
-
-    sleep(1);
-    ajax_log("incrementing values for testing purposes...\n");
-    gval->speed = 10;
-    gval->con_km = -1;
-    gval->rpm = 1000;
-    gval->con_h = 1.01;
-    gval->temp1 = 20;
-    gval->temp2 = 0;
-    gval->voltage = 3.00;
-
-    for (;;)
-    {
-        gettimeofday(&a, NULL);
-
-        gval->speed++;
-        gval->con_km += 0.75;
-        gval->con_h += 1.03;
-        
-        gval->temp1++;
-        gval->temp2++;
-        gval->voltage += 0.15;
-        gval->rpm += 100;
-
-        // update rrdtool databases
-        rrdtool_update_consumption();
-        rrdtool_update_speed();
-        
-        
-        // save consumption array to file        
-        if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
-        {
-            write(file, av_con, sizeof(struct average));
-            close(file);
-        }
-        
-        // save av_speed array to file    
-        if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-            perror("couldn't open file:\n");
-        else
-        {
-            write(file, av_speed, sizeof(struct average));
-            close(file);
-        }
-
-        usleep(1500000);
-        gettimeofday(&b, NULL);
-        av_con->liters += (float) ( gval->con_h / 3600 * 
-                                   ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) - 
-                                     ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) ) );
-
-        // collect defunct processes from rrdtool
-        while(waitpid(-1, &status, WNOHANG) > 0);
-    }
-#endif
-
 
 #ifdef DEBUG
     printf ("receive blocks\n");
 #endif
 
     
+#ifdef SERIAL_ATTACHED
     if (kw1281_get_ascii_blocks() == -1)
         return -1;
-    
+#endif
+	
+#ifndef SERIAL_ATTACHED
+	/* 
+	 * this block is for testing purposes
+	 * when the car is too far to test
+	 * the html interface / ajax server
+	 */
+    gval->rpm = 1000;
+    gval->inj_time = 4.52;
+    gval->speed = 50.4;
+    gval->temp1 = 10.1;
+    gval->temp2 = 23.5;
+    gval->voltage = 2.15;
+    duration = 1.2;
+	
+    ajax_log("incrementing values for testing purposes...\n");
+
+#endif
+		
     ajax_log ("init done.\n");
     for ( ; ; )
     {
+#ifdef SERIAL_ATTACHED		
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
             return -1;
+#endif
+		
+#ifndef SERIAL_ATTACHED
+        gval->rpm += 100;
+        gval->inj_time += 0.1;
+#endif		
 
+		
+#ifdef SERIAL_ATTACHED		
         // request block 0x05
         // (speed)
         if (kw1281_get_block(0x05) == -1)
             return -1;
-
-		/* we request voltage and temperatures
-		 * not so often
-		 */
-		if (i > 5)
-			i = 0;
+#endif
 		
-		if (i == 0)
+#ifndef SERIAL_ATTACHED
+        gval->speed += 5;
+#endif
+		
+		
+		/* don't request temperatures and
+		 * voltage too often
+         */
+		if (i == 5)
 		{
+		
+#ifdef SERIAL_ATTACHED			
 			// request block 0x04
 			// (temperatures + voltage)
 			if (kw1281_get_block(0x04) == -1)
 				return -1;
+#endif
+			
+#ifndef SERIAL_ATTACHED
+            gval->temp1 += 0.4;
+            gval->temp2 += 0.2;
+            gval->voltage += 0.01;		
+#endif
+			i = 0;
         }
 		i++;
-		
-        
+
         /* fork so we don't disrupt time critical
          * serial communication
          */
@@ -1076,6 +1053,10 @@ kw1281_mainloop (void)
 
         // collect defunct processes functions
         while(waitpid(-1, &status, WNOHANG) > 0);
+		
+#ifndef SERIAL_ATTACHED
+		sleep(2);
+#endif
     }
     
     return 0;
