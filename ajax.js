@@ -17,11 +17,14 @@ function update_variable(varname)
             // check if variable is valid (if not, don't update)
             if (req.responseText)
             {			
+                if (varname != "debug")
+                    document.getElementById(varname).style.color = "#f00000";
+                
                 if (varname == "con_km")
-                {
+                {					
                     // set color of all values to red
-                    setcolor("#f00000");	
-					
+                    //setcolor("#f00000");	
+                    
                     // automatically switch to l/h on con_km == -1
                     if (req.responseText == -1)
                     {
@@ -42,12 +45,13 @@ function update_variable(varname)
             }
             else
             {    
-                setcolor("#888888");	
+                if (varname != "debug")
+                    document.getElementById(varname).style.color = "#888888";                
             }
         }
     }
     // send newline to request variable
-    req.send('\n');
+    req.send('\n'); 
 }
 
 
@@ -71,7 +75,7 @@ function image_loaded(tmp, img)
         // document.getElementById("debug").innerHTML = "image loaded<br/>" + Date.parse(new Date());
         
         // show image
-        replace = document.getElementById("img_" + img);
+        var replace = document.getElementById("img_" + img);
         replace.src = tmp.src;
         
         // hide the "loading" popup
@@ -105,7 +109,7 @@ function update_image(img)
          */
         if (tmp.complete && tmp.width)
         {         
-            replace = document.getElementById("img_" + img);
+            var replace = document.getElementById("img_" + img);
             replace.src = tmp.src;
         
             // hide the "loading" popup
