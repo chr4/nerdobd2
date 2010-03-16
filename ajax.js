@@ -1,3 +1,7 @@
+
+/* send get.obd?varname to ajax server
+ * and evaluate reply
+ */
 function update_variable(varname)
 {
     var req = false;
@@ -10,13 +14,13 @@ function update_variable(varname)
     {
         if (req.readyState == 4)
         {
-            // check if variable is valid (if not, don't update
+            // check if variable is valid (if not, don't update)
             if (req.responseText)
             {			
                 if (varname == "con_km")
                 {
-					// set color of all values to red
-					setcolor("#f00000");	
+                    // set color of all values to red
+                    setcolor("#f00000");	
 					
                     // automatically switch to l/h on con_km == -1
                     if (req.responseText == -1)
@@ -113,6 +117,7 @@ function update_image(img)
     }
     
     // image_loaded(tmp, img);
+    delete tmp;
 }
 
 
@@ -139,13 +144,13 @@ function update_all()
     update_image("consumption");
     
     // restart timer
-    setTimeout ( "update_all()", 500 );
+    setTimeout ( "update_all()", 600 );
 }
 
 function update_debug()
 {
     update_variable("debug");
-    setTimeout ( "update_debug()", 500 );    
+    setTimeout ( "update_debug()", 600 );    
 }
 
 

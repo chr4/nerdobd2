@@ -319,9 +319,9 @@ handle_client(int fd)
              "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
     write(fd, out, strlen(out));
     
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("sending file: %s with %9jd length\n", &buffer[5], (intmax_t) stats.st_size);
-#endif
+//#endif
     
     // is file type known?
     if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
