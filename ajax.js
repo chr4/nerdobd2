@@ -12,12 +12,12 @@ function update_variable(varname)
         {
             // check if variable is valid (if not, don't update
             if (req.responseText)
-            {
-
-				setcolor("#f00000");				
-                
+            {			
                 if (varname == "con_km")
                 {
+					// set color of all values to red
+					setcolor("#f00000");	
+					
                     // automatically switch to l/h on con_km == -1
                     if (req.responseText == -1)
                     {
