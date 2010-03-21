@@ -17,9 +17,10 @@ int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
 
 int     fd;
-int     counter;                // kw1281 protocol block counter
-char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
-int     loopcount = 0;          // counter for mainloop
+int     counter;        // kw1281 protocol block counter
+char    got_ack = 0;    // flag (true if ECU send ack block, thus ready to receive block requests)
+int     loopcount;      // counter for mainloop
+
 
 // for measuring time between readings
 struct	timeval a, b;
@@ -591,15 +592,15 @@ kw1281_recv_block (unsigned char n)
                     gval->voltage = 0.001 * buf[i + 1] * buf[i + 2];
                     break;
 
-                case 0x19:        // tank content
+                case 0x13:        // tank content
                     gval->tank = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
                     
                 default:
-#ifdef DEBUG
+//#ifdef DEBUG
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",
                             buf[i], buf[i + 1], buf[i + 2]);
-#endif
+//#endif
                     break;
             }
 
@@ -905,14 +906,15 @@ kw1281_get_tank_cont(void)
     if (kw1281_get_ascii_blocks() == -1)
         return -1;
     
-    if (kw1281_get_block(0x01) == -1)
+    if (kw1281_get_block(0x02) == -1)
         return -1;
 #endif
     
 #ifndef SERIAL_ATTACHED
     gval->tank += 1;
 #endif
-    
+   
+    printf("######################################################\n"); 
     kw1281_print();
     
     return 0;
@@ -954,7 +956,7 @@ kw1281_mainloop (void)
 #endif
 		
     ajax_log ("init done.\n");
-    for ( ; ; )
+    for ( loopcount = 0; ;loopcount++)
     {
 #ifdef SERIAL_ATTACHED		
         // request block 0x02
@@ -988,10 +990,10 @@ kw1281_mainloop (void)
 		{
 		
 #ifdef SERIAL_ATTACHED			
-			// request block 0x04
-			// (temperatures + voltage)
-			if (kw1281_get_block(0x04) == -1)
-				return -1;
+            // request block 0x04
+            // (temperatures + voltage)
+            if (kw1281_get_block(0x04) == -1)
+                return -1;
 #endif
 			
 #ifndef SERIAL_ATTACHED
@@ -1000,18 +1002,6 @@ kw1281_mainloop (void)
             gval->voltage += 0.01;		
 #endif
         }
-        
-        /* every 10 times break to make mainloop() return 0
-         * so instruments can be read for getting tank cont
-         */
-        if (loopcount == 10)
-        {
-            loopcount = 0;
-            break;
-        }
-        
-		loopcount++;
-
         
         
         /* fork so we don't disrupt time critical
@@ -1027,19 +1017,19 @@ kw1281_mainloop (void)
 			 */
 /*
 #ifdef HIGH_PRIORITY
-			// we reduce priority in this process to prevent lagging
-			struct sched_param prio;
+            // we reduce priority in this process to prevent lagging
+            struct sched_param prio;
 			
-			if (getuid() == 0)
-			{
-				prio.sched_priority = 99;
+            if (getuid() == 0)
+            {
+                prio.sched_priority = 99;
 				
-				if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
-					perror("sched_setscheduler");
+                if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
+                    perror("sched_setscheduler");
 				
-				if (nice(19) == -1)
-					perror("nice failed\n");
-			}
+                if (nice(19) == -1)
+                    perror("nice failed\n");
+            }
 #endif
  */
             // calculate consumption per hour
