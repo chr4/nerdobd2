@@ -34,7 +34,7 @@
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
-#define BAUDRATE        10400
+#define BAUDRATE        10400   // for my seat arosa, vw polo needs 9600
 #define WRITE_DELAY     5700    // serial dump logs 15600ms before answer arrives maybe 7800 is better?
 #define INIT_DELAY      200000  // nanosec to wait to emulate 5baud
 
@@ -70,6 +70,7 @@ void    rrdtool_update_consumption (void);
 int     kw1281_open (char *device);
 int     kw1281_close(void);
 int     kw1281_init (int);
+int     kw1281_get_tank_cont(void);
 int     kw1281_mainloop (void);
 
 void    ajax_log(char *s);
@@ -87,6 +88,7 @@ struct values
     float   oil_press;
     float   inj_time;
     float   voltage;
+    float   tank;
     
     // calculated values
     float   con_h;

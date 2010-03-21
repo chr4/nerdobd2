@@ -10,14 +10,15 @@
  *
  *
  * TODO:
- * 
- * cleanup function, catch sigint
  *
  * fix liters calculation with measuring time between calls
- * 
- * tooltips for everything
+ *
+ * fix average calculations:
+ *   - measure time
+ *   - better handling of 0km / 0l/100km handling
  *
  * set baudrate, multiplicator value and other things via config file
+ * set baudrate from argv
  *
  */
 
@@ -137,6 +138,8 @@ reset_values(void)
     gval->voltage   = -2;
     gval->con_h     = -2;
     gval->con_km    = -2;
+    gval->tank      = -2;
+    
 }
 
 void
@@ -249,10 +252,46 @@ main (int arc, char **argv)
 			ajax_log("serial port error\n");
             cleanup(0);
 		}
+        
+        if (kw1281_get_tank_cont() == -1)
+        {
+            ajax_log("errors. restarting...\n");
+            reset_values();
+            continue;
+        }
 
 #endif
 
         if (kw1281_mainloop() == -1)
+        {
+            ajax_log("errors. restarting...\n");
+            reset_values();
+            continue;
+        }
+        
+#ifdef SERIAL_ATTACHED        
+        // ECU: 0x01, INSTR: 0x17
+        // send 5baud address, read sync byte + key word
+        ret = kw1281_init (0x17);
+        
+        // soft error, e.g. communication error
+        if (ret == -1)
+        {
+            ajax_log("init failed, retrying...\n");
+            reset_values();
+            continue;
+        }
+        
+        // hard error (e.g. serial cable unplugged)
+        else if (ret == -2)
+		{
+			ajax_log("serial port error\n");
+            cleanup(0);
+		}
+        
+#endif
+        
+        if (kw1281_get_tank_cont() == -1)
         {
             ajax_log("errors. restarting...\n");
             reset_values();

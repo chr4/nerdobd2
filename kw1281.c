@@ -19,6 +19,7 @@ void    kw1281_print (void);
 int     fd;
 int     counter;                // kw1281 protocol block counter
 char    got_ack = 0;            // flag (true if ECU send ack block, thus ready to receive block requests)
+int     loopcount = 0;          // counter for mainloop
 
 // for measuring time between readings
 struct	timeval a, b;
@@ -590,6 +591,10 @@ kw1281_recv_block (unsigned char n)
                     gval->voltage = 0.001 * buf[i + 1] * buf[i + 2];
                     break;
 
+                case 0x19:        // tank content
+                    gval->tank = 0.01 * buf[i + 1] * buf[i + 2];
+                    break;
+                    
                 default:
 #ifdef DEBUG
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",
@@ -887,13 +892,38 @@ kw1281_init (int address)
     return 0;
 }
 
+
+int
+kw1281_get_tank_cont(void)
+{
+#ifdef DEBUG
+    printf ("receive blocks\n");
+#endif
+    
+    
+#ifdef SERIAL_ATTACHED
+    if (kw1281_get_ascii_blocks() == -1)
+        return -1;
+    
+    if (kw1281_get_block(0x01) == -1)
+        return -1;
+#endif
+    
+#ifndef SERIAL_ATTACHED
+    gval->tank += 1;
+#endif
+    
+    kw1281_print();
+    
+    return 0;
+}
+
+
 int
 kw1281_mainloop (void)
 {
     int		status;
-    int		file;
-	int		i = 0;
-    
+    int		file;    
 
 #ifdef DEBUG
     printf ("receive blocks\n");
@@ -954,7 +984,7 @@ kw1281_mainloop (void)
 		/* don't request temperatures and
 		 * voltage too often
          */
-		if (i == 5)
+		if (! (loopcount % 5) )
 		{
 		
 #ifdef SERIAL_ATTACHED			
@@ -969,10 +999,21 @@ kw1281_mainloop (void)
             gval->temp2 += 0.2;
             gval->voltage += 0.01;		
 #endif
-			i = 0;
         }
-		i++;
+        
+        /* every 10 times break to make mainloop() return 0
+         * so instruments can be read for getting tank cont
+         */
+        if (loopcount == 10)
+        {
+            loopcount = 0;
+            break;
+        }
+        
+		loopcount++;
 
+        
+        
         /* fork so we don't disrupt time critical
          * serial communication
          */
@@ -1068,6 +1109,7 @@ kw1281_print (void)
 {
     printf ("----------------------------------------\n");
     printf ("l abs.\t\t%.3f\n", av_con->liters);
+    printf ("tank content\t%.1f\n", gval->tank);    
     printf ("l/h\t\t%.2f\n", gval->con_h);
     printf ("l/100km\t\t%.2f\n", gval->con_km);
     printf ("speed\t\t%.1f km/h\n", gval->speed);
