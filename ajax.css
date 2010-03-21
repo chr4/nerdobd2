@@ -63,7 +63,7 @@ body, html
     left:51px;
     height:1px;
     width:408px;
-    background-color:#eeeeee;
+    background-color:#cccccc;
 }
 
 /* average consumption values underneath consumption graph */
@@ -81,6 +81,51 @@ body, html
     color:#f00000;
     cursor:pointer;
 }
+
+/* lines for 30, 50, 70, 100km/h
+ * rrdtool cannot create one fixed line
+ * so i'm doing this with a css overlay
+ */
+.km_h_line_100
+{
+    position:relative;
+    top:-321px;
+    left:51px;
+    height:1px;
+    width:408px;
+    background-color:#cccccc;
+}
+
+.km_h_line_70
+{
+    position:relative;
+    top:-286px;
+    left:51px;
+    height:1px;
+    width:408px;
+    background-color:#cccccc;
+}
+
+.km_h_line_50
+{
+    position:relative;
+    top:-268px;
+    left:51px;
+    height:1px;
+    width:408px;
+    background-color:#cccccc;
+}
+
+.km_h_line_30
+{
+    position:relative;
+    top:-243px;
+    left:51px;
+    height:1px;
+    width:408px;
+    background-color:#cccccc;
+}
+
 
 /* average speed values underneath speed graph */
 .speed_av
@@ -180,7 +225,7 @@ body, html
     margin-top:20px;
 }
 
-#con_h, #rpm, #temp1, #temp2, #voltage, #liters
+#con_h, #rpm, #temp1, #temp2, #voltage, #tank
 {
     font-family:helvetica;
     font-size:28px;

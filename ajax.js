@@ -129,7 +129,7 @@ function update_all()
 {
     update_variable("con_h");
     update_variable("con_km");
-    update_variable("liters");
+    update_variable("tank");
     update_variable("rpm");
     update_variable("speed");
     update_variable("temp1");

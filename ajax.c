@@ -233,6 +233,8 @@ handle_client(int fd)
             obd_send(fd, gval->temp2, "%.01f");
         else if (!strcmp(p, "voltage") )
             obd_send(fd, gval->voltage, "%.02f");
+        else if (!strcmp(p, "tank") )
+            obd_send(fd, gval->tank, "%.01f");        
         else if (!strcmp(p, "liters") )
             obd_send(fd, av_con->liters, "%.03f");
 
