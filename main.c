@@ -194,9 +194,6 @@ main (int arc, char **argv)
     if (init_values() == -1)
         return -1;
     
-    // init loopcount
-    loopcount = 10;
-    
     // create databases, unless they exist
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
