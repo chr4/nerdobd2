@@ -20,6 +20,8 @@
  * set baudrate, multiplicator value and other things via config file
  * set baudrate from argv
  *
+ * find a way to get tank content on user request (button)
+ *
  */
 
 int     init_values(void);
@@ -192,6 +194,9 @@ main (int arc, char **argv)
     if (init_values() == -1)
         return -1;
     
+    // init loopcount
+    loopcount = 10;
+    
     // create databases, unless they exist
     rrdtool_create_consumption ();
     rrdtool_create_speed ();
@@ -229,8 +234,36 @@ main (int arc, char **argv)
 #endif
     
     
+    /* get the content of the tank 
+     * this is done only once, because we would've
+     * to disconnect ecu and reconnect to instruments
+     * every time.. 
+     */
+#ifdef SERIAL_ATTACHED        
+    // ECU: 0x01, INSTR: 0x17
+    // send 5baud address, read sync byte + key word
+    ret = kw1281_init (0x17);
+    
+    // soft error, e.g. communication error
+    if (ret == -1)
+        ajax_log("init for instruments failed, skipping...\n");
+    
+    // hard error (e.g. serial cable unplugged)
+    else if (ret == -2)
+    {
+        ajax_log("serial port error\n");
+        cleanup(0);
+    }
+    
+#endif
+    
+    if (kw1281_get_tank_cont() == -1)
+        ajax_log("error getting tank content, skipping...\n");
+    
+    
     for ( ; ; )
     {
+        
 #ifdef SERIAL_ATTACHED
         printf ("init\n");                
         
@@ -252,14 +285,6 @@ main (int arc, char **argv)
 			ajax_log("serial port error\n");
             cleanup(0);
 		}
-        
-        if (kw1281_get_tank_cont() == -1)
-        {
-            ajax_log("errors. restarting...\n");
-            reset_values();
-            continue;
-        }
-
 #endif
 
         if (kw1281_mainloop() == -1)
@@ -268,36 +293,6 @@ main (int arc, char **argv)
             reset_values();
             continue;
         }
-        
-#ifdef SERIAL_ATTACHED        
-        // ECU: 0x01, INSTR: 0x17
-        // send 5baud address, read sync byte + key word
-        ret = kw1281_init (0x17);
-        
-        // soft error, e.g. communication error
-        if (ret == -1)
-        {
-            ajax_log("init failed, retrying...\n");
-            reset_values();
-            continue;
-        }
-        
-        // hard error (e.g. serial cable unplugged)
-        else if (ret == -2)
-		{
-			ajax_log("serial port error\n");
-            cleanup(0);
-		}
-        
-#endif
-        
-        if (kw1281_get_tank_cont() == -1)
-        {
-            ajax_log("errors. restarting...\n");
-            reset_values();
-            continue;
-        }
-        
     }
 
     // should never be reached
