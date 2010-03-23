@@ -59,7 +59,6 @@ function setcolor(color)
 {
 	document.getElementById("con_km").style.color = color;
 	document.getElementById("con_h").style.color = color;
-	document.getElementById("liters").style.color = color;
 	document.getElementById("speed").style.color = color;
 	document.getElementById("rpm").style.color = color;
 	document.getElementById("temp1").style.color = color;

@@ -235,8 +235,8 @@ handle_client(int fd)
             obd_send(fd, gval->voltage, "%.02f");
         else if (!strcmp(p, "tank") )
             obd_send(fd, gval->tank, "%.01f");        
-        else if (!strcmp(p, "liters") )
-            obd_send(fd, av_con->liters, "%.03f");
+        //else if (!strcmp(p, "liters") )
+        //    obd_send(fd, av_con->liters, "%.03f");
 
 
         else if (!strcmp(p, "debug") )
@@ -390,7 +390,7 @@ reset_counters(void)
     av_con->average_short = 0; 
     av_con->average_medium = 0;
     av_con->average_long = 0;
-    av_con->liters = 0;
+    //av_con->liters = 0;
     
     // init average speed struct
     av_speed->array_full = 0;

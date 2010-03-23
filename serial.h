@@ -45,7 +45,7 @@
  *    60 (minutes) * 4 (zylinders) * 
  *    MULTIPLIER * rpm * (injection time - INJ_SUBTRACT)
  */
-#define MULTIPLIER      0.00000089
+#define MULTIPLIER      0.00000089  // for my 1.0l seat arosa 2004
 #define INJ_SUBTRACT    0.1
 
 // the port where to local ajax server listens
@@ -110,7 +110,7 @@ struct average
 
     int     timespan;       // time span for rrdtool graph
     
-    float   liters;         // only av_con uses this, absolute consumption
+    //float   liters;         // only av_con uses this, absolute consumption
 };
 
 struct average *av_con, *av_speed;
