@@ -1022,9 +1022,10 @@ kw1281_mainloop (void)
 			 * this seems to be of no use
 			 * even if we nice to +19 and set a sched_prio of 99 SCHED_OTHER
 			 * system is still lagging
-			 *
+             *
+			 * furthermore, it provoces communication errors
 			 */
-
+/*
 #ifdef HIGH_PRIORITY
             // we reduce priority in this process to prevent lagging
             struct sched_param prio;
@@ -1040,7 +1041,7 @@ kw1281_mainloop (void)
                     perror("nice failed\n");
             }
 #endif
-
+*/
             // calculate consumption per hour
             if (gval->inj_time > INJ_SUBTRACT)
                 gval->con_h = 60 * 4 * MULTIPLIER *
