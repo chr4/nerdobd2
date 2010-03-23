@@ -69,7 +69,9 @@ init_values(void)
     
     reset_values(); 
     
+    // initialize tank content values
     gval->tank_request = 0;
+    gval->tank = -2;
  
     // init average structs
     av_con->array_full = 0;
@@ -140,9 +142,7 @@ reset_values(void)
     gval->inj_time  = -2;
     gval->voltage   = -2;
     gval->con_h     = -2;
-    gval->con_km    = -2;
-    gval->tank      = -2;
-    
+    gval->con_km    = -2;    
 }
 
 
