@@ -559,7 +559,11 @@ kw1281_recv_block (unsigned char n)
                     
                 case 0x0f:        // injection time
 
-					// measure time since last injection read
+					/* measure time since last injection read
+                     * thie whole calculating absolute consumption
+                     * in liters is very inaccurate (not high enough)
+                     */
+                    /*
 					if (!first)
 					{
 						gettimeofday(&b, NULL);
@@ -568,7 +572,7 @@ kw1281_recv_block (unsigned char n)
 					}
 					first = 0;
 					gettimeofday(&a, NULL);
-					
+					*/
 
                     gval->inj_time = 0.01 * buf[i + 1] * buf[i + 2];
                     break;
@@ -597,10 +601,10 @@ kw1281_recv_block (unsigned char n)
                     break;
                     
                 default:
-//#ifdef DEBUG
+#ifdef DEBUG
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",
                             buf[i], buf[i + 1], buf[i + 2]);
-//#endif
+#endif
                     break;
             }
 
@@ -914,8 +918,7 @@ kw1281_get_tank_cont(void)
     gval->tank += 1;
 #endif
    
-    printf("######################################################\n"); 
-    kw1281_print();
+    printf ("tank content\t%.1f\n", gval->tank);    
     
     return 0;
 }
@@ -1015,23 +1018,23 @@ kw1281_mainloop (void)
 			 * system is still lagging
 			 *
 			 */
-/*
+
 #ifdef HIGH_PRIORITY
             // we reduce priority in this process to prevent lagging
             struct sched_param prio;
 			
             if (getuid() == 0)
             {
-                prio.sched_priority = 99;
+                prio.sched_priority = 50;
 				
                 if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
                     perror("sched_setscheduler");
 				
-                if (nice(19) == -1)
+                if (nice(10) == -1)
                     perror("nice failed\n");
             }
 #endif
- */
+
             // calculate consumption per hour
             if (gval->inj_time > INJ_SUBTRACT)
                 gval->con_h = 60 * 4 * MULTIPLIER *
@@ -1042,8 +1045,11 @@ kw1281_mainloop (void)
             /* calculate how much liters we consumed per second
              * multiply that by the time since last value
              * and add it to absolute consumption counter
+             *
+             * this somehow is very inaccurate (not high enough)
+             * dunno why though
              */
-            av_con->liters += ( gval->con_h / 3600 ) * duration;
+            // av_con->liters += ( gval->con_h / 3600 ) * duration;
             
             
             // calculate consumption per hour
@@ -1098,8 +1104,7 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
-    printf ("l abs.\t\t%.3f\n", av_con->liters);
-    printf ("tank content\t%.1f\n", gval->tank);    
+    //printf ("l abs.\t\t%.3f\n", av_con->liters);
     printf ("l/h\t\t%.2f\n", gval->con_h);
     printf ("l/100km\t\t%.2f\n", gval->con_km);
     printf ("speed\t\t%.1f km/h\n", gval->speed);

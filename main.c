@@ -76,7 +76,7 @@ init_values(void)
     av_con->average_short = 0; 
     av_con->average_medium = 0;
     av_con->average_long = 0;
-    av_con->liters = 0;
+    //av_con->liters = 0;
     av_con->timespan = 300;    
     
     av_speed->array_full = 0;
