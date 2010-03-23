@@ -66,6 +66,8 @@ function setcolor(color)
 	document.getElementById("voltage").style.color = color;	
 }
 
+
+/*
 // show image tmp in img after it is completely loaded
 function image_loaded(tmp, img)
 {
@@ -82,7 +84,6 @@ function image_loaded(tmp, img)
             document.getElementById("update_popup_con").style.visibility = 'hidden'; 
         else if (tmp.src.search("speed.png") != -1)
             document.getElementById("update_popup_speed").style.visibility = 'hidden'; 
-        
     }
     else
     {
@@ -92,6 +93,7 @@ function image_loaded(tmp, img)
         setTimeout("image_loaded(" + tmp + "," + img + ")", 10);
     }
 }
+*/
 
 
 function update_image(img)
@@ -115,12 +117,11 @@ function update_image(img)
             if (tmp.src.search("consumption.png") != -1)
                 document.getElementById("update_popup_con").style.visibility = 'hidden'; 
             else if (tmp.src.search("speed.png") != -1)
-                document.getElementById("update_popup_speed").style.visibility = 'hidden';         
+                document.getElementById("update_popup_speed").style.visibility = 'hidden';      
         }
     }
     
     // image_loaded(tmp, img);
-    delete tmp;
 }
 
 
