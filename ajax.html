@@ -106,7 +106,10 @@
         <table border="0" cellpadding="0" cellspacing="0">
           <tr>
             <td align="right" width="210" valign="baseline">
-              <span id="con_km">6.55</span>
+              <div class="tooltip_container">
+                <span id="con_km">6.55</span>
+                <span class="tooltip">consumption: liters per 100km</span>
+              </div>
             </td>
             <td align="left" width="55" valign="baseline">
               <span id="con_km_unit">l/km</span>
@@ -114,7 +117,10 @@
           </tr>
           <tr>
             <td align="right" valign="baseline">
-              <span id="speed">130.6</span>
+              <div class="tooltip_container">
+                <span id="speed">130.6</span>
+                <span class="tooltip">speed in km/h</span>
+              </div>
             </td>
             <td align="left" valign="baseline">
               <span id="speed_unit">km/h</span>
@@ -126,7 +132,10 @@
         <table border="0" cellpadding="0" cellspacing="0">
           <tr>
             <td align="right" width="210" valign="baseline">
-              <span id="con_h">1.2</span>
+              <div class="tooltip_container">
+                <span id="con_h">1.2</span>
+                <span class="tooltip">consumption: liters per hour</span>
+              </div>
             </td>
             <td align="left" width="55" valign="baseline">
               <span class="other_unit">l/h</span>
@@ -134,7 +143,10 @@
           </tr>
           <tr>
             <td align="right" valign="baseline">
-              <span id="rpm">3000</span>
+              <div class="tooltip_container">
+                <span id="rpm">3000</span>
+                <span class="tooltip">engine rpm</span>
+              </div>
             </td>
             <td align="left" valign="baseline">
               <span class="other_unit">rpm</span>
@@ -142,7 +154,10 @@
           </tr>          
           <tr>
             <td align="right" valign="baseline">
-              <span id="temp1">78.0</span>
+              <div class="tooltip_container">
+                <span id="temp1">78.0</span>
+                <span class="tooltip">engine temperature</span>
+              </div>
             </td>
             <td align="left" valign="baseline">
               <span class="other_unit">C</span>
@@ -150,7 +165,10 @@
           </tr>
           <tr>
             <td align="right" valign="baseline">
-              <span id="temp2">34.1</span>
+              <div class="tooltip_container">
+                <span id="temp2">34.1</span>
+                <span class="tooltip">air intake temperature</span>
+              </div>
             </td>
             <td align="left" valign="baseline">
               <span class="other_unit">C</span>
@@ -158,7 +176,10 @@
           </tr>
           <tr>
             <td align="right" valign="baseline">
-              <span id="voltage">14.11</span>
+              <div class="tooltip_container">
+                <span id="voltage">14.11</span>
+                <span class="tooltip">current battery voltage</span>
+              </div>
             </td>
             <td align="left" valign="baseline">
               <span class="other_unit">V</span>
@@ -168,7 +189,7 @@
             <td align="right" width="210" valign="baseline">
               <div class="tooltip_container">
                 <span id="tank" style="cursor:pointer" onclick="get_tank_cont()">6.44</span>
-                <span class="tooltip">request tank content (shortcut: 't')</span>
+                <span class="tooltip">tank content, click to request (shortcut: 't')</span>
               </div>
             </td>
             <td align="left" width="55" valign="baseline">
@@ -177,19 +198,18 @@
           </tr>          
         </table>
         </div>
-        
-        <div class="footer">
-          <div id="debug">initializing...</div>
-          <div id="version">
-		    <div class="tooltip_container">
-			  <input type="button" style="border:0px;background-color:#333333;color:#eeeeee" value="reset counters" onclick="reset_counters()"/>
-              <span class="tooltip">reset all counters (shortcut: 'r')</span>                    	  
-              nerdobd2 | v0.9.5
-			</div>				  
-          </div>
-        </div>
       </div>
-
+      <div class="footer">
+        <div id="debug">initializing...</div>
+        <div id="version">
+          <div class="tooltip_container">
+            <input type="button" style="border:0px;background-color:#333333;color:#eeeeee" value="reset counters" onclick="reset_counters()"/>
+            <span class="tooltip">reset all counters (shortcut: 'r')</span>                    	  
+            nerdobd2 | v0.9.5
+          </div>
+        </div>				  
+      </div>
+      
     </div>
 
   

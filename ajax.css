@@ -176,6 +176,28 @@ body, html
 }
 
 
+/* the tooltips in the right column need other prefs */
+.plain_values .tooltip_container:hover .tooltip,
+.other_values .tooltip_container:hover .tooltip
+{
+    display:block;
+    position:absolute;
+    cursor:pointer;
+    font-family:helvetica;
+    padding:4px;
+    font-size:12px;
+    top:365px;
+    left:542px;
+    width:100px;
+    height:42px;
+    vertical-align:bottom;
+    text-align:left;
+    color:#eeeeee;
+    background-color:#333333;       
+    z-index:100;
+}
+
+
 .right_box
 {
     float:right;

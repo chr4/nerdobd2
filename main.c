@@ -20,10 +20,6 @@
  * set baudrate, multiplicator value and other things via config file
  * set baudrate from argv
  *
- * find a way to get tank content on user request (button)
- *
- * tooltips don't work in tank content
- *
  */
 
 int     init_values(void);
@@ -171,7 +167,7 @@ refresh_tank_content(void)
     
         // soft error, e.g. communication error
         if (ret == -1) {
-            ajax_log("init for instruments failed, retrying...\n");
+            ajax_log("init (tank content) failed, retrying...\n");
             continue;
         }
     
@@ -191,7 +187,10 @@ refresh_tank_content(void)
         }
         // on success, break
         else
+        {
+            ajax_log("tank content updated.\n");
             break;
+        }
     }
     
     // reset flag
@@ -329,7 +328,11 @@ main (int arc, char **argv)
         
         // if mainloop() exited due to tank request
         else if (ret == TANK_REQUEST)
+        {
+            // grey out values
+            reset_values();
             refresh_tank_content();
+        }
     }
 
     // should never be reached
