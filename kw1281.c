@@ -961,6 +961,12 @@ kw1281_mainloop (void)
     ajax_log ("init done.\n");
     for ( loopcount = 0; ;loopcount++)
     {
+        /* check if tank request was sent
+         * if so, return TANK_REQUEST
+         */ 
+        if (gval->tank_request)
+            return TANK_REQUEST;
+        
 #ifdef SERIAL_ATTACHED		
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
@@ -989,7 +995,7 @@ kw1281_mainloop (void)
 		/* don't request temperatures and
 		 * voltage too often
          */
-		if (! (loopcount % 5) )
+		if (! (loopcount % 15) )
 		{
 		
 #ifdef SERIAL_ATTACHED			
@@ -1025,7 +1031,7 @@ kw1281_mainloop (void)
 			
             if (getuid() == 0)
             {
-                prio.sched_priority = 50;
+                prio.sched_priority = 0;
 				
                 if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
                     perror("sched_setscheduler");
@@ -1090,6 +1096,7 @@ kw1281_mainloop (void)
 
         // collect defunct processes functions
         while(waitpid(-1, &status, WNOHANG) > 0);
+        
 		
 #ifndef SERIAL_ATTACHED
 		sleep(2);

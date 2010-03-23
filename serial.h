@@ -29,8 +29,8 @@
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED
-#define HIGH_PRIORITY
+//#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
+#define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 //#define DEBUG
 
 #define DEVICE          "/dev/ttyUSB0"
@@ -55,6 +55,10 @@
 #define SHORT           300     // last 5 minutes
 #define MEDIUM          1800    // last 30 minutes
 #define LONG            14400   // last 4 hours
+
+
+#define TANK_CONT_MAX_TRYS 5    // try to get tank content up to 5 times
+#define TANK_REQUEST    3       // return value
 
 // saving on ramdisk
 #define CON_AV_FILE     "consumption.data"
@@ -89,6 +93,7 @@ struct values
     float   inj_time;
     float   voltage;
     float   tank;
+    char    tank_request;   // flag for requesting tank content
     
     // calculated values
     float   con_h;

@@ -22,11 +22,14 @@
  *
  * find a way to get tank content on user request (button)
  *
+ * tooltips don't work in tank content
+ *
  */
 
 int     init_values(void);
 void	reset_values(void);
 void	cleanup (int);
+void    refresh_tank_content(void);
 
 // shmid has to be global, so we can destroy it on exit
 int     shmid;
@@ -68,7 +71,9 @@ init_values(void)
     av_con   = (struct average *) (p + sizeof(struct values) + sizeof(struct average));
     debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));    
     
-    reset_values();   
+    reset_values(); 
+    
+    gval->tank_request = 0;
  
     // init average structs
     av_con->array_full = 0;
@@ -143,6 +148,56 @@ reset_values(void)
     gval->tank      = -2;
     
 }
+
+
+// refreshes tank content
+void
+refresh_tank_content(void)
+{
+    int     trys;
+
+#ifdef SERIAL_ATTACHED
+    int     ret;
+#endif
+
+    // try up to TANK_CONT_MAX_TRYS times
+    for (trys = 0; trys < TANK_CONT_MAX_TRYS; trys++)
+    { 
+        
+#ifdef SERIAL_ATTACHED        
+        // ECU: 0x01, INSTR: 0x17
+        // send 5baud address, read sync byte + key word
+        ret = kw1281_init (0x17);
+    
+        // soft error, e.g. communication error
+        if (ret == -1) {
+            ajax_log("init for instruments failed, retrying...\n");
+            continue;
+        }
+    
+        // hard error (e.g. serial cable unplugged)
+        else if (ret == -2)
+        {
+            ajax_log("serial port error\n");
+            cleanup(0);
+        }
+    
+#endif
+    
+        if (kw1281_get_tank_cont() == -1)
+        {
+            ajax_log("error getting tank content, retrying...\n");
+            continue;
+        }
+        // on success, break
+        else
+            break;
+    }
+    
+    // reset flag
+    gval->tank_request = 0;
+}
+
 
 void
 cleanup (int signo)
@@ -231,31 +286,8 @@ main (int arc, char **argv)
 #endif
     
     
-    /* get the content of the tank 
-     * this is done only once, because we would've
-     * to disconnect ecu and reconnect to instruments
-     * every time.. 
-     */
-#ifdef SERIAL_ATTACHED        
-    // ECU: 0x01, INSTR: 0x17
-    // send 5baud address, read sync byte + key word
-    ret = kw1281_init (0x17);
-    
-    // soft error, e.g. communication error
-    if (ret == -1)
-        ajax_log("init for instruments failed, skipping...\n");
-    
-    // hard error (e.g. serial cable unplugged)
-    else if (ret == -2)
-    {
-        ajax_log("serial port error\n");
-        cleanup(0);
-    }
-    
-#endif
-    
-    if (kw1281_get_tank_cont() == -1)
-        ajax_log("error getting tank content, skipping...\n");
+    // getting tank content once before entering main loop
+    refresh_tank_content();
     
     
     for ( ; ; )
@@ -284,12 +316,20 @@ main (int arc, char **argv)
 		}
 #endif
 
-        if (kw1281_mainloop() == -1)
+        
+        ret = kw1281_mainloop();
+        
+        // on errors, restart
+        if (ret == -1)
         {
             ajax_log("errors. restarting...\n");
             reset_values();
             continue;
         }
+        
+        // if mainloop() exited due to tank request
+        else if (ret == TANK_REQUEST)
+            refresh_tank_content();
     }
 
     // should never be reached
