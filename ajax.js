@@ -164,6 +164,11 @@ function reset_counters()
     document.getElementById("debug").innerHTML = "counters resetted.";
 }
 
+function get_tank_cont()
+{
+    update_variable("tank_request");
+    document.getElementById("debug").innerHTML = "requesting tank content...";
+}
 
 // set graph to timespan: short, medium, long
 function av_con(timespan)
@@ -209,5 +214,9 @@ function start()
             av_speed("medium");
         else if (e.which == 88) // x
             av_speed("long");
+        
+        // shortcut for requesting tank content
+        else if (e.which == 84) // t
+            get_tank_cont();
     }
 }
