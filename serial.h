@@ -29,7 +29,7 @@
 #include <rrd.h>
 
 
-//#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
+#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
 #define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 //#define DEBUG
 
