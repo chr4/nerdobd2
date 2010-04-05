@@ -163,7 +163,6 @@ body, html
 {
     display:block;
     position:absolute;
-    cursor:pointer;
     font-family:helvetica;
     padding:4px;
     font-size:12px;
@@ -182,7 +181,6 @@ body, html
 {
     display:block;
     position:absolute;
-    cursor:pointer;
     font-family:helvetica;
     padding:4px;
     font-size:12px;
@@ -194,7 +192,7 @@ body, html
     text-align:left;
     color:#eeeeee;
     background-color:#333333;       
-    z-index:100;
+    z-index:100;    
 }
 
 
