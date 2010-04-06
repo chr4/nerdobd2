@@ -145,7 +145,7 @@ body, html
 
 
 /* unit layout for values underneath speed graph*/
-#av_unit
+.av_unit
 {
     font-family:helvetica;
     font-size:12px;
@@ -166,7 +166,7 @@ body, html
     font-family:helvetica;
     padding:4px;
     font-size:12px;
-    top:-45px;
+    top:-50px;
     width:97px;
     text-align:left;
     color:#eeeeee;
