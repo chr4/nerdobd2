@@ -119,7 +119,6 @@ cleanup (int signo)
 int
 main (int arc, char **argv)
 {
-    //int     status;
     int     ret;
     
     
@@ -147,14 +146,14 @@ main (int arc, char **argv)
     }
     
 	
-	// add signal handler for cleanup function
-	signal(SIGINT, cleanup);
-	signal(SIGTERM, cleanup);	
-	
-    
+    // add signal handler for cleanup function
+    signal(SIGINT, cleanup);
+    signal(SIGTERM, cleanup);	
+
+ 
     // set realtime priority if we're running as root
 #ifdef HIGH_PRIORITY
-	struct sched_param prio;
+    struct sched_param prio;
 	
     if (getuid() == 0)
     {
