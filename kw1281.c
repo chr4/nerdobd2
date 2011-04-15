@@ -542,7 +542,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        gval->rpm = 0.2 * buf[i + 1] * buf[i + 2];
+                        insert_value("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -558,46 +558,30 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
-
-					/* measure time since last injection read
-                     * thie whole calculating absolute consumption
-                     * in liters is very inaccurate (not high enough)
-                     */
-                    /*
-					if (!first)
-					{
-						gettimeofday(&b, NULL);
-						duration = (float) ( ( b.tv_sec + ( b.tv_usec * 0.000001 ) ) -
-											 ( a.tv_sec + ( a.tv_usec * 0.000001 ) ) );
-					}
-					first = 0;
-					gettimeofday(&a, NULL);
-					*/
-
-                    gval->inj_time = 0.01 * buf[i + 1] * buf[i + 2];
+                    insert_value("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x12:        // absolute pressure
-                    gval->oil_press = 0.04 * buf[i + 1] * buf[i + 2];
+                    insert_value("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        gval->temp1 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
+                        insert_value("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     if (i == 9)
-                        gval->temp2 = buf[i + 1] * (buf[i + 2] - 100) * 0.1;
+                        insert_value("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     break;
 
                 case 0x07:        // speed
-                    gval->speed = 0.01 * buf[i + 1] * buf[i + 2];
+                    insert_value("speed", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x15:        // battery voltage
-                    gval->voltage = 0.001 * buf[i + 1] * buf[i + 2];
+                    insert_value("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x13:        // tank content
-                    gval->tank = 0.01 * buf[i + 1] * buf[i + 2];
+                    insert_value("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
                     
                 default:
@@ -915,10 +899,10 @@ kw1281_get_tank_cont(void)
 #endif
     
 #ifndef SERIAL_ATTACHED
-    gval->tank += 1;
+    insert_value("tank_content", get_value("tank_content") + 1);
 #endif
    
-    printf ("tank content\t%.1f\n", gval->tank);    
+    printf ("tank content\t%.1f\n", get_value("tank_content"));
     
     return 0;
 }
@@ -928,7 +912,6 @@ int
 kw1281_mainloop (void)
 {
     int		status;
-    int		file;    
 
 #ifdef DEBUG
     printf ("receive blocks\n");
@@ -946,25 +929,25 @@ kw1281_mainloop (void)
 	 * when the car is too far to test
 	 * the html interface / ajax server
 	 */
-    gval->rpm = 1000;
-    gval->inj_time = 4.52;
-    gval->speed = 50.4;
-    gval->temp1 = 10.1;
-    gval->temp2 = 23.5;
-    gval->voltage = 2.15;
+    insert_value("rpm", 1000);
+    insert_value("injection_time", 4.52);
+    insert_value("speed", 50.4);
+    insert_value("temp_engine", 10.1);
+    insert_value("temp_air_intake", 12.1);
+    insert_value("voltage", 2.21);
+    
     duration = 1.2;
 	
     ajax_log("incrementing values for testing purposes...\n");
-
 #endif
-		
-    ajax_log ("init done.\n");
+
+    ajax_log("init done.\n");
     for ( loopcount = 0; ;loopcount++)
     {
         /* check if tank request was sent
          * if so, return TANK_REQUEST
          */ 
-        if (gval->tank_request)
+        if (tank_request)
             return TANK_REQUEST;
         
 #ifdef SERIAL_ATTACHED		
@@ -975,8 +958,8 @@ kw1281_mainloop (void)
 #endif
 		
 #ifndef SERIAL_ATTACHED
-        gval->rpm += 100;
-        gval->inj_time += 0.1;
+        insert_value("rpm", get_value("rpm") + 100);
+        insert_value("injection_time", get_value("injection_time") + 0.1);
 #endif		
 
 		
@@ -988,7 +971,7 @@ kw1281_mainloop (void)
 #endif
 		
 #ifndef SERIAL_ATTACHED
-        gval->speed += 5;
+        insert_value("speed", get_value("speed") + 5);
 #endif
 		
 		
@@ -1006,9 +989,9 @@ kw1281_mainloop (void)
 #endif
 			
 #ifndef SERIAL_ATTACHED
-            gval->temp1 += 0.4;
-            gval->temp2 += 0.2;
-            gval->voltage += 0.01;		
+            insert_value("temp_engine", get_value("temp_engine") + 0.4);
+            insert_value("temp_air_intake", get_value("temp_air_intake") + 0.2);
+            insert_value("voltage", get_value("voltage") + 0.01);
 #endif
         }
         
@@ -1018,13 +1001,13 @@ kw1281_mainloop (void)
          */
         if (fork() > 0)
         {
-			/*
-			 * this seems to be of no use
-			 * even if we nice to +19 and set a sched_prio of 99 SCHED_OTHER
-			 * system is still lagging
+            /*
+             * this seems to be of no use
+             * even if we nice to +19 and set a sched_prio of 99 SCHED_OTHER
+             * system is still lagging
              *
-			 * furthermore, it provoces communication errors
-			 */
+             * furthermore, it provoces communication errors
+             */
 /*
 #ifdef HIGH_PRIORITY
             // we reduce priority in this process to prevent lagging
@@ -1042,30 +1025,8 @@ kw1281_mainloop (void)
             }
 #endif
 */
-            // calculate consumption per hour
-            if (gval->inj_time > INJ_SUBTRACT)
-                gval->con_h = 60 * 4 * MULTIPLIER *
-                              gval->rpm * (gval->inj_time - INJ_SUBTRACT);
-            else
-                gval->con_h = 0;
-            
-            /* calculate how much liters we consumed per second
-             * multiply that by the time since last value
-             * and add it to absolute consumption counter
-             *
-             * this somehow is very inaccurate (not high enough)
-             * dunno why though
-             */
-            // av_con->liters += ( gval->con_h / 3600 ) * duration;
-            
-            
-            // calculate consumption per hour
-            if (gval->speed > 5)
-                // below 5km/h values get very high, which makes the graphs unreadable
-                gval->con_km = (gval->con_h / gval->speed) * 100;
-            else
-                gval->con_km = -1;
-            
+            // calculate consumption
+            calc_consumption(); 
         
             // output values
             kw1281_print ();
@@ -1073,24 +1034,6 @@ kw1281_mainloop (void)
             // update rrdtool databases
             rrdtool_update_consumption();
             rrdtool_update_speed();
-
-            // save consumption array to file        
-            if ( (file = open( CON_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-                perror("couldn't open file:\n");
-            else
-            {
-                write(file, av_con, sizeof(struct average));
-                close(file);
-            }
-
-            // save av_speed array to file    
-            if ( (file = open( SPEED_AV_FILE, O_WRONLY|O_CREAT, 00644 )) == -1)
-                perror("couldn't open file:\n");
-            else
-            {
-                write(file, av_speed, sizeof(struct average));
-                close(file);
-            }
 
             exit(0);
         }
@@ -1100,7 +1043,7 @@ kw1281_mainloop (void)
         
 		
 #ifndef SERIAL_ATTACHED
-		sleep(2);
+        sleep(2);
 #endif
     }
     
@@ -1112,17 +1055,15 @@ void
 kw1281_print (void)
 {
     printf ("----------------------------------------\n");
-    //printf ("l abs.\t\t%.3f\n", av_con->liters);
-    printf ("l/h\t\t%.2f\n", gval->con_h);
-    printf ("l/100km\t\t%.2f\n", gval->con_km);
-    printf ("speed\t\t%.1f km/h\n", gval->speed);
-    printf ("rpm\t\t%.0f RPM\n", gval->rpm);
-    printf ("inj on time\t%.2f ms\n", gval->inj_time);
-    printf ("temp1\t\t%.1f °C\n", gval->temp1);
-    printf ("temp2\t\t%.1f °C\n", gval->temp2);
-    printf ("voltage\t\t%.2f V\n", gval->voltage);
-    //printf ("load\t\t%.0f %%\n", gval->load);
-    printf ("absolute press\t%.0f mbar\n", gval->oil_press);
+    printf ("l/h\t\t%.2f\n", get_row("per_h", "consumption"));
+    printf ("l/100km\t\t%.2f\n", get_row("per_km", "consumption"));
+    printf ("speed\t\t%.1f km/h\n", get_value("speed"));
+    printf ("rpm\t\t%.0f RPM\n", get_value("rpm"));
+    printf ("inj on time\t%.2f ms\n", get_value("injection_time"));
+    printf ("temp engine\t%.1f °C\n", get_value("temp_engine"));
+    printf ("temp air intake\t%.1f °C\n", get_value("temp_air_intake"));
+    printf ("voltage\t\t%.2f V\n", get_value("voltage"));
+    printf ("oil pressure\t%.0f mbar\n", get_value("oil_pressure"));
     printf ("counter\t\t%d\n", counter);
     printf ("\n");
     

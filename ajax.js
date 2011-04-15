@@ -61,8 +61,8 @@ function setcolor(color)
 	document.getElementById("con_h").style.color = color;
 	document.getElementById("speed").style.color = color;
 	document.getElementById("rpm").style.color = color;
-	document.getElementById("temp1").style.color = color;
-	document.getElementById("temp2").style.color = color;	
+	document.getElementById("temp_engine").style.color = color;
+	document.getElementById("temp_air_intake").style.color = color;	
 	document.getElementById("voltage").style.color = color;	
 }
 
@@ -129,11 +129,11 @@ function update_all()
 {
     update_variable("con_h");
     update_variable("con_km");
-    update_variable("tank");
+    update_variable("tank_content");
     update_variable("rpm");
     update_variable("speed");
-    update_variable("temp1");
-    update_variable("temp2");
+    update_variable("temp_engine");
+    update_variable("temp_air_intake");
     update_variable("voltage");
     
     update_variable("con_av_short");

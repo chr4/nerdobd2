@@ -100,7 +100,7 @@ obd_send_debug(int fd)
 {
     char buf2[256];
 
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(debug));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", (int) strlen(debug));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
@@ -120,7 +120,7 @@ obd_send(int fd, float val, char *format)
         return -1;
     
     snprintf (buf, sizeof (buf), format, val);
-    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", strlen(buf));
+    snprintf (buf2, sizeof (buf2), "Content-Length: %d\r\n", (int) strlen(buf));
     send (fd, HTTP_OK, strlen(HTTP_OK), 0);
     send (fd, buf2, strlen(buf2), 0);
     send (fd, HEADER_PLAIN, strlen(HEADER_PLAIN), 0);
@@ -205,47 +205,43 @@ handle_client(int fd)
 #endif
         
         if (!strcmp(p, "speed") )
-            obd_send(fd, gval->speed, "%.01f");
+            obd_send(fd, get_value("speed"), "%.01f");
         else if (!strcmp(p, "rpm") )
-            obd_send(fd, gval->rpm, "%.00f");
+            obd_send(fd, get_value("speed"), "%.00f");
         else if (!strcmp(p, "con_h") )
-            obd_send(fd, gval->con_h, "%.02f");
+            obd_send(fd, get_row("per_h", "consumption"), "%.02f");
         else if (!strcmp(p, "con_km") )
-            obd_send(fd, gval->con_km, "%.02f");
+            obd_send(fd, get_row("per_km", "consumption"), "%.02f");
         
         else if (!strcmp(p, "con_av_short") )
-            obd_send(fd, av_con->average_short, "%.02f");
+            obd_send(fd, get_average("per_km", "consumption", 5), "%.02f");
         else if (!strcmp(p, "con_av_medium") )
-            obd_send(fd, av_con->average_medium, "%.02f");
+            obd_send(fd, get_average("per_km", "consumption", 30), "%.02f");
         else if (!strcmp(p, "con_av_long") )
-            obd_send(fd, av_con->average_long, "%.02f");
+            obd_send(fd, get_average("per_km", "consumption", 0), "%.02f");
         
         else if (!strcmp(p, "speed_av_short") )
-            obd_send(fd, av_speed->average_short, "%.02f");
+            obd_send(fd, get_average("value", "speed", 5), "%.02f");
         else if (!strcmp(p, "speed_av_medium") )
-            obd_send(fd, av_speed->average_medium, "%.02f");
+            obd_send(fd, get_average("value", "speed", 30), "%.02f");
         else if (!strcmp(p, "speed_av_long") )
-            obd_send(fd, av_speed->average_long, "%.02f");
+            obd_send(fd, get_average("value", "speed", 0), "%.02f");
         
-        else if (!strcmp(p, "temp1") )
-            obd_send(fd, gval->temp1, "%.01f");
-        else if (!strcmp(p, "temp2") )
-            obd_send(fd, gval->temp2, "%.01f");
+        else if (!strcmp(p, "temp_engine") )
+            obd_send(fd, get_value("temp_engine"), "%.01f");
+        else if (!strcmp(p, "temp_air_intake") )
+            obd_send(fd, get_value("temp_air_intake"), "%.01f");
         else if (!strcmp(p, "voltage") )
-            obd_send(fd, gval->voltage, "%.02f");
-        else if (!strcmp(p, "tank") )
-            obd_send(fd, gval->tank, "%.01f");  
+            obd_send(fd, get_value("voltage"), "%.02f");
+        else if (!strcmp(p, "tank_content") )
+            obd_send(fd, get_value("tank_content"), "%.01f");  
         
         /* if user is requesting tank content, set the flag
          * in will be checked in the kw1281 mainloop
          */
         else if (!strcmp(p, "tank_request") )
-            gval->tank_request = 1;
+            tank_request = 1;
         
-        //else if (!strcmp(p, "liters") )
-        //    obd_send(fd, av_con->liters, "%.03f");
-
-
         else if (!strcmp(p, "debug") )
             obd_send_debug(fd);        
         
@@ -253,18 +249,18 @@ handle_client(int fd)
             reset_counters();
         
         else if (!strcmp(p, "av_speed_graph:short") )
-            av_speed->timespan = 300;
+            speed_graph_timespan = 300;
         else if (!strcmp(p, "av_speed_graph:medium") )
-            av_speed->timespan = 1800;
+            speed_graph_timespan = 1800;
         else if (!strcmp(p, "av_speed_graph:long") )
-            av_speed->timespan = 14400;
+            speed_graph_timespan = 14400;
         
         else if (!strcmp(p, "av_con_graph:short") )
-            av_con->timespan = 300;            
+            consumption_graph_timespan = 300;            
         else if (!strcmp(p, "av_con_graph:medium") )
-            av_con->timespan = 1800;            
+            consumption_graph_timespan = 1800;            
         else if (!strcmp(p, "av_con_graph:long") )            
-            av_con->timespan = 14400;
+            consumption_graph_timespan = 14400;
         
         else
         {
@@ -378,7 +374,8 @@ void
 ajax_log(char *s)
 {
     printf("%s", s);
-    snprintf(debug, 1024, "%s", s);
+    // TODO: debug doesn't work, needs shared variable i guess
+    //snprintf(debug, 1024, "%s", s);
     return;   
 }
 
@@ -391,26 +388,11 @@ reset_counters(void)
     printf("resetting counters...\n");
 #endif    
 
-    // init average consumption struct
-    av_con->array_full = 0;
-    av_con->counter = 0;
-    av_con->average_short = 0; 
-    av_con->average_medium = 0;
-    av_con->average_long = 0;
-    //av_con->liters = 0;
-    
-    // init average speed struct
-    av_speed->array_full = 0;
-    av_speed->counter = 0;
-    av_speed->average_short = 0; 
-    av_speed->average_medium = 0;
-    av_speed->average_long = 0;
-    
-#ifdef DEBUG
-    sleep(1);
-    printf("values: %.02f %d %d %.02f\n", 
-           av_con->average_short, av_con->counter, av_speed->counter, av_speed->average_long);
-#endif
+    // reset average consumption
+    // TODO
+ 
+    // reset average speed
+    // TODO
     
     return;
 }

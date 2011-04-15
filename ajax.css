@@ -245,7 +245,7 @@ body, html
     margin-top:20px;
 }
 
-#con_h, #rpm, #temp1, #temp2, #voltage, #tank
+#con_h, #rpm, #temp_engine, #temp_air_intake, #voltage, #tank_content
 {
     font-family:helvetica;
     font-size:28px;
