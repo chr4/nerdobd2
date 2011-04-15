@@ -200,7 +200,7 @@ handle_client(int fd)
         }
         p++;    // skip '?'
         
-#ifdef DEBUG
+#ifdef DEBUG_AJAX
         printf("got obd request for %s\n", p);
 #endif
         
@@ -275,7 +275,7 @@ handle_client(int fd)
     if ( (p = strchr(buffer, '?')) != NULL) 
         *p = '\0';
    
-#ifdef DEBUG
+#ifdef DEBUG_AJAX
     printf("%s\n", buffer);
 #endif
     
@@ -289,7 +289,7 @@ handle_client(int fd)
 
     if (stat(&buffer[5], &stats) == -1)
     {
-#ifdef DEBUG        
+#ifdef DEBUG_AJAX        
         printf("file with 0bytes: %s\n", &buffer[0]);
 #endif        
         return -1;
@@ -324,7 +324,7 @@ handle_client(int fd)
              "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
     write(fd, out, strlen(out));
     
-#ifdef DEBUG
+#ifdef DEBUG_AJAX
     printf("sending file: %s with %9jd length\n", &buffer[5], (intmax_t) stats.st_size);
 #endif
     
@@ -384,7 +384,7 @@ void
 reset_counters(void)
 {
 
-#ifdef DEBUG 
+#ifdef DEBUG_AJAX 
     printf("resetting counters...\n");
 #endif    
 
