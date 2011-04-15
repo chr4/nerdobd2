@@ -22,14 +22,9 @@
  *
  */
 
-int     init_values(void);
 void	reset_values(void);
 void	cleanup (int);
 void    refresh_tank_content(void);
-
-// shmid has to be global, so we can destroy it on exit
-int     shmid;
-void   *p;
 
 // pid of ajax server
 pid_t   pid;
@@ -38,113 +33,11 @@ pid_t   pid;
 char	cleaning_up = 0;
 
 
-int
-init_values(void)
-{
-    int     file;
-    key_t   key = 13337;
-
-    // setup shared values
-    if ( (shmid = shmget(key,
-                         sizeof (struct values) +
-                         2 * sizeof(struct average) +
-                         1024, // sizeof debug 
-                         0666 | IPC_CREAT)) < 0)
-    {
-        perror("shmget()");
-        return -1;
-    }
-    
-    if ( (p = shmat(shmid, NULL, 0)) == (void *) -1)
-    {
-        perror("shmat()");
-        return -1;
-    }
-    
-    // attach variables to shared memory space
-    gval     = (struct values *) p;
-    av_speed = (struct average *) (p + sizeof(struct values));
-    av_con   = (struct average *) (p + sizeof(struct values) + sizeof(struct average));
-    debug    = (char *) (p + sizeof(struct values) + 2 * sizeof(struct average));    
-    
-    reset_values(); 
-    
-    // initialize tank content values
-    gval->tank_request = 0;
-    gval->tank = -2;
- 
-    // init average structs
-    av_con->array_full = 0;
-    av_con->counter = 0;
-    av_con->average_short = 0; 
-    av_con->average_medium = 0;
-    av_con->average_long = 0;
-    //av_con->liters = 0;
-    av_con->timespan = 300;    
-    
-    av_speed->array_full = 0;
-    av_speed->counter = 0;
-    av_speed->average_short = 0; 
-    av_speed->average_medium = 0;
-    av_speed->average_long = 0;
-    av_speed->timespan = 300;
-  
-
-    // use & 
-    // overwrite consumption inits from file, if present
-    if ( (file = open( CON_AV_FILE, O_RDONLY )) != -1)
-    {
-        read(file, av_con, sizeof(struct average));
-        close( file );
-    }
-    
-    // overwrite speed inits from file, if present
-    if ( (file = open( SPEED_AV_FILE, O_RDONLY )) != -1)
-    {
-        read(file, av_speed, sizeof(struct average));
-        close( file );
-    }
-    
-    
-#ifdef DEBUG  
-    int i;
-    printf("av_con->counter: %d\n", av_con->counter);
-    for (i = 0; i < av_con->counter; i++)
-        printf("%.02f ", av_con->array[i]);
-    printf("array full? (%d)\n", av_con->array_full);
-    printf("av_con averages: %.02f, %.02f, %.02f\n",
-           av_con->average_short, av_con->average_medium, av_con->average_long);
-
-    printf("av_speed->counter: %d\n", av_speed->counter);
-    for (i = 0; i < av_speed->counter; i++)
-        printf("%.02f ", av_speed->array[i]);
-    printf("array full? (%d)\n", av_speed->array_full);
-    printf("speed averages: %.02f, %.02f, %.02f\n",
-           av_speed->average_short, av_speed->average_medium, av_speed->average_long);    
-#endif  
-    
-    return 0;
-}
-
-
 void
 reset_values(void)
 {
-    /* set values to -2 so ajax interfaces
-     * knows we're not having new values
-     * for a short while and can grey them out
-     */
-    gval->speed     = -2;
-    gval->rpm       = -2;
-    gval->temp1     = -2;
-    gval->temp2     = -2;
-    gval->oil_press = -2;
-    gval->inj_time  = -2;
-    gval->voltage   = -2;
-    gval->con_h     = -2;
-    gval->con_km    = -2;    
+    return;
 }
-
 
 // refreshes tank content
 void
@@ -194,7 +87,7 @@ refresh_tank_content(void)
     }
     
     // reset flag
-    gval->tank_request = 0;
+    tank_request = 0;
 }
 
 
@@ -218,13 +111,6 @@ cleanup (int signo)
 	printf("sending SIGTERM to ajax server...\n");
 	kill(pid, SIGTERM);
 	
-	printf("freeing shm memory...\n");
-	// free shm memory segment
-	if (shmdt(p) == -1)
-		perror("shmdt()");
-	else if (shmctl(shmid, IPC_RMID, NULL) == -1)
-		perror("shmctl()");
-	
 	printf("exiting.\n");
 	exit(0);
 }
@@ -245,7 +131,7 @@ main (int arc, char **argv)
 #endif
     
     // initialize values (if possible, load from file)
-    if (init_values() == -1)
+    if (init_db() == -1)
         return -1;
     
     // create databases, unless they exist
@@ -286,7 +172,7 @@ main (int arc, char **argv)
     
     
     // getting tank content once before entering main loop
-    refresh_tank_content();
+    // refresh_tank_content();
     
     
     for ( ; ; )
@@ -309,10 +195,10 @@ main (int arc, char **argv)
         
         // hard error (e.g. serial cable unplugged)
         else if (ret == -2)
-		{
-			ajax_log("serial port error\n");
+        {
+            ajax_log("serial port error\n");
             cleanup(0);
-		}
+        }
 #endif
 
         

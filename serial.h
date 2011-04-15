@@ -18,6 +18,9 @@
 #include <errno.h>
 #include <signal.h>
 
+// sqlite database
+#include <sqlite3.h>
+
 // for priority settings
 #include <sched.h>
 
@@ -29,7 +32,7 @@
 #include <rrd.h>
 
 
-#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
+//#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
 #define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 //#define DEBUG
 
@@ -51,20 +54,15 @@
 // the port where to local ajax server listens
 #define PORT            8080
 
-// measure length in seconds (for calculating averages)
-#define SHORT           300     // last 5 minutes
-#define MEDIUM          1800    // last 30 minutes
-#define LONG            14400   // last 4 hours
-
-
 #define TANK_CONT_MAX_TRYS 5    // try to get tank content up to 5 times
 #define TANK_REQUEST    3       // return value
 
-// saving on ramdisk
-#define CON_AV_FILE     "consumption.data"
-#define SPEED_AV_FILE   "speed.data"
 #define SPEED_GRAPH     "speed.png"
 #define CON_GRAPH       "consumption.png"
+
+// the database file (sqlite3) and file handler
+#define DB_FILE         "database.sqlite3"
+sqlite3 *db;
 
 void    rrdtool_create_speed (void);
 void    rrdtool_create_consumption (void);
@@ -80,45 +78,16 @@ int     kw1281_mainloop (void);
 void    ajax_log(char *s);
 void    ajax_socket(int);
 
-
-// global values
-struct values
-{
-    // values from obd2
-    float   speed;
-    float   rpm;
-    float   temp1;
-    float   temp2;
-    float   oil_press;
-    float   inj_time;
-    float   voltage;
-    float   tank;
-    char    tank_request;   // flag for requesting tank content
-    
-    // calculated values
-    float   con_h;
-    float   con_km; 
-};
-
-struct values *gval;
-
-
-// averages
-struct average
-{
-    float   array[LONG];
-    char    array_full;
-    int     counter;
-    float   average_short;  // average of short time period (SHORT)
-    float   average_medium; // average of medium time period (MEDIUM)
-    float   average_long;   // average of long time period (LONG)
-
-    int     timespan;       // time span for rrdtool graph
-    
-    //float   liters;         // only av_con uses this, absolute consumption
-};
-
-struct average *av_con, *av_speed;
+// sqlite functions
+int     exec_query(char *);
+int     create_table(char *);
+int     insert_value(char *, float);
+float   get_value(char *);
+float   get_row(char *, char *);
+float   get_average(char*, char *, int);
+int     calc_consumption(void);
+int     init_db(void);
+void    close_db(void);
 
 
 // debuging messages go here
@@ -126,3 +95,9 @@ char    *debug;
 
 // make server socket global so we can close/shutdown it on exit
 int     srv;
+
+// flag for tank request
+char    tank_request;
+
+int	speed_graph_timespan;
+int	consumption_graph_timespan;
