@@ -34,7 +34,10 @@
 
 //#define SERIAL_ATTACHED   // define if serial cable is attached (for debugging, comment out)
 #define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
-//#define DEBUG
+
+#define DEBUG_SERIAL
+// #define DEBUG_AJAX
+// #define DEBUG_SQLITE
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400   // for my seat arosa, vw polo needs 9600

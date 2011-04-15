@@ -3,7 +3,7 @@
 int 
 exec_query(char *query)
 {
-#ifdef DEBUG
+#ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
     if (sqlite3_exec(db, query, 0, 0, 0) != SQLITE_OK)
@@ -60,7 +60,7 @@ get_row(char *row, char *table)
             "SELECT %s FROM %s ORDER BY id DESC LIMIT 1",
             row, table);
 
-#ifdef DEBUG
+#ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
 
@@ -104,7 +104,7 @@ get_average(char *row, char *table, int time)
             row, table);
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
 

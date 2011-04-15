@@ -325,7 +325,7 @@ kw1281_send_ack (void)
     int c;
     // unsigned char c;
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("send ACK block %d\n", counter);
 #endif
 
@@ -374,7 +374,7 @@ kw1281_send_block (unsigned char n)
     int c;
     // unsigned char c;
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("send group reading block %d\n", counter);
 #endif
 
@@ -463,7 +463,7 @@ kw1281_recv_block (unsigned char n)
         printf ("counter error (%d != %d)\n", counter, c);
         ajax_log("counter error\n");
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
         printf ("IN   OUT\t(block dump)\n");
         printf ("0x%02x\t\t(block length)\n", l);
         printf ("     0x%02x\t(ack)\n", 0xff - l);
@@ -487,7 +487,7 @@ kw1281_recv_block (unsigned char n)
         return -1;
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     switch (t)
     {
         case 0xf6:
@@ -520,14 +520,14 @@ kw1281_recv_block (unsigned char n)
 
         buf[i++] = c;
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
         printf ("0x%02x ", c);
 #endif
 
     }
     buf[i] = 0;
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     if (t == 0xf6)
         printf ("= \"%s\"\n", buf);
 #endif
@@ -585,7 +585,7 @@ kw1281_recv_block (unsigned char n)
                     break;
                     
                 default:
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",
                             buf[i], buf[i + 1], buf[i + 2]);
 #endif
@@ -595,7 +595,7 @@ kw1281_recv_block (unsigned char n)
         }
 
     }
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     else
         printf ("\n");
 #endif
@@ -762,7 +762,7 @@ kw1281_init (int address)
     int     in;
     
     
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf("emptying buffer...\n");
 #endif 
     
@@ -770,7 +770,7 @@ kw1281_init (int address)
     kw1281_empty_buffer();
     
 
-#ifdef DEBUG    
+#ifdef DEBUG_SERIAL    
     printf("waiting idle time...\n");
 #endif    
     
@@ -835,7 +835,7 @@ kw1281_init (int address)
         return -1;
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf("found %d chars to ignore\n", in);
 #endif
     
@@ -846,7 +846,7 @@ kw1281_init (int address)
             ajax_log("kw1281_init: read() error\n");
             return -1;
         }
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
         printf ("ignore 0x%02x\n", c);
 #endif
     }
@@ -856,7 +856,7 @@ kw1281_init (int address)
         ajax_log("kw1281_init: read() error\n");
         return -1;
     }
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
 #endif
     
@@ -865,14 +865,14 @@ kw1281_init (int address)
         ajax_log("kw1281_init: read() error\n");
         return -1;
     }
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
 #endif
     
     if ( (c = kw1281_recv_byte_ack ()) == -1)
         return -1;
     
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("read 0x%02x (and sent ack)\n", c);
 #endif
     
@@ -885,7 +885,7 @@ kw1281_init (int address)
 int
 kw1281_get_tank_cont(void)
 {
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("receive blocks\n");
 #endif
     
@@ -913,7 +913,7 @@ kw1281_mainloop (void)
 {
     int		status;
 
-#ifdef DEBUG
+#ifdef DEBUG_SERIAL
     printf ("receive blocks\n");
 #endif
 
