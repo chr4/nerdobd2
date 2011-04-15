@@ -3,7 +3,7 @@
 static void _set_bit (int);
 
 int     kw1281_send_byte_ack (unsigned char);
-int     kw1281_sendajax_log_ack (void);
+int     kw1281_sendprintf_ack (void);
 int     kw1281_send_block (unsigned char);
 int     kw1281_recv_block (unsigned char);
 int     kw1281_send_ack (void);
@@ -20,12 +20,6 @@ int     fd;
 int     counter;        // kw1281 protocol block counter
 char    got_ack = 0;    // flag (true if ECU send ack block, thus ready to receive block requests)
 int     loopcount;      // counter for mainloop
-
-
-// for measuring time between readings
-struct	timeval a, b;
-float	duration;
-char	first = 1;
 
 
 // save old values
@@ -60,9 +54,9 @@ kw1281_empty_buffer(void)
         res = select(fd + 1, &rfds, NULL, NULL, &timeout);
         
         if (errno == EINTR)
-            ajax_log("read: select() got EINTR\n");
+            printf("read: select() got EINTR\n");
         if (res == -1)
-            ajax_log("read: select() failed\n");
+            printf("read: select() failed\n");
         
     } while (res == -1 && errno == EINTR);
     
@@ -108,10 +102,10 @@ kw1281_read_timeout(void)
         if (res == -1)
         {
             if (errno == EINTR)
-                ajax_log("read: select() got EINTR\n");
+                printf("read: select() got EINTR\n");
 
             else
-                ajax_log("read: select() failed\n");
+                printf("read: select() failed\n");
         }
 
     } while (res == -1 && errno == EINTR);
@@ -120,17 +114,17 @@ kw1281_read_timeout(void)
     {
         if (read (fd, &c, 1) == -1)
         {
-            ajax_log("kw1281_read_timeout: read() error\n");
+            printf("kw1281_read_timeout: read() error\n");
             return -1;
         }
     }
     else if (res == 0)
     {
-        ajax_log("kw1281_read_timeout: timeout occured\n");
+        printf("kw1281_read_timeout: timeout occured\n");
         return -1;
     }
     else {
-        ajax_log("kw1281_read_timeout: unknown error\n");
+        printf("kw1281_read_timeout: unknown error\n");
         return -1;
     }
 
@@ -163,10 +157,10 @@ kw1281_write_timeout(unsigned char c)
         if (res == -1)
         {
             if (errno == EINTR)
-                ajax_log("write: select() got EINTR\n");
+                printf("write: select() got EINTR\n");
             
             else
-                ajax_log("write: select() failed\n");
+                printf("write: select() failed\n");
         }
         
     } while (res == -1 && errno == EINTR);
@@ -175,17 +169,17 @@ kw1281_write_timeout(unsigned char c)
     {
         if (write (fd, &c, 1) <= 0)
         {
-            ajax_log("kw1281_write_timeout: write() error\n");
+            printf("kw1281_write_timeout: write() error\n");
             return -1;
         }
     }
     else if (res == 0)
     {
-        ajax_log("kw1281_write_timeout: timeout occured\n");
+        printf("kw1281_write_timeout: timeout occured\n");
         return -1;
     }
     else {
-        ajax_log("kw1281_write_timeout: unknown error\n");
+        printf("kw1281_write_timeout: unknown error\n");
         return -1;
     }
 
@@ -241,7 +235,7 @@ kw1281_recv_byte_ack (void)
 
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_recv_byte_ack: read() error\n");
+        printf("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
     
@@ -250,13 +244,13 @@ kw1281_recv_byte_ack (void)
     
     if (kw1281_write_timeout(d) == -1)
     {
-        ajax_log("kw1281_recv_byte_ack: write() error\n");
+        printf("kw1281_recv_byte_ack: write() error\n");
         return -1;
     }
     
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_recv_byte_ack: read() error\n");
+        printf("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
     
@@ -264,7 +258,7 @@ kw1281_recv_byte_ack (void)
     {
         printf ("kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n",
                 d, 0xff - c);
-        ajax_log("kw1281_recv_byte_ack: echo error\n");
+        printf("kw1281_recv_byte_ack: echo error\n");
         return -1;
     }
     return c;
@@ -282,13 +276,13 @@ kw1281_send_byte_ack (unsigned char c)
     
     if (kw1281_write_timeout(c) == -1)
     {
-        ajax_log("kw1281_send_byte_ack: write() error\n");
+        printf("kw1281_send_byte_ack: write() error\n");
         return -1;
     }
     
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_send_byte_ack: read() error\n");
+        printf("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
     
@@ -296,13 +290,13 @@ kw1281_send_byte_ack (unsigned char c)
     {
         printf ("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c,
                 d);
-        ajax_log("kw1281_send_byte_ack: echo error\n");
+        printf("kw1281_send_byte_ack: echo error\n");
         return -1;
     }
 
     if ( (d = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_send_byte_ack: read() error\n");
+        printf("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
     
@@ -310,7 +304,7 @@ kw1281_send_byte_ack (unsigned char c)
     {
         printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n",
                 0xff - c, d);
-        ajax_log("kw1281_send_byte_ack: ack error\n");
+        printf("kw1281_send_byte_ack: ack error\n");
         return -1;
     }
     
@@ -346,20 +340,20 @@ kw1281_send_ack (void)
     
     if (kw1281_write_timeout(c) == -1)
     {
-        ajax_log("kw1281_send_ack: write() error\n");
+        printf("kw1281_send_ack: write() error\n");
         return -1;
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_send_ack: read() error\n");
+        printf("kw1281_send_ack: read() error\n");
         return -1;
     }
     
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
-        ajax_log("echo error\n");
+        printf("echo error\n");
         return -1;
     }
 
@@ -381,28 +375,28 @@ kw1281_send_block (unsigned char n)
     /* block length */
     if (kw1281_send_byte_ack (0x04) == -1)
     {
-        ajax_log("kw1281_send_block() error\n");
+        printf("kw1281_send_block() error\n");
         return -1;
     }
 
     // counter
     if (kw1281_send_byte_ack (kw1281_inc_counter ()) == -1)
     {
-        ajax_log("kw1281_send_block() error\n");
+        printf("kw1281_send_block() error\n");
         return -1;
     }
 
     /*  type group reading */
     if (kw1281_send_byte_ack (0x29) == -1)
     {
-        ajax_log("kw1281_send_block() error\n");
+        printf("kw1281_send_block() error\n");
         return -1;
     }
 
     /* which group block */
     if (kw1281_send_byte_ack (n) == -1)
     {
-        ajax_log("kw1281_send_block() error\n");
+        printf("kw1281_send_block() error\n");
         return -1;
     }
 
@@ -413,20 +407,20 @@ kw1281_send_block (unsigned char n)
     
     if (kw1281_write_timeout(c) == -1)
     {
-        ajax_log("kw1281_send_block: write() error\n");
+        printf("kw1281_send_block: write() error\n");
         return -1;
     }
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_send_block: read() error\n");
+        printf("kw1281_send_block: read() error\n");
         return -1;
     }
     
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
-        ajax_log("echo error\n");
+        printf("echo error\n");
         return -1;
     }
     
@@ -448,20 +442,20 @@ kw1281_recv_block (unsigned char n)
     /* block length */
     if ( (l = kw1281_recv_byte_ack ()) == -1)
     {
-        ajax_log("kw1281_recv_block() error\n");
+        printf("kw1281_recv_block() error\n");
         return -1;
     }
 
     if ( (c = kw1281_recv_byte_ack ()) == -1)
     {
-        ajax_log("kw1281_recv_block() error\n");
+        printf("kw1281_recv_block() error\n");
         return -1;
     }
 
     if (c != counter)
     {
         printf ("counter error (%d != %d)\n", counter, c);
-        ajax_log("counter error\n");
+        printf("counter error\n");
 
 #ifdef DEBUG_SERIAL
         printf ("IN   OUT\t(block dump)\n");
@@ -483,7 +477,7 @@ kw1281_recv_block (unsigned char n)
 
     if ( (t = kw1281_recv_byte_ack ()) == -1)
     {
-        ajax_log("kw1281_recv_block() error\n");
+        printf("kw1281_recv_block() error\n");
         return -1;
     }
 
@@ -514,7 +508,7 @@ kw1281_recv_block (unsigned char n)
     {
         if ( (c = kw1281_recv_byte_ack ()) == -1)
         {
-            ajax_log("kw1281_recv_block() error\n");
+            printf("kw1281_recv_block() error\n");
             return -1;
         }
 
@@ -542,7 +536,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        insert_value("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
+                        printf("rpm: %f\n", 0.2 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -558,30 +552,30 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
-                    insert_value("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
+                    printf("injection_time: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x12:        // absolute pressure
-                    insert_value("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
+                    printf("oil_pressure: %f\n", 0.04 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        insert_value("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        printf("temp_engine: %f\n", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     if (i == 9)
-                        insert_value("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        printf("temp_air_intake: %f\n", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     break;
 
                 case 0x07:        // speed
-                    insert_value("speed", 0.01 * buf[i + 1] * buf[i + 2]);
+                    printf("speed: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x15:        // battery voltage
-                    insert_value("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
+                    printf("voltage: %f\n", 0.001 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x13:        // tank content
-                    insert_value("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
+                    printf("tank_content: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
                     
                 default:
@@ -603,13 +597,13 @@ kw1281_recv_block (unsigned char n)
     /* read block end */
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_recv_block: read() error\n");
+        printf("kw1281_recv_block: read() error\n");
         return -1;
     }
     if (c != 0x03)
     {
         printf ("block end error (0x03 != 0x%02x)\n", c);
-        ajax_log("block end error\n");
+        printf("block end error\n");
         return -1;
     }
 
@@ -634,13 +628,13 @@ kw1281_get_block (unsigned char n)
 {
     if (kw1281_send_block(n) == -1)
     {
-        ajax_log("kw1281_get_block() error\n");
+        printf("kw1281_get_block() error\n");
         return -1;
     }
     
     if (kw1281_recv_block(n) == -1)
     {
-        ajax_log("kw1281_get_block() error\n");
+        printf("kw1281_get_block() error\n");
         return -1;
     }
     
@@ -673,7 +667,7 @@ kw1281_open (char *device)
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
-        /* we cannot use ajax_log() in this function
+        /* we cannot use printf() in this function
          * because shm vars will be initialized afterwards..
          */
         printf ("couldn't open serial device\n");
@@ -720,11 +714,11 @@ kw1281_open (char *device)
 int
 kw1281_close(void)
 {
-    ajax_log("shutting down serial port\n");
+    printf("shutting down serial port\n");
     
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
     {
-        ajax_log ("TIOCSSERIAL failed\n");
+        printf ("TIOCSSERIAL failed\n");
         return -1;
     }
     
@@ -732,13 +726,13 @@ kw1281_close(void)
     // TCSADRAIN for only letting it drain
     if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
     {
-        ajax_log("tcsetattr() failed.\n");
+        printf("tcsetattr() failed.\n");
         return -1;
     }
 
     if (ioctl (fd, TIOCMSET, &oldflags) < 0)
     {
-        ajax_log("TIOCMSET failed.\n");
+        printf("TIOCMSET failed.\n");
         return -1;
     }
     
@@ -781,7 +775,7 @@ kw1281_init (int address)
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
-        ajax_log("TIOCMGET failed.\n");
+        printf("TIOCMGET failed.\n");
         return -2;
     }
     
@@ -792,7 +786,7 @@ kw1281_init (int address)
 
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
-        ajax_log("TIOCMSET failed.\n");
+        printf("TIOCMSET failed.\n");
         return -2;
     }
 
@@ -817,21 +811,21 @@ kw1281_init (int address)
     // set dtr
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
-        ajax_log("TIOCMGET failed.\n");
+        printf("TIOCMGET failed.\n");
         return -2;
     }
 
      flags |= TIOCM_DTR;
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
-        ajax_log("TIOCMSET failed.\n");
+        printf("TIOCMSET failed.\n");
         return -2;
     }
  
     // read bogus values, if any
     if (ioctl (fd, FIONREAD, &in) < 0)
     {
-        ajax_log("FIONREAD failed.\n");
+        printf("FIONREAD failed.\n");
         return -1;
     }
 
@@ -843,7 +837,7 @@ kw1281_init (int address)
     {
         if ( (c = kw1281_read_timeout()) == -1)
         {
-            ajax_log("kw1281_init: read() error\n");
+            printf("kw1281_init: read() error\n");
             return -1;
         }
 #ifdef DEBUG_SERIAL
@@ -853,7 +847,7 @@ kw1281_init (int address)
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_init: read() error\n");
+        printf("kw1281_init: read() error\n");
         return -1;
     }
 #ifdef DEBUG_SERIAL
@@ -862,7 +856,7 @@ kw1281_init (int address)
     
     if ( (c = kw1281_read_timeout()) == -1)
     {
-        ajax_log("kw1281_init: read() error\n");
+        printf("kw1281_init: read() error\n");
         return -1;
     }
 #ifdef DEBUG_SERIAL
@@ -881,191 +875,41 @@ kw1281_init (int address)
     return 0;
 }
 
-
-int
-kw1281_get_tank_cont(void)
-{
-#ifdef DEBUG_SERIAL
-    printf ("receive blocks\n");
-#endif
-    
-    
-#ifdef SERIAL_ATTACHED
-    if (kw1281_get_ascii_blocks() == -1)
-        return -1;
-    
-    if (kw1281_get_block(0x02) == -1)
-        return -1;
-#endif
-    
-#ifndef SERIAL_ATTACHED
-    insert_value("tank_content", get_value("tank_content") + 1);
-#endif
-   
-    printf ("tank content\t%.1f\n", get_value("tank_content"));
-    
-    return 0;
-}
-
-
 int
 kw1281_mainloop (void)
 {
-    int		status;
-
 #ifdef DEBUG_SERIAL
     printf ("receive blocks\n");
 #endif
 
     
-#ifdef SERIAL_ATTACHED
     if (kw1281_get_ascii_blocks() == -1)
         return -1;
-#endif
 	
-#ifndef SERIAL_ATTACHED
-	/* 
-	 * this block is for testing purposes
-	 * when the car is too far to test
-	 * the html interface / ajax server
-	 */
-    insert_value("rpm", 1000);
-    insert_value("injection_time", 4.52);
-    insert_value("speed", 50.4);
-    insert_value("temp_engine", 10.1);
-    insert_value("temp_air_intake", 12.1);
-    insert_value("voltage", 2.21);
-    
-    duration = 1.2;
-	
-    ajax_log("incrementing values for testing purposes...\n");
-#endif
-
-    ajax_log("init done.\n");
+    printf("init done.\n");
     for ( loopcount = 0; ;loopcount++)
     {
-        /* check if tank request was sent
-         * if so, return TANK_REQUEST
-         */ 
-        if (tank_request)
-            return TANK_REQUEST;
-        
-#ifdef SERIAL_ATTACHED		
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
             return -1;
-#endif
 		
-#ifndef SERIAL_ATTACHED
-        insert_value("rpm", get_value("rpm") + 100);
-        insert_value("injection_time", get_value("injection_time") + 0.1);
-#endif		
-
-		
-#ifdef SERIAL_ATTACHED		
         // request block 0x05
         // (speed)
         if (kw1281_get_block(0x05) == -1)
             return -1;
-#endif
 		
-#ifndef SERIAL_ATTACHED
-        insert_value("speed", get_value("speed") + 5);
-#endif
-		
-		
-		/* don't request temperatures and
-		 * voltage too often
+        /* don't request temperatures and
+         * voltage too often
          */
-		if (! (loopcount % 15) )
-		{
-		
-#ifdef SERIAL_ATTACHED			
+        if (! (loopcount % 15) )
+        {
             // request block 0x04
             // (temperatures + voltage)
             if (kw1281_get_block(0x04) == -1)
                 return -1;
-#endif
-			
-#ifndef SERIAL_ATTACHED
-            insert_value("temp_engine", get_value("temp_engine") + 0.4);
-            insert_value("temp_air_intake", get_value("temp_air_intake") + 0.2);
-            insert_value("voltage", get_value("voltage") + 0.01);
-#endif
-        }
-        
-        
-        /* fork so we don't disrupt time critical
-         * serial communication
-         */
-        if (fork() > 0)
-        {
-            /*
-             * this seems to be of no use
-             * even if we nice to +19 and set a sched_prio of 99 SCHED_OTHER
-             * system is still lagging
-             *
-             * furthermore, it provoces communication errors
-             */
-/*
-#ifdef HIGH_PRIORITY
-            // we reduce priority in this process to prevent lagging
-            struct sched_param prio;
-			
-            if (getuid() == 0)
-            {
-                prio.sched_priority = 0;
-				
-                if ( sched_setscheduler(getpid(), SCHED_OTHER, &prio) < 0)
-                    perror("sched_setscheduler");
-				
-                if (nice(10) == -1)
-                    perror("nice failed\n");
-            }
-#endif
-*/
-            // calculate consumption
-            calc_consumption(); 
-        
-            // output values
-            kw1281_print ();
-
-            // update rrdtool databases
-            rrdtool_update_consumption();
-            rrdtool_update_speed();
-
-            exit(0);
-        }
-
-        // collect defunct processes functions
-        while(waitpid(-1, &status, WNOHANG) > 0);
-        
-		
-#ifndef SERIAL_ATTACHED
-        sleep(2);
-#endif
+        } 
     }
     
     return 0;
-}
-
-// this function prints the collected values 
-void
-kw1281_print (void)
-{
-    printf ("----------------------------------------\n");
-    printf ("l/h\t\t%.2f\n", get_row("per_h", "consumption"));
-    printf ("l/100km\t\t%.2f\n", get_row("per_km", "consumption"));
-    printf ("speed\t\t%.1f km/h\n", get_value("speed"));
-    printf ("rpm\t\t%.0f RPM\n", get_value("rpm"));
-    printf ("inj on time\t%.2f ms\n", get_value("injection_time"));
-    printf ("temp engine\t%.1f °C\n", get_value("temp_engine"));
-    printf ("temp air intake\t%.1f °C\n", get_value("temp_air_intake"));
-    printf ("voltage\t\t%.2f V\n", get_value("voltage"));
-    printf ("oil pressure\t%.0f mbar\n", get_value("oil_pressure"));
-    printf ("counter\t\t%d\n", counter);
-    printf ("\n");
-    
-    return;
 }
