@@ -899,7 +899,11 @@ kw1281_mainloop (void)
         // (speed)
         if (kw1281_get_block(0x05) == -1)
             return -1;
-		
+ 
+        // we have collected all data
+        // tell database to calculate consumption
+        db_send("calculate_consumption", 0);	
+	
         /* don't request temperatures and
          * voltage too often
          */

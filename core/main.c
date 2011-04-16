@@ -30,6 +30,19 @@ main (int argc, char **argv)
 {
     int     ret;
 
+    /*
+    // for testing purposes
+    int i;
+    for ( i = 0; ; i++)
+    {
+        db_send("speed", 100 + i);
+        db_send("injection_time", 0.01 * i);
+        db_send("rpm", 1000 + i * 30);
+        db_send("calculate_consumption", 0);
+        usleep(300000);
+    }
+    */
+
     // kw1281_open() somehow has to be started
     // before any fork() open()
     if (kw1281_open (DEVICE) == -1)
