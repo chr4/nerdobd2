@@ -30,6 +30,12 @@ main (int argc, char **argv)
 {
     int     ret;
 
+    int     i;
+    for (i = 0; i < 10000; i++)
+    {
+        db_send("speed", i * 0.41);
+    }
+
     // kw1281_open() somehow has to be started
     // before any fork() open()
     if (kw1281_open (DEVICE) == -1)

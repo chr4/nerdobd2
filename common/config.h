@@ -3,7 +3,13 @@
 #define DEBUG_SERIAL
 #define DEBUG_SQLITE
 
-#define DB_FILE         "../database.sqlite3"
+/* writing to database is too slow on my eeepc, 
+ * thus provoking "resource temporarily not available" errors
+ * putting database in /dev/shm, and syncing it from time to time
+ * should help.
+ */
+#define DB_RAM         "/dev/shm/nerdob2.sqlite3"
+#define DB_DISK        "../nerdobd2.sqlite3"
 
 #define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 

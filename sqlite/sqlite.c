@@ -164,9 +164,9 @@ int
 init_db(void)
 {
     // open database file
-    if (sqlite3_open(DB_FILE, &db))
+    if (sqlite3_open(DB_RAM, &db))
     {
-        printf("Can not open database: %s", DB_FILE);
+        printf("Can not open database: %s", DB_RAM);
         return -1;
     }
   
@@ -197,3 +197,17 @@ close_db(void)
     sqlite3_close(db);
 }
 
+
+// save the db to disk once in a while
+void
+save_db(void)
+{
+    int status;
+
+    if (fork() > 0)
+    {
+        printf("syncing db file to disk...");
+        execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
+    }
+    while(waitpid(-1, &status, WNOHANG) > 0);
+}

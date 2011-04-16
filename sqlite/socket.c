@@ -64,6 +64,17 @@ main (int argc, char **argv)
     if (init_db() == -1)
         return -1;
 
+    
+    // save the database from ram do disk every few seconds
+    if ( fork() == 0)
+    {
+        for ( ; ; )
+        {
+            save_db();
+            sleep(3);
+        }
+    }
+
     // create unix socket
     if ( (s = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
     {
