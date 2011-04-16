@@ -1,6 +1,29 @@
 #include "sqlite.h"
 #include "../common/config.h"
 
+// flag for cleanup function
+char    cleaning_up = 0;
+
+void
+cleanup (int signo)
+{
+    // if we're already cleaning up, do nothing
+    if (cleaning_up)
+        return;
+
+    cleaning_up = 1;
+
+    printf("\ncleaning up:\n");
+
+    printf("syncing db file to harddisk...\n");
+    sync_db();
+
+    printf("exiting.\n");
+    exit(0);
+}
+
+
+
 // cut newlines
 void
 cut_crlf(char *s) {
@@ -56,7 +79,10 @@ main (int argc, char **argv)
     struct sockaddr_un address;
     size_t address_length;
     int    s, c;
-    pid_t  child;
+
+    // child pids
+    pid_t  handler;
+    pid_t  syncer;
 
 
     // initialize db
@@ -64,12 +90,16 @@ main (int argc, char **argv)
         return -1;
 
     
-    // save the database from ram do disk every few seconds
-    if ( fork() == 0)
+    // sync the database from ram do disk every few seconds
+    if ( (syncer = fork()) == 0)
     {
+        // add signal handler for cleanup function
+        signal(SIGINT, cleanup);
+        signal(SIGTERM, cleanup);
+
         for ( ; ; )
         {
-            save_db();
+            sync_db();
             sleep(3);
         }
     }
@@ -101,7 +131,7 @@ main (int argc, char **argv)
     // accept incoming connections
     while ((c = accept(s, (struct sockaddr *) &address, &address_length)) > 1)
     {
-        if( (child = fork()) == 0)
+        if( (handler = fork()) == 0)
             return handle_client(c);
         close(c);
     }
