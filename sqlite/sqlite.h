@@ -3,6 +3,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <signal.h>
+
+// for copying file
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 // sqlite database
 #include <sqlite3.h>
@@ -22,4 +28,4 @@ float   get_average(char*, char *, int);
 int     calc_consumption(void);
 int     init_db(void);
 void    close_db(void);
-void    save_db(void);
+void    sync_db(void);

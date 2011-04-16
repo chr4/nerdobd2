@@ -4,6 +4,7 @@
 // the database handler
 sqlite3 *db;
 
+int use_hd_db(void);
 
 int 
 exec_query(char *query)
@@ -200,6 +201,31 @@ calc_consumption(void)
 int
 init_db(void)
 {
+
+    /* check if database file exists in /dev/shm
+     * if not, look for one on the disk and use it
+     * if nothing is found, create a new one.
+     */
+    if (access(DB_RAM, W_OK) == 0)
+    {
+#ifdef DEBUG_SQLITE
+        printf("%s exists and is writeable\n", DB_RAM);
+#endif
+    }
+    else if (access(DB_DISK, R_OK) == 0)
+    {
+#ifdef DEBUG_SQLITE
+        printf("%s exists and is readable\n", DB_DISK);
+#endif
+        use_hd_db();
+    }
+    else
+    {
+#ifdef DEBUG_SQLITE
+        printf("no db file found\n");
+#endif
+    }
+
     // open database file
     if (sqlite3_open(DB_RAM, &db))
     {
@@ -237,7 +263,7 @@ close_db(void)
 
 // save the db to disk once in a while
 void
-save_db(void)
+sync_db(void)
 {
     int status;
 
@@ -248,3 +274,41 @@ save_db(void)
     }
     while(waitpid(-1, &status, WNOHANG) > 0);
 }
+
+
+// copy over disk file to ram
+int
+use_hd_db(void)
+{
+    int hd;
+    int ram;
+    int n;
+    void *buf;
+
+    buf = malloc(sizeof(void) * 256);
+
+    if ( (hd = open(DB_DISK, O_RDONLY)) == -1)
+    {
+        perror("open");
+        return -1;
+    }
+
+    if ( (ram = open(DB_RAM, O_CREAT | O_RDWR, 0644)) == -1)
+    {
+        perror("open");
+        return -1;
+    }
+
+    do
+    {
+        n = read(hd, buf, sizeof(buf));
+        write(ram, buf, n);
+    }
+    while (n);
+
+    close(hd);
+    close(ram);
+
+    return 0;
+}
+
