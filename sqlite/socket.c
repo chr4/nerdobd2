@@ -1,6 +1,11 @@
 #include "sqlite.h"
 #include "../common/config.h"
 
+void cleanup(int);
+void cut_crlf(char *);
+int  calculate_consumption(void);
+
+
 // flag for cleanup function
 char    cleaning_up = 0;
 
@@ -39,6 +44,32 @@ cut_crlf(char *s) {
                 *p = '\0';
 }
 
+int
+calculate_consumption(void)
+{
+    char  query[1024];
+    float per_h;
+    float per_km;
+    float speed;
+
+    // calculate consumption per hour
+    per_h = 60 * 4 * MULTIPLIER * get_value("rpm") * (get_value("injection_time") - INJ_SUBTRACT);
+
+    // calculate consumption per hour
+    if ( (speed = get_value("speed")) > 0)
+        per_km = per_h / speed * 100;
+    else
+        per_km = -1;
+
+    snprintf(query, sizeof(query),
+        "INSERT INTO consumption VALUES ( \
+             NULL, DATETIME('NOW'), %f, %f )",
+        per_h, per_km);
+
+    return exec_query(query);
+}
+
+
 
 // TODO: this function needs to be nicer massively
 int
@@ -53,19 +84,29 @@ handle_client(int c)
 
     cut_crlf(buf);
 
-    // split string
+    // parse key
     if ( (key = strtok(buf, ":")) == NULL)
     {
         printf("error: no key found.\n");
         return -1;
     }
 
+    // check whether key tells us to calculate consumption
+    if (!strcmp(buf, "calculate_consumption"))
+    {
+        calculate_consumption();
+        close(c);
+        return 0;
+    }
+
+    // parse value
     if ( (value = strtok(NULL, ":")) == NULL)
     {
         printf("error: no value found.\n");
         return -1;
     }
 
+    // insert key value pair to database
     insert_value(key, atof(value));
 
     close(c);
