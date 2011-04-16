@@ -43,7 +43,6 @@ handle_client(int c)
         return -1;
     }
 
-    printf("%s -> %s\n", key, value);
     insert_value(key, atof(value));
 
     close(c);
