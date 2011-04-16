@@ -2,7 +2,7 @@ CC=gcc
 CC_OPTIONS=-Wall 
 # -lsqlite3 breaks serial communication :/
 
-nerdobd2 : main.o kw1281.o socket.o
+core : main.o kw1281.o socket.o
 	$(CC) $(CC_OPTIONS) -o core main.o kw1281.o socket.o
 
 main.o : main.c

@@ -1,11 +1,14 @@
 CC=gcc
 CC_OPTIONS=-Wall -lsqlite3
 
-nerdobd2 : main.o
-	$(CC) $(CC_OPTIONS) -o sqlite main.o
+sqlite : socket.o sqlite.o
+	$(CC) $(CC_OPTIONS) -o sqlite socket.o sqlite.o
 
-main.o : main.c
-	$(CC) $(CC_OPTIONS) -c main.c
+socket.o : socket.c
+	$(CC) $(CC_OPTIONS) -c socket.c
+	
+sqlite.o : sqlite.c
+	$(CC) $(CC_OPTIONS) -c sqlite.c
 	
 clean :
 	rm -f *.o sqlite

@@ -1,4 +1,5 @@
 #include "core.h"
+#include "../common/config.h"
 
 void	cleanup (int);
 
@@ -38,7 +39,6 @@ main (int argc, char **argv)
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	
 
- 
     // set realtime priority if we're running as root
 #ifdef HIGH_PRIORITY
     struct sched_param prio;

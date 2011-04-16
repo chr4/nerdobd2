@@ -1,5 +1,5 @@
 #include "core.h"
-#include "../common.h"
+#include "../common/config.h"
 
 int
 db_connect(void)
@@ -30,7 +30,7 @@ db_connect(void)
 
 
 int
-db_send(char *name, float value)
+db_send(char *key, float value)
 {
    int  db;
    int  n;
@@ -43,7 +43,7 @@ db_send(char *name, float value)
    if ( (db = db_connect()) == -1)
        return -1;
 
-   n = snprintf(data, 256, "%s:%f", name, value);
+   n = snprintf(data, 256, "%s:%f", key, value);
 
    if (write (db, data, n) <= 0)
    {
