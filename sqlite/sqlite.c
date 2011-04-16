@@ -9,16 +9,53 @@ int
 exec_query(char *query)
 {
 
+    sqlite3_stmt  *stmt;
+    
+    int ret;
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
 
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("sqlite3_prepare_v2() error\n");
+    }
+
+    ret = sqlite3_step(stmt);
+
+    // database is busy, retry query
+    if (ret == SQLITE_BUSY)
+    {
+        // wait for 0.5 sec
+        usleep(500000);
+
+#ifdef DEBUG_SQLITE
+        printf("retrying query...\n");
+
+        return exec_query(query);
+        printf("SUCCESSFULLY RETRIED!\n");
+
+        return 0;
+#else
+        return exec_query(query);
+#endif
+
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+    }
+
+
+// we need to retry, so this is not enough
+/*
     if (sqlite3_exec(db, query, 0, 0, 0) != SQLITE_OK)
     {
         printf("couldn't exec query: '%s\n", query);
         perror("error");
     }
-
+*/
     return 0;
 }
 
