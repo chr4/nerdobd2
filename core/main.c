@@ -1,4 +1,4 @@
-#include "serial.h"
+#include "core.h"
 
 void	cleanup (int);
 
