@@ -23,8 +23,8 @@ int     loopcount;      // counter for mainloop
 
 
 // save old values
-struct termios oldtio;
-struct serial_struct ot, st;
+struct  termios oldtio;
+struct  serial_struct ot, st;
 int     oldflags;
 
 
