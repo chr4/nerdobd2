@@ -25,15 +25,15 @@ cleanup (int signo)
 
 
 int
-main (int arc, char **argv)
+main (int argc, char **argv)
 {
     int     ret;
-    
+
     // kw1281_open() somehow has to be started
     // before any fork() open()
     if (kw1281_open (DEVICE) == -1)
         return -1;
-    
+
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	

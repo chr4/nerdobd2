@@ -431,7 +431,7 @@ kw1281_send_block (unsigned char n)
 int
 kw1281_recv_block (unsigned char n)
 {
-    int     i;
+    int i;
     
     // we need int, so we can capture -1 as well
     int c, l, t;
@@ -536,7 +536,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        printf("rpm: %f\n", 0.2 * buf[i + 1] * buf[i + 2]);
+                        db_send("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -552,30 +552,30 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
-                    printf("injection_time: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
+                    db_send("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x12:        // absolute pressure
-                    printf("oil_pressure: %f\n", 0.04 * buf[i + 1] * buf[i + 2]);
+                    db_send("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        printf("temp_engine: %f\n", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        db_send("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     if (i == 9)
-                        printf("temp_air_intake: %f\n", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        db_send("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     break;
 
                 case 0x07:        // speed
-                    printf("speed: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
+                    db_send("speed", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x15:        // battery voltage
-                    printf("voltage: %f\n", 0.001 * buf[i + 1] * buf[i + 2]);
+                    db_send("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x13:        // tank content
-                    printf("tank_content: %f\n", 0.01 * buf[i + 1] * buf[i + 2]);
+                    db_send("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
                     
                 default:
