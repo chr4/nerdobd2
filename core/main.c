@@ -30,7 +30,6 @@ main (int argc, char **argv)
 {
     int     ret;
 
-    /*
     // for testing purposes
     int i;
     for ( i = 0; ; i++)
@@ -41,7 +40,6 @@ main (int argc, char **argv)
         db_send("calculate_consumption", 0);
         usleep(300000);
     }
-    */
 
     // kw1281_open() somehow has to be started
     // before any fork() open()
