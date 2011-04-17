@@ -265,14 +265,19 @@ close_db(void)
 void
 sync_db(void)
 {
-    int status;
+    int   status;
+    pid_t child;
 
-    if (fork() > 0)
+    if ( (child = fork()) > 0)
     {
-        printf("syncing db file to disk...");
+        printf("syncing db file to disk...\n");
         execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
+        _exit(1);
     }
-    while(waitpid(-1, &status, WNOHANG) > 0);
+    else
+    {
+        while(waitpid(child, &status, WNOHANG) > 0);
+    }
 }
 
 

@@ -6,6 +6,10 @@ void cut_crlf(char *);
 int  calculate_consumption(void);
 
 
+// child pids
+pid_t  handler;
+pid_t  syncer;
+
 // flag for cleanup function
 char    cleaning_up = 0;
 
@@ -19,14 +23,21 @@ cleanup (int signo)
     cleaning_up = 1;
 
     printf("\ncleaning up:\n");
-
-    printf("syncing db file to harddisk...\n");
     sync_db();
 
     printf("exiting.\n");
     exit(0);
 }
 
+void
+sig_chld(int signo)
+{
+        pid_t   pid;
+        int     stat;
+
+        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
+        return;
+}
 
 
 // cut newlines
@@ -79,6 +90,10 @@ handle_client(int c)
     char buf[1024];
     char *key, *value;
 
+    // remove signal handlers
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+
     n = read(c, buf, 1024);
     buf[n] = '\0';
 
@@ -121,29 +136,34 @@ main (int argc, char **argv)
     size_t address_length;
     int    s, c;
 
-    // child pids
-    pid_t  handler;
-    pid_t  syncer;
+
+    // add signal handler for cleanup function
+    signal(SIGINT, cleanup);
+    signal(SIGTERM, cleanup);
+
+    // wait for children when dead
+    signal(SIGCHLD, sig_chld);
 
 
     // initialize db
     if (init_db() == -1)
         return -1;
 
-    
+    /* 
     // sync the database from ram do disk every few seconds
     if ( (syncer = fork()) == 0)
     {
-        // add signal handler for cleanup function
-        signal(SIGINT, cleanup);
-        signal(SIGTERM, cleanup);
+        // remove signal handlers
+        signal(SIGINT, SIG_DFL);
+        signal(SIGTERM, SIG_DFL);
 
         for ( ; ; )
         {
             sync_db();
-            sleep(3);
+            sleep(10);
         }
     }
+    */
 
     // create unix socket
     if ( (s = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
