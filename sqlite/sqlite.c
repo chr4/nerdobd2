@@ -99,7 +99,8 @@ get_row(char *row, char *table)
 {
     char          query[1024];
     float         value;
-    sqlite3_stmt  *res;
+    sqlite3_stmt  *stmt;
+    int           ret;
 
     snprintf(query, sizeof(query),
             "SELECT %s FROM %s ORDER BY id DESC LIMIT 1",
@@ -109,22 +110,44 @@ get_row(char *row, char *table)
     printf("sql: %s\n", query);
 #endif
 
-    if (sqlite3_prepare_v2(db, query, strlen(query), &res, NULL) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
         perror("error");
         return -1;
     }
 
-    if (sqlite3_step(res) == SQLITE_ROW)
+    ret = sqlite3_step(stmt);
+
+    // database is busy, retry query
+    if (ret == SQLITE_BUSY)
     {
-        if (EOF == sscanf( (const char * __restrict__) sqlite3_column_text(res, 0), "%f", &value) )
-            value = -1;
+        // wait for 0.5 sec
+        usleep(500000);
+
+#ifdef DEBUG_SQLITE
+        printf("retrying query...\n");
+
+        return get_row(row, table);
+        printf("SUCCESSFULLY RETRIED!\n");
+
+        return 0;
+#else
+        return get_row(row, table);
+#endif
+
+    }
+
+    if (ret == SQLITE_ROW)
+    {
+        value = atof((const char *) sqlite3_column_text(stmt, 0));
+        //if (EOF == sscanf( (const char * __restrict__) sqlite3_column_text(res, 0), "%f", &value) )
+        //    value = -1;
     }
     else
         value = -1;
 
-    sqlite3_finalize(res);
+    sqlite3_finalize(stmt);
 
     return value;
 }
