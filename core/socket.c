@@ -30,11 +30,9 @@ db_connect(void)
 
 
 int
-db_send(char *key, float value)
+db_send_query(char *query)
 {
    int  db;
-   int  n;
-   char data[256];
 
    /* we have to connect and close the connection
     * each time, because otherwise the serial connection
@@ -43,9 +41,7 @@ db_send(char *key, float value)
    if ( (db = db_connect()) == -1)
        return -1;
 
-   n = snprintf(data, 256, "%s:%f", key, value);
-
-   if (write (db, data, n) <= 0)
+   if (write (db, query, strlen(query)) <= 0)
    {
        printf("db_send: write() error");
        return -1;
@@ -53,4 +49,30 @@ db_send(char *key, float value)
 
    close(db);
    return 0;
+}
+
+void
+db_send_engine_data(engine_data engine)
+{
+    char query[1024];
+
+    snprintf(query, sizeof(query), "INSERT INTO engine_data VALUES ( \
+                                    NULL, DATETIME('NOW'), \
+                                    %f, %f, %f, %f, %f, %f )",
+                                    engine.rpm, engine.speed, engine.injection_time,
+                                    engine.oil_pressure, engine.per_km, engine.per_h);
+
+    db_send_query(query);
+}
+
+void
+db_send_other_data(char *key, float value)
+{
+    char query[1024];
+
+    snprintf(query, sizeof(query), 
+             "INSERT INTO %s VALUES ( NULL, DATETIME('NOW'), %f )", 
+             key, value);
+
+    db_send_query(query);
 }

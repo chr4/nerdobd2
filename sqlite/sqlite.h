@@ -21,11 +21,10 @@
 // sqlite functions
 int     exec_query(char *);
 int     create_table(char *);
-int     insert_value(char *, float);
 float   get_value(char *);
 float   get_row(char *, char *);
 float   get_average(char*, char *, int);
-int     calc_consumption(void);
 int     init_db(void);
 void    close_db(void);
 void    sync_db(void);
+

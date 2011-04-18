@@ -574,11 +574,12 @@ kw1281_recv_block (unsigned char n)
                 case 0x15:        // battery voltage
                     handle_data("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
                     break;
-
+                /*
                 case 0x13:        // tank content
                     handle_data("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
-                    
+                */ 
+    
                 default:
 #ifdef DEBUG_SERIAL
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",

@@ -88,7 +88,6 @@ handle_client(int c)
 {
     int  n;
     char buf[1024];
-    char *key, *value;
 
     // remove signal handlers
     signal(SIGINT, SIG_DFL);
@@ -99,30 +98,7 @@ handle_client(int c)
 
     cut_crlf(buf);
 
-    // parse key
-    if ( (key = strtok(buf, ":")) == NULL)
-    {
-        printf("error: no key found.\n");
-        return -1;
-    }
-
-    // check whether key tells us to calculate consumption
-    if (!strcmp(buf, "calculate_consumption"))
-    {
-        calculate_consumption();
-        close(c);
-        return 0;
-    }
-
-    // parse value
-    if ( (value = strtok(NULL, ":")) == NULL)
-    {
-        printf("error: no value found.\n");
-        return -1;
-    }
-
-    // insert key value pair to database
-    insert_value(key, atof(value));
+    exec_query(buf);
 
     close(c);
     return 0;

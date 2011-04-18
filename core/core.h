@@ -17,11 +17,27 @@
 // for priority settings
 #include <sched.h>
 
-int     kw1281_open (char *device);
-int     kw1281_close(void);
-int     kw1281_init (int);
-int     kw1281_mainloop (void);
 
-int     db_send(char *, float);
+// the engine data struct
+typedef struct engine_data
+{
+    float rpm;
+    float injection_time;
+    float oil_pressure;
+    float speed;
 
-int     handle_Data(char *, float);
+    // consumption (will be calculated)
+    float per_h;
+    float per_km;
+} engine_data;
+
+
+int  kw1281_open (char *device);
+int  kw1281_close(void);
+int  kw1281_init (int);
+int  kw1281_mainloop (void);
+
+void handle_data(char *, float);
+
+void db_send_engine_data(engine_data);
+void db_send_other_data(char *, float);
