@@ -537,7 +537,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        db_send("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
+                        handle_data("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -553,30 +553,30 @@ kw1281_recv_block (unsigned char n)
                 */
                     
                 case 0x0f:        // injection time
-                    db_send("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
+                    handle_data("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x12:        // absolute pressure
-                    db_send("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
+                    handle_data("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        db_send("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        handle_data("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     if (i == 9)
-                        db_send("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        handle_data("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
                     break;
 
                 case 0x07:        // speed
-                    db_send("speed", 0.01 * buf[i + 1] * buf[i + 2]);
+                    handle_data("speed", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x15:        // battery voltage
-                    db_send("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
+                    handle_data("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
                     break;
 
                 case 0x13:        // tank content
-                    db_send("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
+                    handle_data("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
                     
                 default:
@@ -900,10 +900,6 @@ kw1281_mainloop (void)
         if (kw1281_get_block(0x05) == -1)
             return -1;
  
-        // we have collected all data
-        // tell database to calculate consumption
-        db_send("calculate_consumption", 0);	
-	
         /* don't request temperatures and
          * voltage too often
          */

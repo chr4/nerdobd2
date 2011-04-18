@@ -23,3 +23,5 @@ int     kw1281_init (int);
 int     kw1281_mainloop (void);
 
 int     db_send(char *, float);
+
+int     handle_Data(char *, float);
