@@ -20,6 +20,7 @@ exec_query(char *query)
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("sqlite3_prepare_v2() error\n");
+        return -1;
     }
 
     ret = sqlite3_step(stmt);
@@ -48,15 +49,6 @@ exec_query(char *query)
         printf("sqlite3_finalize() error\n");
     }
 
-
-// we need to retry, so this is not enough
-/*
-    if (sqlite3_exec(db, query, 0, 0, 0) != SQLITE_OK)
-    {
-        printf("couldn't exec query: '%s\n", query);
-        perror("error");
-    }
-*/
     return 0;
 }
 
@@ -72,18 +64,6 @@ create_table(char *name)
              time  DATE, \
              value FLOAT \
          )", name);
-
-    return exec_query(query);
-}
-
-int
-insert_value(char *name, float value)
-{
-    char          query[1024];
-
-    snprintf(query, sizeof(query),
-        "INSERT INTO %s VALUES ( NULL, DATETIME('NOW'), %f )",
-        name, value);
 
     return exec_query(query);
 }
@@ -113,7 +93,6 @@ get_row(char *row, char *table)
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        perror("error");
         return -1;
     }
 
@@ -139,11 +118,7 @@ get_row(char *row, char *table)
     }
 
     if (ret == SQLITE_ROW)
-    {
         value = atof((const char *) sqlite3_column_text(stmt, 0));
-        //if (EOF == sscanf( (const char * __restrict__) sqlite3_column_text(res, 0), "%f", &value) )
-        //    value = -1;
-    }
     else
         value = -1;
 
@@ -179,7 +154,6 @@ get_average(char *row, char *table, int time)
     if (sqlite3_prepare_v2(db, query, strlen(query), &res, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        perror("error");
         return -1;
     }
 
@@ -194,31 +168,6 @@ get_average(char *row, char *table, int time)
     sqlite3_finalize(res);
 
     return average;
-}
-
-int
-calc_consumption(void)
-{
-    char  query[1024];
-    float per_h;
-    float per_km;
-    float speed;
-
-    // calculate consumption per hour
-    per_h = 60 * 4 * MULTIPLIER * get_value("rpm") * (get_value("injection_time") - INJ_SUBTRACT);
-
-    // calculate consumption per hour
-    if ( (speed = get_value("speed")) > 0)    
-        per_km = per_h / speed * 100;
-    else
-        per_km = -1;
-
-    snprintf(query, sizeof(query),
-        "INSERT INTO consumption VALUES ( \
-             NULL, DATETIME('NOW'), %f, %f )",
-        per_h, per_km);
-
-    return exec_query(query);
 }
 
 int
@@ -257,21 +206,20 @@ init_db(void)
     }
   
     // create tables (if not existent) 
-    create_table("speed"); 
-    create_table("rpm");
     create_table("temp_engine");
     create_table("temp_air_intake");
-    create_table("oil_pressure");
-    create_table("injection_time");
     create_table("voltage");
-    create_table("tank_content");
 
-    // create consumption table
-    exec_query("CREATE TABLE IF NOT EXISTS consumption ( \
-                    id     INTEGER PRIMARY KEY, \
-                    time   DATE, \
-                    per_h  FLOAT, \
-                    per_km FLOAT \
+    // create engine_data table
+    exec_query("CREATE TABLE IF NOT EXISTS engine_data ( \
+                    id             INTEGER PRIMARY KEY, \
+                    time           DATE, \
+                    rpm            FLOAT, \
+                    speed          FLOAT, \
+                    injection_time FLOAT, \
+                    oil_pressure   FLOAT, \
+                    per_km         FLOAT, \
+                    per_h          FLOAT \
                 )");
 
     return 0;

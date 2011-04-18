@@ -34,10 +34,11 @@ main (int argc, char **argv)
     int i;
     for ( i = 0; ; i++)
     {
-        db_send("speed", 100 + i);
-        db_send("injection_time", 0.01 * i);
-        db_send("rpm", 1000 + i * 30);
-        db_send("calculate_consumption", 0);
+        handle_data("rpm", 1000 + i);
+        handle_data("injection_time", 0.04 * i);
+        handle_data("oil_pressure", i);
+        handle_data("speed", 74.4 * i * 0.01);
+        handle_data("voltage", 0.01 * i);
         usleep(300000);
     }
 
@@ -108,8 +109,45 @@ main (int argc, char **argv)
 }
 
 
-int
+// this struct collects all engine data
+// before sending it to database
+engine_data engine;
+
+void
 handle_data(char *name, float value)
 {
-    db_send(name, value);
+    /* first block gets rpm, injection time, oil pressure
+     * second block gets speed
+     * third block gehts voltage and temperatures (not as often requested)
+     */
+
+    if (!strcmp(name, "rpm"))
+        engine.rpm = value;
+    else if (!strcmp(name, "injection_time"))
+        engine.injection_time = value;
+    else if (!strcmp(name, "oil_pressure"))
+        engine.oil_pressure = value;
+
+    // everytime we get speed, calculate consumption
+    // end send data to database
+    else if (!strcmp(name, "speed"))
+    {
+        engine.speed = value;
+
+        // calculate consumption per hour
+        engine.per_h = 60 * 4 * MULTIPLIER * engine.rpm * (engine.injection_time - INJ_SUBTRACT);
+
+        // calculate consumption per hour
+        if ( engine.speed > 0)
+            engine.per_km = engine.per_h / engine.speed * 100;
+        else
+            engine.per_km = -1;
+
+
+        db_send_engine_data(engine);
+    }
+
+    // put other values directly to database
+    else 
+        db_send_other_data(name, value);
 }
