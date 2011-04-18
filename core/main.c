@@ -106,3 +106,10 @@ main (int argc, char **argv)
     // should never be reached
     return 0;
 }
+
+
+int
+handle_data(char *name, float value)
+{
+    db_send(name, value);
+}
