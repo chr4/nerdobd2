@@ -9,6 +9,7 @@ int  calculate_consumption(void);
 // child pids
 pid_t  handler;
 pid_t  syncer;
+pid_t  ajax;
 
 // flag for cleanup function
 char    cleaning_up = 0;
@@ -125,21 +126,17 @@ main (int argc, char **argv)
     if (init_db() == -1)
         return -1;
 
-    /* 
-    // sync the database from ram do disk every few seconds
-    if ( (syncer = fork()) == 0)
+
+    // spawn ajax server 
+    if ( (ajax = fork()) == 0)
     {
         // remove signal handlers
         signal(SIGINT, SIG_DFL);
         signal(SIGTERM, SIG_DFL);
 
-        for ( ; ; )
-        {
-            sync_db();
-            sleep(10);
-        }
+        ajax_socket(8080);
+        _exit(0);
     }
-    */
 
     // create unix socket
     if ( (s = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)

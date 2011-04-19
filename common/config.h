@@ -1,7 +1,7 @@
 #define UNIX_SOCKET     "../nerdobd2_socket"
 
-#define DEBUG_SERIAL
-#define DEBUG_SQLITE
+//#define DEBUG_SERIAL
+//#define DEBUG_SQLITE
 
 /* writing to database is too slow on my eeepc, 
  * thus provoking "resource temporarily not available" errors

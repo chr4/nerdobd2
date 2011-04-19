@@ -1,8 +1,6 @@
 #include "sqlite.h"
 #include "../common/config.h"
 
-// the database handler
-sqlite3 *db;
 
 int use_hd_db(void);
 
@@ -69,9 +67,9 @@ create_table(char *name)
 }
 
 float
-get_value(char *table)
+get_value(char *key)
 {
-    return get_row("value", table);
+    return get_row(key, "engine_data");
 }
 
 float
