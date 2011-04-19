@@ -17,6 +17,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+// json parser
+#include <json/json.h>
 
 // sqlite functions
 int     exec_query(char *);
@@ -27,4 +29,10 @@ float   get_average(char*, char *, int);
 int     init_db(void);
 void    close_db(void);
 void    sync_db(void);
+
+const char *json_generate_graph(char *key, char *table, int minutes);
+void ajax_socket (int port);
+
+// the database handler
+sqlite3 *db;
 

@@ -31,6 +31,7 @@ main (int argc, char **argv)
     int     ret;
 
     // for testing purposes
+/*
     int i;
     for ( i = 0; ; i++)
     {
@@ -41,7 +42,7 @@ main (int argc, char **argv)
         handle_data("voltage", 0.01 * i);
         usleep(300000);
     }
-
+*/
     // kw1281_open() somehow has to be started
     // before any fork() open()
     if (kw1281_open (DEVICE) == -1)
