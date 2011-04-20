@@ -87,6 +87,7 @@ json_generate_graph(char *key, char *table, int minutes)
     json_object *json = json_object_new_object();
 
     // options
+    /* those are set in javascript
     json_object *options = add_object(json, "options");
     add_boolean( add_object(options, "lines"), "show", 1);
     add_int( add_object(options, "series"), "shadowSize", 0);
@@ -98,7 +99,7 @@ json_generate_graph(char *key, char *table, int minutes)
     json_object *xaxis = add_object(options, "xaxis");
     add_string(xaxis, "mode", "time");
     add_string(xaxis, "timeformat", "%H:%M");
-
+    */
 
     // data
     add_string(json, "label", "speed");
@@ -135,10 +136,12 @@ json_generate_graph(char *key, char *table, int minutes)
             add_data(data, sqlite3_column_double(stmt, 1),
                            sqlite3_column_double(stmt, 0));
 
+            /* those are set in javascript
             // display range from newest dataset to dataset 5 minutes ago.
             // javascript uses not seconds, but milliseconds, so * 1000
             add_double(xaxis, "min", sqlite3_column_double(stmt, 1) - 500000);
             add_double(xaxis, "max", sqlite3_column_double(stmt, 1));
+            */
         }
 
     } while(ret != SQLITE_DONE);
