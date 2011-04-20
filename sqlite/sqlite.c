@@ -131,7 +131,7 @@ get_row(char *row, char *table)
     }
 
     if (ret == SQLITE_ROW)
-        value = atof((const char *) sqlite3_column_text(stmt, 0));
+        value = sqlite3_column_double(stmt, 0);
     else
         value = -1;
 
@@ -172,8 +172,7 @@ get_average(char *row, char *table, int time)
 
     if (sqlite3_step(res) == SQLITE_ROW)
     {
-        if (EOF == sscanf( (const char * __restrict__) sqlite3_column_text(res, 0), "%f", &average) )
-            average = -1;
+        average = sqlite3_column_double(res, 0);
     }
     else
         average = -1;
