@@ -13,12 +13,23 @@
 <script type="text/javascript">
 $(function () {
 
+    var options = null;
     var plot = null;
 
     function getData() {
 
         function onDataReceived(json) {
-            plot = $.plot($("#placeholder"), [ json.data ], json.options);
+            options = {
+                // drawing is faster without shadows
+                "series": { "shadowSize": 0 },
+                "yaxis": { "min": 0, "max": "160" },
+                "xaxis": { "min": ((new Date()).getTime() - 500000),
+                           "max": (new Date()).getTime(),
+                           "mode": "time",
+                           "timeformat": "%H:%M"
+                }
+            };
+            plot = $.plot($("#placeholder"), [ json ], options);
         }
 
         $.ajax({
