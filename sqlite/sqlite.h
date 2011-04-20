@@ -21,18 +21,24 @@
 #include <json/json.h>
 
 // sqlite functions
-int     exec_query(char *);
-int     create_table(char *);
-float   get_value(char *);
-float   get_row(char *, char *);
-float   get_average(char*, char *, int);
-int     init_db(void);
-void    close_db(void);
-void    sync_db(void);
+int   exec_query(char *);
+int   create_table(char *);
+float get_value(char *);
+float get_row(char *, char *);
+float get_average(char*, char *, int);
+int   init_db(void);
+void  close_db(void);
+void  sync_db(void);
+const char *json_generate_graph(char *, char *, int);
 
-const char *json_generate_graph(char *key, char *table, int minutes);
-void ajax_socket (int port);
+// json helper functions
+json_object *add_string(json_object *, char *, char *);
+json_object *add_int(json_object *, char *, int);
+json_object *add_double(json_object *, char *, double);
+json_object *add_boolean(json_object *, char *, char);
+json_object *add_array(json_object *, char *);
+json_object *add_object(json_object *, char *);
+json_object *add_data(json_object *, double, double);
 
-// the database handler
-sqlite3 *db;
-
+// the ajax html server
+void  ajax_socket (int port);
