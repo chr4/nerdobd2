@@ -33,7 +33,7 @@ int     oldflags;
 int
 kw1281_empty_buffer(void)
 {
-    char c[1024];
+    char c[LEN_BUFFER];
     
     int res;
     struct timeval timeout;
@@ -438,7 +438,7 @@ kw1281_recv_block (unsigned char n)
     int c, l, t;
     //unsigned char c, l, t;
     
-    unsigned char buf[256];
+    unsigned char buf[LEN];
 
     /* block length */
     if ( (l = kw1281_recv_byte_ack ()) == -1)

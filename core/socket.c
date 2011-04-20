@@ -54,7 +54,7 @@ db_send_query(char *query)
 void
 db_send_engine_data(engine_data engine)
 {
-    char query[1024];
+    char query[LEN_QUERY];
 
     snprintf(query, sizeof(query), "INSERT INTO engine_data VALUES ( \
                                     NULL, DATETIME('NOW'), \
@@ -68,7 +68,7 @@ db_send_engine_data(engine_data engine)
 void
 db_send_other_data(char *key, float value)
 {
-    char query[1024];
+    char query[LEN_QUERY];
 
     snprintf(query, sizeof(query), 
              "INSERT INTO %s VALUES ( NULL, DATETIME('NOW'), %f )", 

@@ -6,6 +6,19 @@ sqlite3 *db;
 
 int use_hd_db(void);
 
+int create_table(char *);
+int exec_query(char *);
+int create_table(char *);
+float get_value(char *);
+float get_row(char *, char *);
+float get_average(char *, char *, int);
+int init_db(void);
+void close_db(void);
+void sync_db(void);
+json_object *json_latest_data(void);
+json_object *json_generate_graph(char *, char *, int);
+
+
 int 
 exec_query(char *query)
 {
@@ -56,7 +69,7 @@ exec_query(char *query)
 int
 create_table(char *name)
 {
-    char query[1024];
+    char query[LEN_QUERY];
 
     snprintf(query, sizeof(query), 
         "CREATE TABLE IF NOT EXISTS %s ( \
@@ -77,7 +90,7 @@ get_value(char *key)
 float
 get_row(char *row, char *table)
 {
-    char          query[1024];
+    char          query[LEN_QUERY];
     float         value;
     sqlite3_stmt  *stmt;
     int           ret;
@@ -130,7 +143,7 @@ get_row(char *row, char *table)
 float
 get_average(char *row, char *table, int time)
 {
-    char          query[1024];
+    char          query[LEN_QUERY];
     float         average;
     sqlite3_stmt  *res;
 
@@ -261,7 +274,7 @@ use_hd_db(void)
     int n;
     void *buf;
 
-    buf = malloc(sizeof(void) * 256);
+    buf = malloc(sizeof(void) * LEN);
 
     if ( (hd = open(DB_DISK, O_RDONLY)) == -1)
     {
@@ -288,38 +301,83 @@ use_hd_db(void)
     return 0;
 }
 
-const char *
-json_generate_graph(char *key, char *table, int minutes)
+// get latest engine data from database
+json_object *
+json_latest_data(void)
 {
-    char          query[1024];
+    char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
     int           ret;
 
-
-    json_object *json = json_object_new_object();
-
-    // options
-    /* those are set in javascript
-    json_object *options = add_object(json, "options");
-    add_boolean( add_object(options, "lines"), "show", 1);
-    add_int( add_object(options, "series"), "shadowSize", 0);
-
-    json_object *yaxis = add_object(options, "yaxis");
-    add_int(yaxis, "min", 0);
-    add_int(yaxis, "max", 160);
-
-    json_object *xaxis = add_object(options, "xaxis");
-    add_string(xaxis, "mode", "time");
-    add_string(xaxis, "timeformat", "%H:%M");
-    */
-
-    // data
-    add_string(json, "label", "speed");
-    json_object *data = add_array(json, "data");
+    json_object *data = json_object_new_object();
 
     snprintf(query, sizeof(query),
-             "SELECT %s, strftime('%%s000', time) FROM %s WHERE time > DATETIME('NOW', '-%d minutes') ORDER BY time",
-            key, table, minutes);
+             "SELECT   engine_data.*, \
+                       voltage.value, temp_engine.value, temp_air_intake.value \
+              FROM     engine_data, voltage, temp_engine, temp_air_intake \
+              ORDER BY id \
+              DESC LIMIT 1");
+
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
+
+    do
+    {
+        ret = sqlite3_step(stmt);
+
+        // database is busy, retry query
+        if (ret == SQLITE_BUSY)
+        {
+            // wait for 0.5 sec
+            usleep(500000);
+
+#ifdef DEBUG_SQLITE
+            printf("retrying query: \n", query);
+#endif
+            continue;
+        }
+
+        if (ret == SQLITE_ROW)
+        {
+            add_double(data, "rpm", sqlite3_column_double(stmt, 3));
+            add_double(data, "speed", sqlite3_column_double(stmt, 4));
+            add_double(data, "injection_time", sqlite3_column_double(stmt, 5));
+            add_double(data, "oil_pressure", sqlite3_column_double(stmt, 6));
+            add_double(data, "per_km", sqlite3_column_double(stmt, 7));
+            add_double(data, "per_h", sqlite3_column_double(stmt, 8));
+            add_double(data, "voltage", sqlite3_column_double(stmt, 9));
+            add_double(data, "temp_engine", sqlite3_column_double(stmt, 10));
+            add_double(data, "temp_air_intake", sqlite3_column_double(stmt, 11));
+        }
+    } while(ret != SQLITE_DONE);
+
+    sqlite3_finalize(stmt);
+
+    return data;
+}
+
+json_object *
+json_generate_graph(char *label, char *key, int minutes)
+{
+    char          query[LEN_QUERY];
+    sqlite3_stmt  *stmt;
+    int           ret;
+
+    json_object *graph = json_object_new_object();
+    add_string(graph, "label", label);
+
+    json_object *data = add_array(graph, "data");
+
+    snprintf(query, sizeof(query),
+             "SELECT %s, strftime('%%s000', time) \
+              FROM   engine_data \
+              WHERE time > DATETIME('NOW', '-%d minutes') \
+              ORDER BY time",
+             key, minutes);
 
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
@@ -339,29 +397,41 @@ json_generate_graph(char *key, char *table, int minutes)
         if (ret == SQLITE_BUSY)
         {
 #ifdef DEBUG_SQLITE
-            printf("database busy.\n");
+            printf("retrying query: %s.\n", query);
 #endif
             // wait for 0.5 sec
             usleep(500000);
             continue;
-        } 
+        }
 
         if (ret == SQLITE_ROW) {
             add_data(data, sqlite3_column_double(stmt, 1),
                            sqlite3_column_double(stmt, 0));
-
-            /* those are set in javascript
-            // display range from newest dataset to dataset 5 minutes ago.
-            // javascript uses not seconds, but milliseconds, so * 1000
-            add_double(xaxis, "min", sqlite3_column_double(stmt, 1) - 500000);
-            add_double(xaxis, "max", sqlite3_column_double(stmt, 1));
-            */
         }
 
     } while(ret != SQLITE_DONE);
 
     sqlite3_finalize(stmt);
 
-  return json_object_to_json_string(json);
+    return graph;
+}
+
+const char *
+json_generate(int timespan_consumption, int timespan_speed)
+{
+    json_object *json = json_object_new_object();
+
+    // timespan for both graphs (* 1000 for javascript)
+    add_int(json, "timespan_consumption", timespan_consumption * 1000);
+    add_int(json, "timespan_speed", timespan_speed * 1000);
+
+    // get latest engine data from database
+    json_object_object_add(json, "latest_data", json_latest_data());    
+
+    // graphing data 
+    json_object_object_add(json, "graph_consumption", json_generate_graph("consumption", "per_km", timespan_consumption));
+    json_object_object_add(json, "graph_speed", json_generate_graph("speed", "speed", timespan_speed));
+
+    return json_object_to_json_string(json);
 }
 

@@ -20,6 +20,9 @@
 // json parser
 #include <json/json.h>
 
+// include common defines
+#include "../common/common.h"
+
 // sqlite functions
 int   exec_query(char *);
 int   create_table(char *);
@@ -29,7 +32,7 @@ float get_average(char*, char *, int);
 int   init_db(void);
 void  close_db(void);
 void  sync_db(void);
-const char *json_generate_graph(char *, char *, int);
+const char *json_generate(int, int);
 
 // json helper functions
 json_object *add_string(json_object *, char *, char *);
