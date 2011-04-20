@@ -343,15 +343,15 @@ json_latest_data(void)
 
         if (ret == SQLITE_ROW)
         {
-            add_double(data, "rpm", sqlite3_column_double(stmt, 3));
-            add_double(data, "speed", sqlite3_column_double(stmt, 4));
-            add_double(data, "injection_time", sqlite3_column_double(stmt, 5));
-            add_double(data, "oil_pressure", sqlite3_column_double(stmt, 6));
-            add_double(data, "per_km", sqlite3_column_double(stmt, 7));
-            add_double(data, "per_h", sqlite3_column_double(stmt, 8));
-            add_double(data, "voltage", sqlite3_column_double(stmt, 9));
-            add_double(data, "temp_engine", sqlite3_column_double(stmt, 10));
-            add_double(data, "temp_air_intake", sqlite3_column_double(stmt, 11));
+            add_double(data, "rpm", sqlite3_column_double(stmt, 2));
+            add_double(data, "speed", sqlite3_column_double(stmt, 3));
+            add_double(data, "injection_time", sqlite3_column_double(stmt, 4));
+            add_double(data, "oil_pressure", sqlite3_column_double(stmt, 5));
+            add_double(data, "per_km", sqlite3_column_double(stmt, 6));
+            add_double(data, "per_h", sqlite3_column_double(stmt, 7));
+            add_double(data, "voltage", sqlite3_column_double(stmt, 8));
+            add_double(data, "temp_engine", sqlite3_column_double(stmt, 9));
+            add_double(data, "temp_air_intake", sqlite3_column_double(stmt, 10));
         }
     } while(ret != SQLITE_DONE);
 
