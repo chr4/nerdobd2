@@ -105,8 +105,8 @@ tcp_listen (int port)
 int
 obd_send(int fd, float val, char *format)
 {
-    char buf[256];
-    char buf2[256];
+    char buf[LEN];
+    char buf2[LEN];
     
     // check if value was set
     if (val == -2)
@@ -129,9 +129,9 @@ handle_browser(int fd)
     
     int file_fd;
     int r, i, j;
-    static char buffer[1024];
-    char out[1024];
-    char json[65535];
+    static char buffer[LEN_BUFFER];
+    char out[LEN_BUFFER];
+    char json[LEN_JSON];
     struct stat stats;
     char *p;
 
@@ -244,10 +244,9 @@ handle_browser(int fd)
     }
 
     // send graphing data
-    else if (!strncmp(buffer, "GET /speed.json", 15) )
+    else if (!strncmp(buffer, "GET /data.json", 15) )
     {  
-        printf("serving speed data\n"); 
-        strncpy(json, json_generate_graph("speed", "engine_data", 5), sizeof(json));
+        strncpy(json, json_generate(500, 500), sizeof(json));
 
 #ifdef DEBUG_AJAX 
         printf("serving json:\n%s\n", json);
@@ -370,7 +369,7 @@ ajax_log(char *s)
 {
     printf("%s", s);
     // TODO: debug doesn't work, needs shared variable i guess
-    //snprintf(debug, 1024, "%s", s);
+    //snprintf(debug, LEN_BUFFER, "%s", s);
     return;   
 }
 

@@ -59,7 +59,7 @@ cut_crlf(char *s) {
 int
 calculate_consumption(void)
 {
-    char  query[1024];
+    char  query[LEN_QUERY];
     float per_h;
     float per_km;
     float speed;
@@ -88,13 +88,13 @@ int
 handle_client(int c)
 {
     int  n;
-    char buf[1024];
+    char buf[LEN_QUERY];
 
     // remove signal handlers
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
 
-    n = read(c, buf, 1024);
+    n = read(c, buf, sizeof(buf));
     buf[n] = '\0';
 
     cut_crlf(buf);

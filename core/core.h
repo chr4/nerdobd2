@@ -17,6 +17,8 @@
 // for priority settings
 #include <sched.h>
 
+// include common defines
+#include "../common/common.h"
 
 // the engine data struct
 typedef struct engine_data
