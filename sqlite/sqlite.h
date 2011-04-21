@@ -32,7 +32,7 @@ float get_average(char*, char *, int);
 int   init_db(void);
 void  close_db(void);
 void  sync_db(void);
-const char *json_generate(int, int);
+const char *json_generate(int, int, int);
 
 // json helper functions
 json_object *add_string(json_object *, char *, char *);
