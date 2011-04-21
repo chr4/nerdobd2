@@ -3,7 +3,6 @@
 
 void cleanup(int);
 void cut_crlf(char *);
-int  calculate_consumption(void);
 
 
 // child pids
@@ -55,32 +54,6 @@ cut_crlf(char *s) {
         if (p)
                 *p = '\0';
 }
-
-int
-calculate_consumption(void)
-{
-    char  query[LEN_QUERY];
-    float per_h;
-    float per_km;
-    float speed;
-
-    // calculate consumption per hour
-    per_h = 60 * 4 * MULTIPLIER * get_value("rpm") * (get_value("injection_time") - INJ_SUBTRACT);
-
-    // calculate consumption per hour
-    if ( (speed = get_value("speed")) > 0)
-        per_km = per_h / speed * 100;
-    else
-        per_km = -1;
-
-    snprintf(query, sizeof(query),
-        "INSERT INTO consumption VALUES ( \
-             NULL, DATETIME('NOW'), %f, %f )",
-        per_h, per_km);
-
-    return exec_query(query);
-}
-
 
 
 // TODO: this function needs to be nicer massively

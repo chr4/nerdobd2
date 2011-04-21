@@ -21,7 +21,6 @@
 int     tcp_listen (int);
 int     handle_browser(int);
 int     obd_send(int, float, char *);
-void    reset_counters(void);
 
 
 int     srv;
@@ -133,7 +132,9 @@ handle_browser(int fd)
     char out[LEN_BUFFER];
     char json[LEN_JSON];
     struct stat stats;
-    char *p;
+    char *p, *q;
+
+    int speed_index, consumption_index, timespan;
 
 
     // remove signal handlers
@@ -188,65 +189,37 @@ handle_browser(int fd)
         strncpy(buffer, "GET /ajax.html", sizeof(buffer));
     
     
-    // answer to our obd requests ( get.obd?varname )
-    else if (!strncmp(buffer, "POST /get.obd?", 1) )
-    {      
-        // which varname?
+    // send json data
+    else if (!strncmp(buffer, "GET /data.json", 14) )
+    {  
+        // parse arguments
+        // if no arguments are given, set args to 0
         if ( (p = strchr(buffer, '?')) == NULL)
         {
-            printf("bad obd request\n");
-            return -1;
+            speed_index = 0;
+            consumption_index = 0;
+            timespan = 0;
         }
-        p++;    // skip '?'
-        
-#ifdef DEBUG_AJAX
-        printf("got obd request for %s\n", p);
-#endif
-        
-        if (!strcmp(p, "speed") )
-            obd_send(fd, get_value("speed"), "%.01f");
-        else if (!strcmp(p, "rpm") )
-            obd_send(fd, get_value("speed"), "%.00f");
-        else if (!strcmp(p, "con_h") )
-            obd_send(fd, get_value("per_h"), "%.02f");
-        else if (!strcmp(p, "con_km") )
-            obd_send(fd, get_value("per_km"), "%.02f");
-        
-        else if (!strcmp(p, "con_av_short") )
-            obd_send(fd, get_average("per_km", "engine_data", 5), "%.02f");
-        else if (!strcmp(p, "con_av_medium") )
-            obd_send(fd, get_average("per_km", "engine_data", 30), "%.02f");
-        else if (!strcmp(p, "con_av_long") )
-            obd_send(fd, get_average("per_km", "engine_data", 0), "%.02f");
-        
-        else if (!strcmp(p, "speed_av_short") )
-            obd_send(fd, get_average("speed", "engine_data", 5), "%.02f");
-        else if (!strcmp(p, "speed_av_medium") )
-            obd_send(fd, get_average("speed", "engine_data", 30), "%.02f");
-        else if (!strcmp(p, "speed_av_long") )
-            obd_send(fd, get_average("speed", "engine_data", 0), "%.02f");
-       
-/* 
-        else if (!strcmp(p, "temp_engine") )
-            obd_send(fd, get_value("temp_engine"), "%.01f");
-        else if (!strcmp(p, "temp_air_intake") )
-            obd_send(fd, get_value("temp_air_intake"), "%.01f");
-        else if (!strcmp(p, "voltage") )
-            obd_send(fd, get_value("voltage"), "%.02f");
-*/        
+         
+        // parse arguments
         else
         {
-            printf("unkown obd varname: %s\n", p);
-            return -1;
-        }
-        
-        return 0;
-    }
+            q = strtok(p + 1, "=");
+            while (q != NULL)
+            {
+                if (!strcmp(q, "speed_index"))
+                    speed_index = atoi(strtok(NULL, "&"));
+                else if (!strcmp(q, "consumption_index"))
+                    consumption_index = atoi(strtok(NULL, "&"));
+                else if (!strcmp(q, "timespan"))
+                    timespan = atoi(strtok(NULL, "&"));
 
-    // send graphing data
-    else if (!strncmp(buffer, "GET /data.json", 15) )
-    {  
-        strncpy(json, json_generate(500, 500), sizeof(json));
+                q = strtok(NULL, "=");
+            }
+        }
+
+        strncpy(json, json_generate(consumption_index, speed_index, timespan), sizeof(json));
+
 
 #ifdef DEBUG_AJAX 
         printf("serving json:\n%s\n", json);
@@ -363,30 +336,3 @@ handle_browser(int fd)
     return 0;
 }
 
-
-void
-ajax_log(char *s)
-{
-    printf("%s", s);
-    // TODO: debug doesn't work, needs shared variable i guess
-    //snprintf(debug, LEN_BUFFER, "%s", s);
-    return;   
-}
-
-
-void
-reset_counters(void)
-{
-
-#ifdef DEBUG_AJAX 
-    printf("resetting counters...\n");
-#endif    
-
-    // reset average consumption
-    // TODO
- 
-    // reset average speed
-    // TODO
-    
-    return;
-}

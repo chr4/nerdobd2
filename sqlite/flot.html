@@ -17,48 +17,91 @@
       <div id="rpm"></div>
       <div id="speed"></div>
       <div id="per_km"></div>
+      <div id="av_con"></div>
+      <div id="av_con_new"></div>
     </div>
 
 <script type="text/javascript">
 $(function () {
+
+    var index_consumption = 0;
+    var index_speed = 0;
+
+    var timespan_consumption = 300000;
+    var timespan_speed = 300000;
+
+    var data_consumption = [];
+    var data_speed = [];
+
+
+    /* if timespan changes, only change it in JS, and reset index to 0 */
 
     function getData() {
 
         function onDataReceived(json) {
             var now = (new Date()).getTime();
 
+            if (json.graph_consumption.index)
+                index_consumption = json.graph_consumption.index;
+            if (json.graph_speed.index)
+                index_speed = json.graph_speed.index;           
+
+            data_consumption = data_consumption.concat(json.graph_consumption.data);
+            data_speed = data_speed.concat(json.graph_speed.data);
+
             var options_consumption = {
                 // drawing is faster without shadows
                 "series": { "shadowSize": 0 },
                 "yaxis": { "min": 0, "max": "20" },
-                "xaxis": { "min": now - json.timespan_consumption,
+                "xaxis": { "min": now - timespan_consumption,
                            "max": now,
                            "mode": "time",
                            "timeformat": "%H:%M"
-                }
+                },
+            };
+            var graph_consumption = {
+                "data": data_consumption,
+                "color": "rgb(30, 180, 20)",
+                "lines": { "fill": true },
             };
 
             var options_speed = {
                 // drawing is faster without shadows
                 "series": { "shadowSize": 0 },
                 "yaxis": { "min": 0, "max": "160" },
-                "xaxis": { "min": now - json.timespan_speed,
+                "xaxis": { "min": now - timespan_speed,
                            "max": now,
                            "mode": "time",
                            "timeformat": "%H:%M"
                 }
             };
+            var graph_speed = {
+                "data": data_speed,
+                "color": "rgb(0, 0, 0)",
+                "lines": { "fill": true }
+            };
 
-            $("#rpm").html(json.latest_data.rpm.toFixed(0) + " rpm");
-            $("#speed").html(json.latest_data.speed.toFixed(1) + " km/h");
-            $("#per_km").html(json.latest_data.per_km.toFixed(2) + " l/km");
+            if (json.latest_data.rpm)
+                $("#rpm").html(json.latest_data.rpm.toFixed(0) + " rpm");
+            if (json.latest_data.speed)
+                $("#speed").html(json.latest_data.speed.toFixed(1) + " km/h");
+            if (json.latest_data.per_km)
+                $("#per_km").html(json.latest_data.per_km.toFixed(2) + " l/km");
+            if (json.averages.timespan)
+                $("#av_con").html(json.averages.timespan.toFixed(2) + " old");
+            if (json.averages.timespan)
+                $("#av_con_new").html(json.averages.new.toFixed(2) + " new");
 
-            $.plot($("#graph_consumption"), [ json.graph_speed ], options_speed);
-            $.plot($("#graph_speed"), [ json.graph_consumption ], options_consumption);
+
+            $.plot($("#graph_consumption"), [ graph_consumption ], options_consumption);
+            $.plot($("#graph_speed"), [ graph_speed ], options_speed);
         }
 
         $.ajax({
-            url: "data.json",
+            url: "data.json" + 
+                 "?speed_index=" + index_speed + 
+                 "&consumption_index=" + index_consumption +
+                 "&timespan=" + timespan_consumption / 1000,
             method: 'GET',
             dataType: 'json',
             success: onDataReceived

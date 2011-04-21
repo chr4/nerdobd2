@@ -29,20 +29,32 @@ int
 main (int argc, char **argv)
 {
     int     ret;
-
-    // for testing purposes
 /*
-    int i;
-    for ( i = 0; ; i++)
+    // for testing purposes
+    int i = 0, flag = 0;
+    for (; ;)
     {
-        handle_data("rpm", 1000 + i);
-        handle_data("injection_time", 0.04 * i);
+        handle_data("rpm", 1000 + i * 100);
+        handle_data("injection_time", 0.15 * i);
         handle_data("oil_pressure", i);
-        handle_data("speed", 74.4 * i * 0.01);
+        handle_data("speed", 3 * i );
+        handle_data("temp_engine", 90);
+        handle_data("temp_air_intake", 35);
         handle_data("voltage", 0.01 * i);
         usleep(300000);
+
+        if (i > 35)
+            flag = 1;
+        if (i < 2)
+            flag = 0;
+
+        if (flag)
+            i--;
+        else
+            i++;
     }
 */
+
     // kw1281_open() somehow has to be started
     // before any fork() open()
     if (kw1281_open (DEVICE) == -1)

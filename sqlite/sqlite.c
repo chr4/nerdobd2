@@ -9,15 +9,9 @@ int use_hd_db(void);
 int create_table(char *);
 int exec_query(char *);
 int create_table(char *);
-float get_value(char *);
-float get_row(char *, char *);
-float get_average(char *, char *, int);
 int init_db(void);
 void close_db(void);
 void sync_db(void);
-json_object *json_latest_data(void);
-json_object *json_generate_graph(char *, char *, int);
-
 
 int 
 exec_query(char *query)
@@ -81,106 +75,6 @@ create_table(char *name)
     return exec_query(query);
 }
 
-float
-get_value(char *key)
-{
-    return get_row(key, "engine_data");
-}
-
-float
-get_row(char *row, char *table)
-{
-    char          query[LEN_QUERY];
-    float         value;
-    sqlite3_stmt  *stmt;
-    int           ret;
-
-    snprintf(query, sizeof(query),
-            "SELECT %s FROM %s ORDER BY id DESC LIMIT 1",
-            row, table);
-
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif
-
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
-        printf("couldn't execute query: '%s'\n", query);
-        return -1;
-    }
-
-    ret = sqlite3_step(stmt);
-
-    // database is busy, retry query
-    if (ret == SQLITE_BUSY)
-    {
-        // wait for 0.5 sec
-        usleep(500000);
-
-#ifdef DEBUG_SQLITE
-        printf("retrying query...\n");
-
-        return get_row(row, table);
-        printf("SUCCESSFULLY RETRIED!\n");
-
-        return 0;
-#else
-        return get_row(row, table);
-#endif
-
-    }
-
-    if (ret == SQLITE_ROW)
-        value = sqlite3_column_double(stmt, 0);
-    else
-        value = -1;
-
-    sqlite3_finalize(stmt);
-
-    return value;
-}
-
-float
-get_average(char *row, char *table, int time)
-{
-    char          query[LEN_QUERY];
-    float         average;
-    sqlite3_stmt  *res;
-
-    if (time > 0)
-    {
-        snprintf(query, sizeof(query),
-            "SELECT AVG (%s) FROM %s WHERE time > DATETIME('NOW', '-%d minutes')",
-            row, table, time);
-    }
-    else
-    {
-        snprintf(query, sizeof(query),
-            "SELECT AVG (%s) FROM %s",
-            row, table);
-    }
-
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif
-
-    if (sqlite3_prepare_v2(db, query, strlen(query), &res, NULL) != SQLITE_OK)
-    {
-        printf("couldn't execute query: '%s'\n", query);
-        return -1;
-    }
-
-    if (sqlite3_step(res) == SQLITE_ROW)
-    {
-        average = sqlite3_column_double(res, 0);
-    }
-    else
-        average = -1;
-
-    sqlite3_finalize(res);
-
-    return average;
-}
 
 int
 init_db(void)
@@ -300,6 +194,60 @@ use_hd_db(void)
     return 0;
 }
 
+
+// get averages
+json_object *
+json_averages(int timespan)
+{
+    char          query[LEN_QUERY];
+    sqlite3_stmt  *stmt;
+    int           ret;
+
+    json_object *averages = json_object_new_object();
+
+    /* averages from current timespan displayed
+       averages since last manual reset
+       averages since beginning of calculation
+     */
+    snprintf(query, sizeof(query),
+             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) FROM engine_data \
+              WHERE time > DATETIME('NOW', '-%d minutes')",
+              timespan);
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
+
+    do
+    {
+        ret = sqlite3_step(stmt);
+
+        // database is busy, retry query
+        if (ret == SQLITE_BUSY)
+        {
+            // wait for 0.5 sec
+            usleep(500000);
+
+#ifdef DEBUG_SQLITE
+            printf("retrying query: %s\n", query);
+#endif
+            continue;
+        }
+
+        if (ret == SQLITE_ROW)
+        {
+            add_double(averages, "timespan", sqlite3_column_double(stmt, 1));
+            add_double(averages, "new", sqlite3_column_double(stmt, 0));
+        }
+    } while(ret != SQLITE_DONE);
+
+    sqlite3_finalize(stmt);
+
+    return averages;
+}
+
 // get latest engine data from database
 json_object *
 json_latest_data(void)
@@ -335,7 +283,7 @@ json_latest_data(void)
             usleep(500000);
 
 #ifdef DEBUG_SQLITE
-            printf("retrying query: \n", query);
+            printf("retrying query: %s\n", query);
 #endif
             continue;
         }
@@ -360,23 +308,22 @@ json_latest_data(void)
 }
 
 json_object *
-json_generate_graph(char *label, char *key, int minutes)
+json_generate_graph(char *key, int span)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
     int           ret;
+    int           index = 0;
 
     json_object *graph = json_object_new_object();
-    add_string(graph, "label", label);
-
     json_object *data = add_array(graph, "data");
 
     snprintf(query, sizeof(query),
-             "SELECT %s, strftime('%%s000', time) \
+             "SELECT id, %s, strftime('%%s000', time) \
               FROM   engine_data \
-              WHERE time > DATETIME('NOW', '-%d minutes') \
+              WHERE id > %d \
               ORDER BY time",
-             key, minutes);
+             key, span);
 
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
@@ -404,33 +351,35 @@ json_generate_graph(char *label, char *key, int minutes)
         }
 
         if (ret == SQLITE_ROW) {
-            add_data(data, sqlite3_column_double(stmt, 1),
-                           sqlite3_column_double(stmt, 0));
+            add_data(data, sqlite3_column_double(stmt, 2),
+                           sqlite3_column_double(stmt, 1));
+
+            index = sqlite3_column_int(stmt, 0);
         }
 
     } while(ret != SQLITE_DONE);
 
     sqlite3_finalize(stmt);
 
+    add_int(graph, "index", index);
+
     return graph;
 }
 
 const char *
-json_generate(int timespan_consumption, int timespan_speed)
+json_generate(int span_consumption, int span_speed, int timespan)
 {
     json_object *json = json_object_new_object();
-
-    // timespan for both graphs (* 1000 for javascript)
-    add_int(json, "timespan_consumption", timespan_consumption * 1000);
-    add_int(json, "timespan_speed", timespan_speed * 1000);
 
     // get latest engine data from database
     json_object_object_add(json, "latest_data", json_latest_data());    
 
+    // get averages
+    json_object_object_add(json, "averages", json_averages(timespan));
+
     // graphing data 
-    json_object_object_add(json, "graph_consumption", json_generate_graph("consumption", "per_km", timespan_consumption));
-    json_object_object_add(json, "graph_speed", json_generate_graph("speed", "speed", timespan_speed));
+    json_object_object_add(json, "graph_consumption", json_generate_graph("per_km", span_consumption));
+    json_object_object_add(json, "graph_speed", json_generate_graph("speed", span_speed));
 
     return json_object_to_json_string(json);
 }
-
