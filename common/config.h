@@ -1,4 +1,4 @@
-#define UNIX_SOCKET     "../nerdobd2_socket"
+#define UNIX_SOCKET     "/tmp/nerdobd2_socket"
 
 //#define DEBUG_SERIAL
 //#define DEBUG_SQLITE
@@ -9,7 +9,7 @@
  * should help.
  */
 #define DB_RAM         "/dev/shm/nerdob2.sqlite3"
-#define DB_DISK        "../nerdobd2.sqlite3"
+#define DB_DISK        "database.sqlite3"
 
 #define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 
