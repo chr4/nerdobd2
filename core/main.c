@@ -29,7 +29,7 @@ int
 main (int argc, char **argv)
 {
     int     ret;
-/*
+
     // for testing purposes
     int i = 0, flag = 0;
     for (; ;)
@@ -53,7 +53,7 @@ main (int argc, char **argv)
         else
             i++;
     }
-*/
+
 
     // kw1281_open() somehow has to be started
     // before any fork() open()

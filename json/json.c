@@ -1,5 +1,4 @@
-#include "sqlite.h"
-#include "../common/config.h"
+#include "json.h"
 
 json_object *
 add_string(json_object *parent, char *key, char *value)

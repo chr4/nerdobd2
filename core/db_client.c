@@ -1,5 +1,6 @@
 #include "core.h"
 #include "../common/config.h"
+#include "../json/json.h"
 
 int
 db_connect(void)
@@ -56,13 +57,14 @@ db_send_engine_data(engine_data engine)
 {
     char query[LEN_QUERY];
 
+/*
     snprintf(query, sizeof(query), "INSERT INTO engine_data VALUES ( \
                                     NULL, DATETIME('NOW'), \
                                     %f, %f, %f, %f, %f, %f )",
                                     engine.rpm, engine.speed, engine.injection_time,
                                     engine.oil_pressure, engine.per_km, engine.per_h);
-
-    db_send_query(query);
+*/
+    db_send_query("{ \"rpm\": 2000, \"speed\": 70.5 }");
 }
 
 void

@@ -1,5 +1,6 @@
 #include "sqlite.h"
 #include "../common/config.h"
+#include "../json/json.h"
 
 // the database handler
 sqlite3 *db;
