@@ -33,6 +33,14 @@ typedef struct engine_data
     float per_km;
 } engine_data;
 
+// struct for other data
+typedef struct other_data
+{
+    float temp_engine;
+    float temp_air_intake;
+    float voltage;
+} other_data;
+
 
 int  kw1281_open (char *device);
 int  kw1281_close(void);
@@ -42,4 +50,4 @@ int  kw1281_mainloop (void);
 void handle_data(char *, float);
 
 void db_send_engine_data(engine_data);
-void db_send_other_data(char *, float);
+void db_send_other_data(other_data);

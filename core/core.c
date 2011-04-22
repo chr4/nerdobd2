@@ -125,6 +125,7 @@ main (int argc, char **argv)
 // this struct collects all engine data
 // before sending it to database
 engine_data engine;
+other_data  other;
 
 void
 handle_data(char *name, float value)
@@ -160,7 +161,14 @@ handle_data(char *name, float value)
         db_send_engine_data(engine);
     }
 
-    // put other values directly to database
-    else 
-        db_send_other_data(name, value);
+    // other data
+    else if (!strcmp(name, "temp_engine"))
+        other.temp_engine = value;
+    else if (!strcmp(name, "temp_air_intake"))
+        other.temp_air_intake = value;
+    else if (!strcmp(name, "voltage"))
+    {
+        other.voltage = value;
+        db_send_other_data(other);
+    }
 }

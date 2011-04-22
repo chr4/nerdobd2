@@ -22,27 +22,38 @@ class EngineData
   property :created_at,         DateTime
   property :rpm,                Float
   property :speed,              Float
-  property :injectionTime,      Float
-  property :conPerH,            Float
-  property :conPer100km,        Float
+  property :injection_time,     Float
+  property :oil_pressure,       Float
+  property :con_per_h,          Float
+  property :con_per_100km,      Float
 end
 
-#DataMapper.finalize
+class OtherData
+  include DataMapper::Resource
+
+  property :id,                 Serial
+  property :created_at,         DateTime
+  property :temp_engine,        Float
+  property :temp_air_intake,    Float
+  property :voltage,            Float
+end
+
 DataMapper.auto_upgrade!
 
 file = "/tmp/nerdobd2_socket"
 
-File.unlink if File.exist?(file) and File.socket?(file)
+File.unlink if File.exist?(file)
 
 server = UNIXServer.new(file)
 
 while (true) do
-socket = server.accept
+  socket = server.accept
 
-while(line = socket.gets) do
-  data = JSON.parse(line)
-  puts data
-  EngineData.create(data);
-end
+  while(line = socket.gets) do
+    data = JSON.parse(line)
+
+    EngineData.create(data) if data['rpm']
+    OtherData.create(data) if data['voltage']
+  end
 end
 

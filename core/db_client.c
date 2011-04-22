@@ -57,24 +57,28 @@ db_send_engine_data(engine_data engine)
 {
     char query[LEN_QUERY];
 
-/*
-    snprintf(query, sizeof(query), "INSERT INTO engine_data VALUES ( \
-                                    NULL, DATETIME('NOW'), \
-                                    %f, %f, %f, %f, %f, %f )",
-                                    engine.rpm, engine.speed, engine.injection_time,
-                                    engine.oil_pressure, engine.per_km, engine.per_h);
-*/
-    db_send_query("{ \"rpm\": 2000, \"speed\": 70.5 }");
+    // we cannot use json library, so we have to do json by hand
+    snprintf(query, sizeof(query),
+             "{ \"rpm\": %f, \"speed\": %f, \"injection_time\": %f, \
+                \"oil_pressure\": %f, \"con_per_100km\": %f, \
+                \"con_per_h\": %f \
+              }",
+              engine.rpm, engine.speed, engine.injection_time,
+              engine.oil_pressure, engine.per_km, engine.per_h);
+
+    db_send_query(query);
 }
 
 void
-db_send_other_data(char *key, float value)
+db_send_other_data(other_data other)
 {
     char query[LEN_QUERY];
 
     snprintf(query, sizeof(query), 
-             "INSERT INTO %s VALUES ( NULL, DATETIME('NOW'), %f )", 
-             key, value);
+             "{ \"temp_engine\": %f, \
+                \"temp_air_intake\": %f, \
+                \"voltage\": %f }", 
+             other.temp_engine, other.temp_air_intake, other.voltage);
 
     db_send_query(query);
 }
