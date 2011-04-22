@@ -1,4 +1,4 @@
-#include "sqlite.h"
+#include "../sqlite/sqlite.h"
 #include "../common/config.h"
 
 #include <netinet/in.h>
