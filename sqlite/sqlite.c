@@ -205,13 +205,15 @@ json_averages(int timespan)
 
     json_object *averages = json_object_new_object();
 
-    /* averages from current timespan displayed
+    /* TODO: averages from current timespan displayed
        averages since last manual reset
        averages since beginning of calculation
      */
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) FROM engine_data \
-              WHERE time > DATETIME('NOW', '-%d minutes')",
+             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
+              FROM engine_data \
+              WHERE time > DATETIME('NOW', '-%d minutes') \
+              AND per_km != -1",
               timespan);
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
