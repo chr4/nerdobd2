@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <error.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -61,11 +62,14 @@ tcp_loop_accept(int s, void (*callback)(int))
 
         if (fork () == 0)
         {
+            // remove signal handlers
+            signal(SIGINT, SIG_DFL);
+            signal(SIGTERM, SIG_DFL);
+
             close(s);
-
             callback(c);
-
             close (c);
+
             _exit(0);
         }
 
