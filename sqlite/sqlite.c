@@ -164,7 +164,11 @@ use_hd_db(void)
     do
     {
         n = read(hd, buf, sizeof(buf));
-        write(ram, buf, n);
+        if (write (ram, buf, n) <= 0)
+        {
+            perror("error while copying file");
+            return -1;
+        }
     }
     while (n);
 
