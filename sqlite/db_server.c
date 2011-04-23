@@ -1,14 +1,8 @@
 #include "sqlite.h"
-#include "../common/config.h"
-
-void cleanup(int);
-void cut_crlf(char *);
-
 
 // child pids
 pid_t  handler;
-pid_t  syncer;
-pid_t  ajax;
+
 
 // flag for cleanup function
 char    cleaning_up = 0;
@@ -79,12 +73,48 @@ handle_client(int c)
 }
 
 int
+setup_socket(void)
+{
+    int s;
+    int on = 1;
+    struct sockaddr_in servaddr;
+    
+    if ((s = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+    {
+        perror ("socket() failed");
+        return -1;
+    }
+    
+    setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on));
+    
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons (DB_PORT);
+    
+    // retry if bind failed
+    while (bind (s, (struct sockaddr *) &servaddr, sizeof (servaddr)) == -1)
+    {
+        perror ("bind() failed");
+        usleep(50000);
+        printf("retrying...\n");
+    }
+    
+    if (listen (s, 3) == -1)
+    {
+        perror ("listen() failed");
+        return -1;
+    }
+
+    return s;
+}
+
+int
 main (int argc, char **argv)
 {
-    // unix domain sockets
-    struct sockaddr_un address;
-    size_t address_length;
+    struct sockaddr_in cliaddr;
     int    s, c;
+    int    clisize;
+
 
 
     // add signal handler for cleanup function
@@ -99,53 +129,32 @@ main (int argc, char **argv)
     if (init_db() == -1)
         return -1;
 
-
-    // spawn ajax server 
-    if ( (ajax = fork()) == 0)
-    {
-        // remove signal handlers
-        signal(SIGINT, SIG_DFL);
-        signal(SIGTERM, SIG_DFL);
-
-        ajax_socket(8080);
-        _exit(0);
-    }
-
-    // create unix socket
-    if ( (s = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
-    {
-        perror("socket() failed");
+    if ( (s = setup_socket()) == -1)
         return -1;
-    }
-
-    unlink(UNIX_SOCKET);
-    address.sun_family = AF_UNIX;
-    address_length = sizeof(address.sun_family) +
-                     sprintf(address.sun_path, UNIX_SOCKET);
-
-    if (bind(s, (struct sockaddr *) &address, address_length) != 0)
-    {
-        perror("bind() failed");
-        return -1;
-    }
-
-    if (listen(s, 5) != 0)
-    {
-        perror("listen() failed");
-        return -1;
-    }
 
     // accept incoming connections
-    while ((c = accept(s, (struct sockaddr *) &address, &address_length)) > 1)
+    for ( ; ; )
     {
-        if( (handler = fork()) == 0)
-            return handle_client(c);
-        close(c);
+        clisize = sizeof (cliaddr);
+        if ((c = accept (s, (struct sockaddr *) &cliaddr,
+                         (socklen_t *) & clisize)) == -1)
+            continue;
+
+
+        if ((handler = fork ()) == 0)
+        {
+            close(s);
+
+            handle_client(c);
+
+            close (c);
+            _exit(0);
+        }
+
+        close (c);
     }
 
+    // should never be reached
     close(s);
-    unlink(UNIX_SOCKET);
-
     return 0;
 }
-

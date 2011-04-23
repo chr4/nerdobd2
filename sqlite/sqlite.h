@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <string.h>
 
 // for copying file
 #include <sys/types.h>
@@ -13,23 +14,17 @@
 // sqlite database
 #include <sqlite3.h>
 
-// unix domain sockets
+// tcp sockets
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 
 // include common defines
 #include "../common/common.h"
+#include "../common/config.h"
 
 // sqlite functions
 int   exec_query(char *);
-int   create_table(char *);
-float get_value(char *);
-float get_row(char *, char *);
-float get_average(char*, char *, int);
 int   init_db(void);
 void  close_db(void);
 void  sync_db(void);
-const char *json_generate(int, int, int);
-
-// the ajax html server
-void  ajax_socket (int port);
