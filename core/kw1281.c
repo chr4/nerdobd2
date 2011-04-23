@@ -1,5 +1,4 @@
 #include "core.h"
-#include "../common/config.h"
 
 static void _set_bit (int);
 
