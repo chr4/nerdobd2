@@ -20,6 +20,7 @@
 
 // include common defines
 #include "../common/common.h"
+#include "../common/config.h"
 
 // the engine data struct
 typedef struct engine_data
