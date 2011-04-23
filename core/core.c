@@ -62,24 +62,6 @@ main (int argc, char **argv)
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	
-
-    // set realtime priority if we're running as root
-#ifdef HIGH_PRIORITY
-    struct sched_param prio;
-	
-    if (getuid() == 0)
-    {
-        prio.sched_priority = 1;
-        
-        if ( sched_setscheduler(getpid(), SCHED_FIFO, &prio) < 0)
-            perror("sched_setscheduler");
-        
-        if (nice(-19) == -1)
-            perror("nice failed\n");
-    }
-    else
-        printf("sorry, need to be root for realtime priority. continuing with normal priority.\n");
-#endif
     
     for ( ; ; )
     {

@@ -15,11 +15,10 @@
 #define DB_RAM         "/dev/shm/nerdob2.sqlite3"
 #define DB_DISK        "database.sqlite3"
 
-#define HIGH_PRIORITY       // whether to run program with high priority (for more reliable serial communication)
 
 #define DEVICE          "/dev/ttyUSB0"
 #define BAUDRATE        10400   // for my seat arosa, vw polo needs 9600
-#define WRITE_DELAY     5700    // serial dump logs 15600ms before answer arrives maybe 7800 is better?
+#define WRITE_DELAY     0    // milliseconds delay before serial writes, not needed anymore. (was 5700)
 #define INIT_DELAY      200000  // nanosec to wait to emulate 5baud
 
 /* constants for calculating consumption
