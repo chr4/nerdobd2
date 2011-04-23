@@ -7,9 +7,7 @@
  */
 
 #include "sqlite.h"
-
-// child pids
-pid_t  handler;
+#include "../common/tcp.h"
 
 
 // flag for cleanup function
@@ -31,17 +29,6 @@ cleanup (int signo)
     exit(0);
 }
 
-void
-sig_chld(int signo)
-{
-        pid_t   pid;
-        int     stat;
-
-        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
-        return;
-}
-
-
 // cut newlines
 void
 cut_crlf(char *s) {
@@ -59,7 +46,7 @@ cut_crlf(char *s) {
 
 
 // TODO: this function needs to be nicer massively
-int
+void
 handle_client(int c)
 {
     int  n;
@@ -77,90 +64,25 @@ handle_client(int c)
     exec_query(buf);
 
     close(c);
-    return 0;
-}
-
-int
-setup_socket(void)
-{
-    int s;
-    int on = 1;
-    struct sockaddr_in servaddr;
-    
-    if ((s = socket (AF_INET, SOCK_STREAM, 0)) == -1)
-    {
-        perror ("socket() failed");
-        return -1;
-    }
-    
-    setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on));
-    
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons (DB_PORT);
-    
-    // retry if bind failed
-    while (bind (s, (struct sockaddr *) &servaddr, sizeof (servaddr)) == -1)
-    {
-        perror ("bind() failed");
-        usleep(50000);
-        printf("retrying...\n");
-    }
-    
-    if (listen (s, 3) == -1)
-    {
-        perror ("listen() failed");
-        return -1;
-    }
-
-    return s;
 }
 
 int
 main (int argc, char **argv)
 {
-    struct sockaddr_in cliaddr;
-    int    s, c;
-    int    clisize;
-
-
+    int s;
 
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);
 
-    // wait for children when dead
-    signal(SIGCHLD, sig_chld);
-
-
     // initialize db
     if (init_db() == -1)
         return -1;
 
-    if ( (s = setup_socket()) == -1)
+    if ( (s = tcp_listen(DB_PORT)) == -1)
         return -1;
 
-    // accept incoming connections
-    for ( ; ; )
-    {
-        clisize = sizeof (cliaddr);
-        if ((c = accept (s, (struct sockaddr *) &cliaddr,
-                         (socklen_t *) & clisize)) == -1)
-            continue;
-
-
-        if ((handler = fork ()) == 0)
-        {
-            close(s);
-
-            handle_client(c);
-
-            close (c);
-            _exit(0);
-        }
-
-        close (c);
-    }
+    tcp_loop_accept(s, &handle_client);
 
     // should never be reached
     close(s);

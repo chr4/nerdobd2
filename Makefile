@@ -21,8 +21,8 @@ db_client.o : core/db_client.c
 
 
 # sqlite	
-db_server : db_server.o sqlite.o
-	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o  sqlite/sqlite.o
+db_server : db_server.o sqlite.o tcp.o
+	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o  sqlite/sqlite.o common/tcp.o
 
 db_server.o : sqlite/db_server.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/db_server.c -o sqlite/db_server.o
@@ -30,7 +30,11 @@ db_server.o : sqlite/db_server.c
 sqlite.o : sqlite/sqlite.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/sqlite.c -o sqlite/sqlite.o
 
-	
+
+# tcp helpers
+tcp.o : common/tcp.c
+	$(CC) $(CC_OPTIONS) -c common/tcp.c -o common/tcp.o
+
 # json helpers
 json.o : json/json.c
 	$(CC) $(CC_OPTIONS) -c json/json.c -o json/json.o
