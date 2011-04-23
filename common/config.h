@@ -1,9 +1,11 @@
 #define DB_HOST	        "127.0.0.1"
 #define DB_PORT         4588
-#define HTTP_PORT	8080
+#define HTTPD_PORT	8080
+#define DOCROOT		"httpd"
 
 //#define DEBUG_SERIAL
 //#define DEBUG_SQLITE
+#define DEBUG_AJAX
 
 /* writing to database is too slow on my eeepc, 
  * thus provoking "resource temporarily not available" errors

@@ -4,7 +4,7 @@ CC_OPTIONS_SQLITE=-Wall -O3 -lsqlite3
 CC_OPTIONS=-Wall -O3
 
 
-nerdobd2 : core db_server
+nerdobd2 : core db_server httpd
 
 # core
 core : core.o kw1281.o db_client.o
@@ -31,6 +31,15 @@ sqlite.o : sqlite/sqlite.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/sqlite.c -o sqlite/sqlite.o
 
 
+# http server
+httpd : httpd.o tcp.o
+	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_httpd httpd/httpd.o common/tcp.o
+
+httpd.o : httpd/httpd.c
+	$(CC) $(CC_OPTIONS_SQLITE) -c httpd/httpd.c -o httpd/httpd.o
+	
+
+
 # tcp helpers
 tcp.o : common/tcp.c
 	$(CC) $(CC_OPTIONS) -c common/tcp.c -o common/tcp.o
@@ -42,5 +51,5 @@ json.o : json/json.c
 
 # cleaning	
 clean :
-	rm -f core/*.o sqlite/*.o nerdobd2_*
+	rm -f core/*.o sqlite/*.o httpd/*.o common/*.o nerdobd2_*
 
