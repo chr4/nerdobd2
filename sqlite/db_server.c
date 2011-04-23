@@ -1,3 +1,11 @@
+/*
+ * this process does nothing but creating a sqlite database,
+ * listening on a tcp socket and forwarding queries to it
+ * this is a different process and necessary, because we cannot
+ * compile core with -lsqlite, this will break the serial connection
+ * due to mysterious reasons
+ */
+
 #include "sqlite.h"
 
 // child pids
