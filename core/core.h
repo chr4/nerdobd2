@@ -10,17 +10,12 @@
 #include <errno.h>
 #include <signal.h>
 
-// tcp sockets
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-
-// for priority settings
-#include <sched.h>
-
 // include common defines
 #include "../common/common.h"
 #include "../common/config.h"
+
+// we need sqlite3 access
+#include "../common/sqlite.h"
 
 // the engine data struct
 typedef struct engine_data
@@ -51,5 +46,3 @@ int  kw1281_mainloop (void);
 
 void handle_data(char *, float);
 
-void db_send_engine_data(engine_data);
-void db_send_other_data(other_data);

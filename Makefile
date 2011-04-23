@@ -1,44 +1,31 @@
 CC=gcc
-CC_OPTIONS_CORE=-Wall -O3 # -lxxx breaks serial connection :/
-CC_OPTIONS_SQLITE=-Wall -O3 -lsqlite3
-CC_OPTIONS=-Wall -O3
+CC_OPTIONS=-Wall -O3 -lsqlite3
 
 
-nerdobd2 : core db_server httpd
+nerdobd2 : core 
 
 # core
-core : core.o kw1281.o db_client.o
-	$(CC) $(CC_OPTIONS_CORE) -o nerdobd2_core core/core.o core/kw1281.o core/db_client.o
+core : core.o kw1281.o sqlite.o
+	$(CC) $(CC_OPTIONS) -o nerdobd2_core core/core.o core/kw1281.o common/sqlite.o
 
 core.o : core/core.c
-	$(CC) $(CC_OPTIONS_CORE) -c core/core.c -o core/core.o
+	$(CC) $(CC_OPTIONS) -c core/core.c -o core/core.o
 	
 kw1281.o : core/kw1281.c
-	$(CC) $(CC_OPTIONS_CORE) -c core/kw1281.c -o core/kw1281.o
-
-db_client.o : core/db_client.c
-	$(CC) $(CC_OPTIONS_CORE) -c core/db_client.c -o core/db_client.o
-
-
-# sqlite	
-db_server : db_server.o sqlite.o tcp.o
-	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o  sqlite/sqlite.o common/tcp.o
-
-db_server.o : sqlite/db_server.c
-	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/db_server.c -o sqlite/db_server.o
-	
-sqlite.o : sqlite/sqlite.c
-	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/sqlite.c -o sqlite/sqlite.o
+	$(CC) $(CC_OPTIONS) -c core/kw1281.c -o core/kw1281.o
 
 
 # http server
 httpd : httpd.o tcp.o
-	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_httpd httpd/httpd.o common/tcp.o
+	$(CC) $(CC_OPTIONS) -o nerdobd2_httpd httpd/httpd.o common/tcp.o
 
 httpd.o : httpd/httpd.c
-	$(CC) $(CC_OPTIONS_SQLITE) -c httpd/httpd.c -o httpd/httpd.o
+	$(CC) $(CC_OPTIONS) -c httpd/httpd.c -o httpd/httpd.o
 	
 
+# sqlite access
+sqlite.o : common/sqlite.c
+	$(CC) $(CC_OPTIONS) -c common/sqlite.c -o common/sqlite.o
 
 # tcp helpers
 tcp.o : common/tcp.c
@@ -51,5 +38,5 @@ json.o : json/json.c
 
 # cleaning	
 clean :
-	rm -f core/*.o sqlite/*.o httpd/*.o common/*.o nerdobd2_*
+	rm -f core/*.o httpd/*.o common/*.o nerdobd2_*
 

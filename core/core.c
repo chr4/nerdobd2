@@ -14,8 +14,8 @@ cleanup (int signo)
 	
 	cleaning_up = 1;
 	
-	printf("\ncleaning up:\n");
-	
+	sync_db();
+    
 	printf("closing serial port...\n");
 	kw1281_close();
 	
@@ -29,6 +29,23 @@ main (int argc, char **argv)
 {
     int     ret;
 
+#ifndef TEST
+    // kw1281_open() somehow has to be started
+    // before any fork() open()
+    if (kw1281_open (DEVICE) == -1)
+        return -1;
+#endif
+    
+    // initialize database
+    if (init_db() == -1)
+        return -1;
+    
+    // add signal handler for cleanup function
+    signal(SIGINT, cleanup);
+    signal(SIGTERM, cleanup);	
+    
+    
+#ifdef TEST
     // for testing purposes
     int i = 0, flag = 0;
     for (; ;)
@@ -41,27 +58,18 @@ main (int argc, char **argv)
         handle_data("temp_air_intake", 35);
         handle_data("voltage", 0.01 * i);
         usleep(300000);
-
+        
         if (i > 35)
             flag = 1;
         if (i < 2)
             flag = 0;
-
+        
         if (flag)
             i--;
         else
             i++;
     }
-
-
-    // kw1281_open() somehow has to be started
-    // before any fork() open()
-    if (kw1281_open (DEVICE) == -1)
-        return -1;
-
-    // add signal handler for cleanup function
-    signal(SIGINT, cleanup);
-    signal(SIGTERM, cleanup);	
+#endif    
     
     for ( ; ; )
     {
@@ -103,6 +111,35 @@ main (int argc, char **argv)
 }
 
 
+void
+insert_engine_data(engine_data e)
+{
+    char query[LEN_QUERY];
+    
+    snprintf(query, sizeof(query),
+             "INSERT INTO engine_data VALUES ( \
+             NULL, DATETIME('NOW'), \
+             %f, %f, %f, %f, %f, %f )",
+             e.rpm, e.speed, e.injection_time,
+             e.oil_pressure, e.per_km, e.per_h);
+    
+    exec_query(query);
+}
+
+void
+insert_other_data(other_data o)
+{
+    char query[LEN_QUERY];
+    
+    snprintf(query, sizeof(query), 
+             "INSERT INTO other_data VALUES ( \
+             NULL, DATETIME('NOW'), \
+             %f, %f, %f)",
+             o.temp_engine, o.temp_air_intake, o.voltage);
+    
+    exec_query(query);
+}
+
 // this struct collects all engine data
 // before sending it to database
 engine_data engine;
@@ -139,7 +176,7 @@ handle_data(char *name, float value)
             engine.per_km = -1;
 
 
-        db_send_engine_data(engine);
+        insert_engine_data(engine);
     }
 
     // other data
@@ -150,6 +187,6 @@ handle_data(char *name, float value)
     else if (!strcmp(name, "voltage"))
     {
         other.voltage = value;
-        db_send_other_data(other);
+        insert_other_data(other);
     }
 }

@@ -22,32 +22,28 @@ exec_query(char *query)
         printf("sqlite3_prepare_v2() error\n");
         return -1;
     }
-
-    ret = sqlite3_step(stmt);
-
-    // database is busy, retry query
-    if (ret == SQLITE_BUSY)
+    
+    do
     {
-        // wait for 0.5 sec
-        usleep(500000);
-
+        ret = sqlite3_step(stmt);
+        
+        // database is busy, retry query
+        if (ret == SQLITE_BUSY)
+        {
+            // wait for 0.5 sec
+            usleep(500000);
+            
 #ifdef DEBUG_SQLITE
-        printf("retrying query...\n");
-
-        return exec_query(query);
-        printf("SUCCESSFULLY RETRIED!\n");
-
-        return 0;
-#else
-        return exec_query(query);
+            printf("retrying query: %s\n", query);
 #endif
-
-    }
+            continue;
+        }
+        
+    } while(ret != SQLITE_DONE);
+    
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
         printf("sqlite3_finalize() error\n");
-    }
 
     return 0;
 }

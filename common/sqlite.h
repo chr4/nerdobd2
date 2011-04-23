@@ -14,11 +14,6 @@
 // sqlite database
 #include <sqlite3.h>
 
-// tcp sockets
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-
 // include common defines
 #include "../common/common.h"
 #include "../common/config.h"
