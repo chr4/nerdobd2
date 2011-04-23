@@ -3,9 +3,10 @@
 #define HTTPD_PORT	8080
 #define DOCROOT		"httpd"
 
-//#define DEBUG_SERIAL
-//#define DEBUG_SQLITE
+#define DEBUG_SERIAL
+#define DEBUG_SQLITE
 #define DEBUG_AJAX
+#define TEST
 
 /* writing to database is too slow on my eeepc, 
  * thus provoking "resource temporarily not available" errors
