@@ -1,4 +1,5 @@
-#define UNIX_SOCKET     "/tmp/nerdobd2_socket"
+#define DB_HOST	        "127.0.0.1"
+#define DB_PORT         4567
 
 //#define DEBUG_SERIAL
 //#define DEBUG_SQLITE

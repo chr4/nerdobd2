@@ -10,9 +10,10 @@
 #include <errno.h>
 #include <signal.h>
 
-// unix domain sockets
+// tcp sockets
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 
 // for priority settings
 #include <sched.h>

@@ -1,4 +1,4 @@
-#!/usr/bin/ruby1.9.1
+#!/usr/bin/ruby
 
 require 'socket'
 
@@ -10,9 +10,15 @@ require 'dm-migrations'
 require 'dm-validations'
 require 'dm-timestamps'
 
+require 'sinatra'
+
+
+file = "/tmp/nerdobd2_socket"
+
 DataMapper::Logger.new($stdout, :debug)
 #DataMapper.setup(:default, 'sqlite:///tmp/nerdobd.sqlite3')
 DataMapper.setup(:default, 'sqlite::memory:')
+#DataMapper.setup(:default, 'postgres://postgres@localhost/nerdobd2')
 
 
 class EngineData
@@ -40,20 +46,18 @@ end
 
 DataMapper.auto_upgrade!
 
-file = "/tmp/nerdobd2_socket"
 
-File.unlink if File.exist?(file)
+get '/' do
+  return "Hello World"
+end
 
-server = UNIXServer.new(file)
+# save engine data to database
+post '/engine_data' do
+  EngineData.create(params)
+end
 
-while (true) do
-  socket = server.accept
-
-  while(line = socket.gets) do
-    data = JSON.parse(line)
-
-    EngineData.create(data) if data['rpm']
-    OtherData.create(data) if data['voltage']
-  end
+# save other data to database
+post '/other_data' do
+  OtherData.create(params)
 end
 

@@ -21,19 +21,16 @@ db_client.o : core/db_client.c
 
 
 # sqlite	
-sqlite : db_server.o sqlite.o json.o ajax.o
-	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_sqlite sqlite/db_server.o sqlite/sqlite.o ajax/ajax.o json/json.o
+db_server : db_server.o sqlite.o 
+	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o sqlite/sqlite.o
 
 db_server.o : sqlite/db_server.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/db_server.c -o sqlite/db_server.o
 	
 sqlite.o : sqlite/sqlite.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/sqlite.c -o sqlite/sqlite.o
+
 	
-ajax.o : ajax/ajax.c
-	$(CC) $(CC_OPTIONS_SQLITE) -c ajax/ajax.c -o ajax/ajax.o
-
-
 # json helpers
 json.o : json/json.c
 	$(CC) $(CC_OPTIONS) -c json/json.c -o json/json.o
