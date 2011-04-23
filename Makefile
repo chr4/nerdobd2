@@ -1,10 +1,10 @@
 CC=gcc
-CC_OPTIONS_CORE=-Wall # -lxxx breaks serial connection :/
-CC_OPTIONS_SQLITE=-Wall -lsqlite3 -ljson
-CC_OPTIONS=-Wall
+CC_OPTIONS_CORE=-Wall -O3 # -lxxx breaks serial connection :/
+CC_OPTIONS_SQLITE=-Wall -O3 -lsqlite3
+CC_OPTIONS=-Wall -O3
 
 
-nerdobd2 : core sqlite
+nerdobd2 : core db_server
 
 # core
 core : core.o kw1281.o db_client.o
@@ -21,8 +21,8 @@ db_client.o : core/db_client.c
 
 
 # sqlite	
-db_server : db_server.o sqlite.o 
-	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o sqlite/sqlite.o
+db_server : db_server.o sqlite.o
+	$(CC) $(CC_OPTIONS_SQLITE) -o nerdobd2_dbserver sqlite/db_server.o  sqlite/sqlite.o
 
 db_server.o : sqlite/db_server.c
 	$(CC) $(CC_OPTIONS_SQLITE) -c sqlite/db_server.c -o sqlite/db_server.o
