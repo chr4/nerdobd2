@@ -1,21 +1,10 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-// for file operations
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include "../common/common.h"
-#include "../common/config.h"
+#include "httpd.h"
 #include "../common/tcp.h"
 
 #define SERVER_STRING   "Server: nerdobd ajax server |0.9.4\r\n"
 #define SERVER_CON      "Connection: close\r\n"
 #define HTTP_OK         "HTTP/1.0 200 OK\r\n"
+#define HTTP_ERROR      "HTTP/1.0 404 Not Found\r\n"
 
 #define HEADER_PLAIN    SERVER_STRING SERVER_CON "Content-Type: text/plain\r\n\r\n"
 #define HEADER_HTML     SERVER_STRING SERVER_CON "Content-Type: text/html\r\n\r\n"
@@ -24,6 +13,26 @@
 #define HEADER_JS       SERVER_STRING SERVER_CON "Content-Type: application/x-javascript\r\n\r\n"
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 
+
+int
+send_error(int fd, char *message)
+{
+    char out[LEN_BUFFER];
+
+    snprintf(out, sizeof(out), HTTP_ERROR
+             "Content-Length: %d\r\n", strlen(message));
+    
+    if (write(fd, out, strlen(out)) <= 0)
+        return -1;
+    
+    if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
+        return -1;
+    
+    if (write(fd, message, strlen(message)) <= 0)
+        return -1;    
+    
+    return 0;
+}
 
 
 int
@@ -63,7 +72,9 @@ send_file(int fd, char *filename)
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
              "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
-    write(fd, out, strlen(out));
+    if (write(fd, out, strlen(out)) <= 0)
+        return -1;
+        
     
 #ifdef DEBUG_AJAX
     printf("sending file: %s with %9jd length\n", path, (intmax_t) stats.st_size);
@@ -71,23 +82,35 @@ send_file(int fd, char *filename)
     
     // is file type known?
     if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
-        write(fd, HEADER_HTML, strlen(HEADER_HTML));
-    
+    {
+        if (write(fd, HEADER_HTML, strlen(HEADER_HTML)) <= 0)
+            return -1;
+    }
     else if (!strcmp(p, ".png") ) 
-        write(fd, HEADER_PNG, strlen(HEADER_PNG));
-    
+    {
+        if (write(fd, HEADER_PNG, strlen(HEADER_PNG)) <= 0)
+            return -1;
+    }
     else if (!strcmp(p, ".txt") )
-        write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN));   
-    
+    {
+        if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
+            return -1;
+    }
     else if (!strcmp(p, ".js") )
-        write(fd, HEADER_JS, strlen(HEADER_JS));
-    
+    {
+        if (write(fd, HEADER_JS, strlen(HEADER_JS)) <= 0)
+            return -1;
+    }
     else if (!strcmp(p, ".css") )
-        write(fd, HEADER_CSS, strlen(HEADER_CSS));
-    
+    {
+        if (write(fd, HEADER_CSS, strlen(HEADER_CSS)) <= 0)
+            return -1;
+    }
     else if (!strcmp(p, ".ico") )
-        write(fd, HEADER_ICON, strlen(HEADER_ICON));    
-    
+    {
+        if (write(fd, HEADER_ICON, strlen(HEADER_ICON)) <= 0)
+            return -1;
+    }
     else
     {
         printf("extention not found\n");
@@ -102,7 +125,8 @@ send_file(int fd, char *filename)
     }
     
     while ( (r = read(file_fd, out, sizeof(out))) > 0 )
-        write(fd, out, r);
+        if (write(fd, out, r) <= 0)
+            return -1;
     
     close(file_fd);
     return 0;
@@ -112,51 +136,48 @@ send_file(int fd, char *filename)
 int
 send_json_data(int fd, char *args)
 {  
-    char *p, *q;
-    char out[LEN_BUFFER];
-    char json[LEN_JSON];
-    int speed_index, consumption_index, timespan;
+    char       *p;
+    char        out[LEN_BUFFER];
+    long        speed_index = 0;
+    long        consumption_index = 0;
+    long        timespan = 0;
+    const char *json;
     
     // parse arguments
-    // if no arguments are given, set args to 0
-    if ( (p = strchr(args, '?')) == NULL)
+    if (strtok(args, "?") != NULL)
     {
-        speed_index = 0;
-        consumption_index = 0;
-        timespan = 0;
-    }
-    
-    // parse arguments
-    else
-    {
-        q = strtok(p + 1, "=");
-        while (q != NULL)
+        p = strtok(NULL, "=");
+        while (p != NULL)
         {
-            if (!strcmp(q, "speed_index"))
+            if (!strcmp(p, "speed_index"))
                 speed_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(q, "consumption_index"))
+            else if (!strcmp(p, "consumption_index"))
                 consumption_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(q, "timespan"))
+            else if (!strcmp(p, "timespan"))
                 timespan = atoi(strtok(NULL, "&"));
             
-            q = strtok(NULL, "=");
+            p = strtok(NULL, "=");
         }
     }
     
-    //strncpy(json, json_generate(consumption_index, speed_index, timespan), sizeof(json));
-    strcpy(json, "test");
+    json = json_generate(consumption_index, speed_index, timespan);
     
 #ifdef DEBUG_AJAX 
-    printf("serving json:\n%s\n", json);
+    // printf("serving json:\n%s\n", json);
 #endif
     
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
-             "Content-Length: %jd\r\n", (intmax_t) strlen(json));
+             "Content-Length: %d\r\n", strlen(json));
     
-    write(fd, out, strlen(out));
-    write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN));
-    write(fd, json, strlen(json));
+    if (write(fd, out, strlen(out)) <= 0)
+        return -1;
+    
+    if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
+        return -1;
+    
+    if (write(fd, json, strlen(json)) <= 0)
+        return -1;
     
     return 0;
 }
@@ -166,7 +187,7 @@ void
 handle_client(int fd)
 {
     int r;
-    int i, j;
+    int i;
     char *p;
     static char buffer[LEN_BUFFER];
     
@@ -189,7 +210,7 @@ handle_client(int fd)
     // filter requests we don't support
     if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
     {
-        printf("not supported: %s\n", buffer);
+        send_error(fd, "not supported (only GET and POST)");
         return;
     }
     
@@ -208,7 +229,7 @@ handle_client(int fd)
     }
     else
     {
-        printf("no space found\n");
+        send_error(fd, "invalid request.\n");
         return;
     }
     
@@ -217,12 +238,15 @@ handle_client(int fd)
         strncpy(buffer, "GET /index.html", sizeof(buffer));
     
     
-    // check for illegal parent directory requests
-    for (j = 0; j < i - 1; j++)
+    // check for illegal parent directory requests   
+    for (i = 0; ; i++)
     {
-        if(buffer[j] == '.' && buffer[j + 1] == '.')
+        if (buffer[i] == '\0' || buffer[i + 1] == '\0')
+            break;
+        
+        if(buffer[i] == '.' && buffer[i + 1] == '.')
         {
-            printf(".. detected\n");
+            send_error(fd, ".. detected.\n");
             return;
         }
     }
@@ -233,13 +257,13 @@ handle_client(int fd)
     
     
     // send json data
-    if (!strncmp(p, "/data.json", 14) )
+    if (!strncmp(p, "/data.json", 10) )
         send_json_data(fd, buffer);
  
     // send file
     else
         if (send_file(fd, p) != 0)
-            printf("couldn't send file: %s\n", p);
+            send_error(fd, "could not send file.\n");
     
     return;
 }
@@ -249,6 +273,9 @@ int
 main(int argc, char **argv)
 {
     int s;
+    
+    if (open_db() == -1)
+        return -1;
     
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;

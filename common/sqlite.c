@@ -78,12 +78,17 @@ init_db(void)
     }
 
     // open database file
-    if (sqlite3_open(DB_RAM, &db))
+    if (sqlite3_open(DB_RAM, &db) != 0)
     {
         printf("Can not open database: %s", DB_RAM);
         return -1;
     }
+    
+    // disable waiting for write to be completed
+    exec_query("PRAGMA synchronous=OFF");
   
+    exec_query("BEGIN TRANSACTION");
+    
     // create engine_data table
     exec_query("CREATE TABLE IF NOT EXISTS engine_data ( \
                     id              INTEGER PRIMARY KEY, \
@@ -103,9 +108,11 @@ init_db(void)
                     temp_air_intake FLOAT, \
                     voltage         FLOAT )");
 
-
+    exec_query("END TRANSACTION");
     return 0;
 }
+
+
 
 void
 close_db(void)

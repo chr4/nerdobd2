@@ -1,8 +1,9 @@
 CC=gcc
 CC_OPTIONS=-Wall -O3 -lsqlite3
+CC_OPTIONS_HTTPD=-Wall -O3 -lsqlite3 -ljson
 
 
-nerdobd2 : core 
+nerdobd2 : core httpd
 
 # core
 core : core.o kw1281.o sqlite.o
@@ -16,11 +17,14 @@ kw1281.o : core/kw1281.c
 
 
 # http server
-httpd : httpd.o tcp.o
-	$(CC) $(CC_OPTIONS) -o nerdobd2_httpd httpd/httpd.o common/tcp.o
+httpd : httpd.o db_client.o tcp.o json.o
+	$(CC) $(CC_OPTIONS_HTTPD) -o nerdobd2_httpd httpd/httpd.o httpd/db_client.o common/tcp.o common/json.o
 
 httpd.o : httpd/httpd.c
-	$(CC) $(CC_OPTIONS) -c httpd/httpd.c -o httpd/httpd.o
+	$(CC) $(CC_OPTIONS_HTTPD) -c httpd/httpd.c -o httpd/httpd.o
+	
+db_client.o : httpd/db_client.c
+	$(CC) $(CC_OPTIONS_HTTPD) -c httpd/db_client.c -o httpd/db_client.o
 	
 
 # sqlite access
@@ -32,8 +36,8 @@ tcp.o : common/tcp.c
 	$(CC) $(CC_OPTIONS) -c common/tcp.c -o common/tcp.o
 
 # json helpers
-json.o : json/json.c
-	$(CC) $(CC_OPTIONS) -c json/json.c -o json/json.o
+json.o : common/json.c
+	$(CC) $(CC_OPTIONS_HTTPD) -c common/json.c -o common/json.o
 
 
 # cleaning	
