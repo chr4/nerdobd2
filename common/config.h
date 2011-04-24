@@ -27,8 +27,6 @@
  *
  * consumption per hour = 
  *    60 (minutes) * 4 (zylinders) * 
- *    MULTIPLIER * rpm * (injection time - INJ_SUBTRACT)
+ *    MULTIPLIER * rpm * injection time
  */
 #define MULTIPLIER      0.00000089  // for my 1.0l seat arosa 2004
-#define INJ_SUBTRACT    0.1
-
