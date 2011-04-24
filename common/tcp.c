@@ -60,7 +60,6 @@ void
 tcp_loop_accept(int s, void (*callback)(int))
 {
     int    c, clisize;
-    int    status;
     struct sockaddr_in cliaddr;
 
     signal(SIGCHLD, sig_chld);
