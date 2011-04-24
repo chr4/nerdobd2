@@ -27,8 +27,8 @@ $(function () {
     var index_consumption = 0;
     var index_speed = 0;
 
-    var timespan_consumption = 300000;
-    var timespan_speed = 300000;
+    var timespan_consumption = 300000; // 5min
+    var timespan_speed = 1800000; // 30min
 
     var data_consumption = [];
     var data_speed = [];
@@ -45,6 +45,23 @@ $(function () {
             if (json.graph_speed.index)
                 index_speed = json.graph_speed.index;           
 
+            // remove data that is older than timespan first
+            
+            // loop reverse, for better performance
+            for (i = data_consumption.length - 1; i >= 0; i--)
+            {
+                // after we find the first element that is outdated
+                // remove everything up to this element
+                if (data_consumption[i][0] < now - timespan_consumption)
+                    data_consumption.splice(0, i + 1);
+            }
+            
+            for (i = data_speed.length - 1; i >= 0; i--)
+            {
+                if (data_speed[i][0] < now - timespan_speed)
+                    data_speed.splice(0, i + 1);
+            }            
+                        
             data_consumption = data_consumption.concat(json.graph_consumption.data);
             data_speed = data_speed.concat(json.graph_speed.data);
 
@@ -94,19 +111,20 @@ $(function () {
 
             $.plot($("#graph_consumption"), [ graph_consumption ], options_consumption);
             $.plot($("#graph_speed"), [ graph_speed ], options_speed);
+            
+            setTimeout(getData, 500);
         }
 
         $.ajax({
             url: "data.json" + 
-                 "?speed_index=" + index_speed + 
-                 "&consumption_index=" + index_consumption +
-                 "&timespan=" + timespan_consumption / 1000,
+                 "?consumption_index=" + index_consumption +
+                 "&consumption_timespan=" + timespan_consumption / 1000 + 
+                 "&speed_index=" + index_speed + 
+                 "&speed_timespan=" + timespan_speed / 1000,
             method: 'GET',
             dataType: 'json',
             success: onDataReceived
         });
-
-        setTimeout(getData, 500);
     }
 
     getData();

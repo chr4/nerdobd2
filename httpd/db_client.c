@@ -66,7 +66,7 @@ exec_query(char *query)
 
 // get averages
 json_object *
-json_averages(int timespan)
+json_averages(unsigned long int timespan)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -81,7 +81,7 @@ json_averages(int timespan)
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
              FROM engine_data \
-             WHERE time > DATETIME('NOW', '-%d minutes') \
+             WHERE time > DATETIME('NOW', '-%lu minutes') \
              AND per_km != -1",
              timespan);
     
@@ -163,10 +163,6 @@ json_latest_data(void)
             continue;
         }
         
-        
-        
-        
-        
         if (ret == SQLITE_ROW)
         {
             add_double(data, "rpm", sqlite3_column_double(stmt, 0));
@@ -230,13 +226,17 @@ json_latest_data(void)
 }
 
 
+/*
+ * get json data for graphing table key
+ * getting all data since id index
+ * but not older than timepsan seconds
+ */
 json_object *
-json_generate_graph(char *key, int span)
+json_generate_graph(char *key, unsigned long int index, unsigned long int timespan)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
     int           ret;
-    int           index = 0;
     
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
@@ -244,9 +244,10 @@ json_generate_graph(char *key, int span)
     snprintf(query, sizeof(query),
              "SELECT id, %s, strftime('%%s000', time) \
              FROM   engine_data \
-             WHERE id > %d \
-             ORDER BY time",
-             key, span);
+             WHERE id > %lu \
+             AND time > DATETIME('NOW', '-%lu seconds') \
+             ORDER BY id",
+             key, index, timespan);
     
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
@@ -290,7 +291,8 @@ json_generate_graph(char *key, int span)
 }
 
 const char *
-json_generate(long span_consumption, long span_speed, long timespan)
+json_generate(unsigned long int index_consumption, unsigned long int timespan_consumption,
+              unsigned long int index_speed, unsigned long int timespan_speed)
 {
     json_object *json = json_object_new_object();
     
@@ -301,11 +303,11 @@ json_generate(long span_consumption, long span_speed, long timespan)
     json_object_object_add(json, "latest_data", json_latest_data());    
     
     // get averages
-    json_object_object_add(json, "averages", json_averages(timespan));
+    json_object_object_add(json, "averages", json_averages(timespan_speed));
     
     // graphing data 
-    json_object_object_add(json, "graph_consumption", json_generate_graph("per_km", span_consumption));
-    json_object_object_add(json, "graph_speed", json_generate_graph("speed", span_speed));
+    json_object_object_add(json, "graph_consumption", json_generate_graph("per_km", index_consumption, timespan_consumption));
+    json_object_object_add(json, "graph_speed", json_generate_graph("speed", index_speed, timespan_speed));
     
     exec_query("END TRANSACTION");
     return json_object_to_json_string(json);

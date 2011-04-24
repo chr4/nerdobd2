@@ -138,9 +138,10 @@ send_json_data(int fd, char *args)
 {  
     char       *p;
     char        out[LEN_BUFFER];
-    long        speed_index = 0;
     long        consumption_index = 0;
-    long        timespan = 0;
+    long        consumption_timespan = 300;
+    long        speed_index = 0;
+    long        speed_timespan = 300;
     const char *json;
     
     // parse arguments
@@ -149,18 +150,20 @@ send_json_data(int fd, char *args)
         p = strtok(NULL, "=");
         while (p != NULL)
         {
-            if (!strcmp(p, "speed_index"))
-                speed_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(p, "consumption_index"))
+            if (!strcmp(p, "consumption_index"))
                 consumption_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(p, "timespan"))
-                timespan = atoi(strtok(NULL, "&"));
+            else if (!strcmp(p, "consumption_timespan"))
+                consumption_timespan = atoi(strtok(NULL, "&"));
+            else if (!strcmp(p, "speed_index"))
+                speed_index = atoi(strtok(NULL, "&"));
+            else if (!strcmp(p, "speed_timespan"))
+                speed_timespan = atoi(strtok(NULL, "&"));
             
             p = strtok(NULL, "=");
         }
     }
     
-    json = json_generate(consumption_index, speed_index, timespan);
+    json = json_generate(consumption_index, consumption_timespan, speed_index, speed_timespan);
     
 #ifdef DEBUG_AJAX 
     // printf("serving json:\n%s\n", json);
