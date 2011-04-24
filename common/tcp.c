@@ -7,6 +7,18 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
+
+void
+sig_chld(int signo)
+{
+        pid_t pid;
+        int   stat;
+
+        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
+        return;
+}
+
 
 int
 tcp_listen(int port)
@@ -51,6 +63,8 @@ tcp_loop_accept(int s, void (*callback)(int))
     int    status;
     struct sockaddr_in cliaddr;
 
+    signal(SIGCHLD, sig_chld);
+
     // accept incoming connections
     for ( ; ; )
     {
@@ -72,9 +86,6 @@ tcp_loop_accept(int s, void (*callback)(int))
 
             _exit(0);
         }
-
-        // collect defunct processes (don't wait)
-        while(waitpid(-1, &status, WNOHANG) > 0);
 
         close (c);
     }
