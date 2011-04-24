@@ -53,7 +53,7 @@ $(function () {
                 "series": { "shadowSize": 0 },
                 "yaxis": { "min": 0, "max": "20" },
                 "xaxis": { "min": now - timespan_consumption,
-                           "max": now,
+                           "max": now - 1000,
                            "mode": "time",
                            "timeformat": "%H:%M"
                 },
@@ -69,7 +69,7 @@ $(function () {
                 "series": { "shadowSize": 0 },
                 "yaxis": { "min": 0, "max": "160" },
                 "xaxis": { "min": now - timespan_speed,
-                           "max": now,
+                           "max": now - 1000,
                            "mode": "time",
                            "timeformat": "%H:%M"
                 }
