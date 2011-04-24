@@ -16,8 +16,4 @@
 
 int open_db(void);
 
-json_object *json_averages(int);
-json_object *json_latest_data(void);
-json_object *json_generate_graph(char *, int);
-
-const char *json_generate(long, long, long);
+const char *json_generate(unsigned long int, unsigned long int, unsigned long int, unsigned long int);
