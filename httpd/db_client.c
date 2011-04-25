@@ -110,11 +110,47 @@ json_averages(unsigned long int timespan)
         if (ret == SQLITE_ROW)
         {
             add_double(averages, "timespan", sqlite3_column_double(stmt, 1));
-            add_double(averages, "new", sqlite3_column_double(stmt, 0));
+            add_double(averages, "timespan_new", sqlite3_column_double(stmt, 0));
         }
     } while(ret != SQLITE_DONE);
     
     sqlite3_finalize(stmt);
+
+    snprintf(query, sizeof(query),
+             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
+             FROM engine_data \
+             WHERE per_km != -1");
+    
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
+    
+    do
+    {
+        ret = sqlite3_step(stmt);
+        
+        // database is busy, retry query
+        if (ret == SQLITE_BUSY)
+        {
+            // wait for 0.5 sec
+            usleep(500000);
+            
+#ifdef DEBUG_SQLITE
+            printf("retrying query: %s\n", query);
+#endif
+            continue;
+        }
+        
+        if (ret == SQLITE_ROW)
+        {
+            add_double(averages, "total", sqlite3_column_double(stmt, 1));
+            add_double(averages, "total_new", sqlite3_column_double(stmt, 0));
+        }
+    } while(ret != SQLITE_DONE);
+    
+    sqlite3_finalize(stmt);    
     
     return averages;
 }

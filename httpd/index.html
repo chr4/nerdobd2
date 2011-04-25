@@ -13,12 +13,14 @@
       <div id="graph_speed" style="width:470px;height:150px"></div>
     </div>
 
-    <div id="data" style="position:fixed;top:0px;left:500px;float:right;font-size:58px">
+    <div id="data" style="position:fixed;top:0px;left:500px;float:right;font-size:48px">
       <div id="rpm"></div>
       <div id="speed"></div>
       <div id="per_km"></div>
-      <div id="av_con"></div>
-      <div id="av_con_new"></div>
+      <div id="timespan"></div>
+      <div id="timespan_new"></div>
+      <div id="total"></div>
+      <div id="total_new"></div>      
     </div>
 
 <script type="text/javascript">
@@ -104,10 +106,13 @@ $(function () {
             if (json.latest_data.per_km)
                 $("#per_km").html(json.latest_data.per_km.toFixed(2) + " l/km");
             if (json.averages.timespan)
-                $("#av_con").html(json.averages.timespan.toFixed(2) + " old");
-            if (json.averages.timespan)
-                $("#av_con_new").html(json.averages.new.toFixed(2) + " new");
-
+                $("#timespan").html(json.averages.timespan.toFixed(2) + " old");
+            if (json.averages.timespan_new)
+                $("#timespan_new").html(json.averages.timespan_new.toFixed(2) + " new");
+            if (json.averages.total)
+                $("#total").html(json.averages.total.toFixed(2) + " old");
+            if (json.averages.total_new)
+                $("#total_new").html(json.averages.total_new.toFixed(2) + " new");
 
             $.plot($("#graph_consumption"), [ graph_consumption ], options_consumption);
             $.plot($("#graph_speed"), [ graph_speed ], options_speed);
