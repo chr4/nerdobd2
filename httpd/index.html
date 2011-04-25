@@ -5,6 +5,7 @@
   <title>nerdobd2</title>
   <script language="javascript" type="text/javascript" src="js/jquery.min.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.flot.min.js"></script>
+  <script language="javascript" type="text/javascript" src="js/jquery.flot.threshold.min.js"></script>
 
   <script language="javascript" type="text/javascript">
 
@@ -63,8 +64,9 @@
         };
         var graph_consumption = {
             "data": data_consumption,
-            "color": "rgb(30, 180, 20)",
-            "lines": { "fill": true },
+            "color": "rgb(200, 20, 30)",
+            "lines": { "fill": false, "steps": true },
+            "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" {
         };
 
         var options_speed = {
