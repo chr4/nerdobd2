@@ -81,7 +81,7 @@ json_averages(unsigned long int timespan)
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
              FROM engine_data \
-             WHERE time > DATETIME('NOW', '-%lu minutes') \
+             WHERE time > DATETIME('NOW', '-%lu seconds') \
              AND per_km != -1",
              timespan);
     
