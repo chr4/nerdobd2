@@ -277,12 +277,27 @@ json_generate_graph(char *key, unsigned long int index, unsigned long int timesp
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
     
+    // average in groups, so we have max 470 entries
+    // (we cannot display any more pixels)
+    /*
     snprintf(query, sizeof(query),
-             "SELECT id, %s, strftime('%%s000', time) \
-             FROM   engine_data \
-             WHERE id > %lu \
-             AND time > DATETIME('NOW', '-%lu seconds') \
-             ORDER BY id",
+             "SELECT id, SUM(strftime('%%s000', time))/count(1), \
+              SUM(%s)/count(1) FROM engine_data \
+              WHERE id > %lu \
+              AND time > DATETIME('NOW', '-%lu seconds') \
+              GROUP BY id / ( ( \
+                  SELECT COUNT(id) FROM engine_data \
+                  WHERE id > %lu \
+                  AND time > DATETIME('NOW', '-%lu seconds') \
+              ) / %d + 1 )",
+             key, index, timespan, index, timespan, 100);
+    */
+    snprintf(query, sizeof(query),    
+             "SELECT id, strftime('%%s000', time), %s \
+              FROM   engine_data \
+              WHERE id > %lu \
+              AND time > DATETIME('NOW', '-%lu seconds') \
+              ORDER BY id",
              key, index, timespan);
     
 #ifdef DEBUG_SQLITE
@@ -311,8 +326,8 @@ json_generate_graph(char *key, unsigned long int index, unsigned long int timesp
         }
         
         if (ret == SQLITE_ROW) {
-            add_data(data, sqlite3_column_double(stmt, 2),
-                     sqlite3_column_double(stmt, 1));
+            add_data(data, sqlite3_column_double(stmt, 1),
+                     sqlite3_column_double(stmt, 2));
             
             index = sqlite3_column_int(stmt, 0);
         }
