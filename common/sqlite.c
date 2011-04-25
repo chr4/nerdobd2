@@ -83,12 +83,15 @@ init_db(void)
         printf("Can not open database: %s", DB_RAM);
         return -1;
     }
-    
-    // disable waiting for write to be completed
-    exec_query("PRAGMA synchronous=OFF");
   
     exec_query("BEGIN TRANSACTION");
     
+    // disable waiting for write to be completed
+    exec_query("PRAGMA synchronous = OFF");
+    
+    // disable journal
+    exec_query("PRAGMA journal_mode = OFF");
+  
     // create engine_data table
     exec_query("CREATE TABLE IF NOT EXISTS engine_data ( \
                     id              INTEGER PRIMARY KEY, \
