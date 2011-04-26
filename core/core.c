@@ -115,7 +115,9 @@ void
 insert_engine_data(engine_data e)
 {
     char query[LEN_QUERY];
-    
+
+    exec_query("BEGIN TRANSACTION");
+
     snprintf(query, sizeof(query),
              "INSERT INTO engine_data VALUES ( \
              NULL, DATETIME('NOW'), \
@@ -124,13 +126,17 @@ insert_engine_data(engine_data e)
              e.oil_pressure, e.per_km, e.per_h);
     
     exec_query(query);
+
+    exec_query("END TRANSACTION");
 }
 
 void
 insert_other_data(other_data o)
 {
     char query[LEN_QUERY];
-    
+   
+    exec_query("BEGIN TRANSACTION");
+ 
     snprintf(query, sizeof(query), 
              "INSERT INTO other_data VALUES ( \
              NULL, DATETIME('NOW'), \
@@ -138,6 +144,8 @@ insert_other_data(other_data o)
              o.temp_engine, o.temp_air_intake, o.voltage);
     
     exec_query(query);
+
+    exec_query("END TRANSACTION");
 }
 
 // this struct collects all engine data

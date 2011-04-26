@@ -5,46 +5,44 @@ sqlite3 *db;
 
 int use_hd_db(void);
 
+static int
+busy(void *unused __attribute__((unused)), int count)
+{
+	usleep(500000);
+    puts("retrying query...\n");
+    
+    // give up after 30 seconds
+	return (count < 60);
+}
 
 int 
 exec_query(char *query)
 {
-
+    
     sqlite3_stmt  *stmt;
     
-    int ret;
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
-
+    
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("sqlite3_prepare_v2() error\n");
         return -1;
     }
     
-    do
+    if (sqlite3_step(stmt) != SQLITE_DONE)
     {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-    } while(ret != SQLITE_DONE);
+        printf("sqlite3_step error\n");
+        return -1;
+    }
     
-
     if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
         printf("sqlite3_finalize() error\n");
-
+        return -1;
+    }
+    
     return 0;
 }
 
@@ -83,6 +81,9 @@ init_db(void)
         printf("Can not open database: %s", DB_RAM);
         return -1;
     }
+    
+    // retry on busy errors
+    sqlite3_busy_handler(db, busy, NULL);    
   
     exec_query("BEGIN TRANSACTION");
     
