@@ -3,6 +3,18 @@
 
 sqlite3 *db;
 
+
+static int
+busy(void *unused __attribute__((unused)), int count)
+{
+	usleep(500000);
+    puts("retrying query...\n");
+    
+    // give up after 15 seconds (30 iterations)
+	return (count < 30);
+}
+
+
 int
 open_db(void)
 {
@@ -18,16 +30,19 @@ open_db(void)
         return -1;
     }
     
+    // retry on busy errors
+    sqlite3_busy_handler(db, busy, NULL);
+    
     return 0;
 }
+
 
 int 
 exec_query(char *query)
 {
     
     sqlite3_stmt  *stmt;
-    
-    int ret;
+
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
@@ -38,27 +53,17 @@ exec_query(char *query)
         return -1;
     }
     
-    do
+    if (sqlite3_step(stmt) != SQLITE_DONE)
     {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-    } while(ret != SQLITE_DONE);
-    
+        printf("sqlite3_step error\n");
+        return -1;
+    }
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
         printf("sqlite3_finalize() error\n");
+        return -1;
+    }
     
     return 0;
 }
@@ -70,7 +75,6 @@ json_averages(unsigned long int timespan)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
-    int           ret;
     
     json_object *averages = json_object_new_object();
     
@@ -91,30 +95,17 @@ json_averages(unsigned long int timespan)
         return NULL;
     }
     
-    do
-    {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-        if (ret == SQLITE_ROW)
-        {
+    while (sqlite3_step(stmt) == SQLITE_ROW)
             add_double(averages, "timespan", sqlite3_column_double(stmt, 0));
-        }
-    } while(ret != SQLITE_DONE);
     
-    sqlite3_finalize(stmt);
-
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }
+    
+    
+    // get the overall consumption average
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*per_km)/SUM(speed) \
              FROM engine_data \
@@ -125,33 +116,19 @@ json_averages(unsigned long int timespan)
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
-    
-    do
-    {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-        if (ret == SQLITE_ROW)
-        {
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
             add_double(averages, "total", sqlite3_column_double(stmt, 0));
-        }
-    } while(ret != SQLITE_DONE);
-    
-    sqlite3_finalize(stmt);    
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }    
     
     return averages;
 }
+
 
 // get latest data from database
 json_object *
@@ -159,7 +136,6 @@ json_latest_data(void)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
-    int           ret;
     
     json_object *data = json_object_new_object();
     
@@ -171,9 +147,12 @@ json_latest_data(void)
               ORDER BY id \
               DESC LIMIT 1");
   
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif    
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
     
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -181,36 +160,22 @@ json_latest_data(void)
         return NULL;
     }
     
-    do
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-        if (ret == SQLITE_ROW)
-        {
             add_double(data, "rpm", sqlite3_column_double(stmt, 0));
             add_double(data, "speed", sqlite3_column_double(stmt, 1));
             add_double(data, "injection_time", sqlite3_column_double(stmt, 2));
             add_double(data, "oil_pressure", sqlite3_column_double(stmt, 3));
             add_double(data, "per_km", sqlite3_column_double(stmt, 4));
             add_double(data, "per_h", sqlite3_column_double(stmt, 5));
-
-        }
-    } while(ret != SQLITE_DONE);
+    }
     
-    sqlite3_finalize(stmt);
-   
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }      
+    
     
     // query other data
     snprintf(query, sizeof(query),
@@ -219,9 +184,11 @@ json_latest_data(void)
              ORDER BY id \
              DESC LIMIT 1");
     
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
     
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -229,31 +196,18 @@ json_latest_data(void)
         return NULL;
     }
     
-    do
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-            // wait for 0.5 sec
-            usleep(500000);
-            
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s\n", query);
-#endif
-            continue;
-        }
-        
-        if (ret == SQLITE_ROW)
-        {
             add_double(data, "temp_engine", sqlite3_column_double(stmt, 0));
             add_double(data, "temp_air_intake", sqlite3_column_double(stmt, 1));
             add_double(data, "voltage", sqlite3_column_double(stmt, 2));  
-        }
-    } while(ret != SQLITE_DONE);
+    }
 
-    sqlite3_finalize(stmt);
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }   
 
     
     return data;
@@ -270,26 +224,10 @@ json_generate_graph(char *key, unsigned long int index, unsigned long int timesp
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
-    int           ret;
     
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
-    
-    // average in groups, so we have max 470 entries
-    // (we cannot display any more pixels)
-    /*
-    snprintf(query, sizeof(query),
-             "SELECT id, SUM(strftime('%%s000', time))/count(1), \
-              SUM(%s)/count(1) FROM engine_data \
-              WHERE id > %lu \
-              AND time > DATETIME('NOW', '-%lu seconds') \
-              GROUP BY id / ( ( \
-                  SELECT COUNT(id) FROM engine_data \
-                  WHERE id > %lu \
-                  AND time > DATETIME('NOW', '-%lu seconds') \
-              ) / %d + 1 )",
-             key, index, timespan, index, timespan, 100);
-    */
+
     snprintf(query, sizeof(query),    
              "SELECT id, strftime('%%s000', time), %s \
               FROM   engine_data \
@@ -298,9 +236,11 @@ json_generate_graph(char *key, unsigned long int index, unsigned long int timesp
               ORDER BY id",
              key, index, timespan);
     
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
     
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -308,36 +248,25 @@ json_generate_graph(char *key, unsigned long int index, unsigned long int timesp
         return NULL;
     }
     
-    do
+    while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        ret = sqlite3_step(stmt);
-        
-        // database is busy, retry query
-        if (ret == SQLITE_BUSY)
-        {
-#ifdef DEBUG_SQLITE
-            printf("retrying query: %s.\n", query);
-#endif
-            // wait for 0.5 sec
-            usleep(500000);
-            continue;
-        }
-        
-        if (ret == SQLITE_ROW) {
-            add_data(data, sqlite3_column_double(stmt, 1),
-                     sqlite3_column_double(stmt, 2));
+        add_data(data, sqlite3_column_double(stmt, 1),
+                       sqlite3_column_double(stmt, 2));
             
-            index = sqlite3_column_int(stmt, 0);
-        }
-        
-    } while(ret != SQLITE_DONE);
-    
-    sqlite3_finalize(stmt);
+        index = sqlite3_column_int(stmt, 0);
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }
     
     add_int(graph, "index", index);
     
     return graph;
 }
+
 
 const char *
 json_generate(unsigned long int index_consumption, unsigned long int timespan_consumption,
