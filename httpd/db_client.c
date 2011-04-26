@@ -79,7 +79,7 @@ json_averages(unsigned long int timespan)
      averages since beginning of calculation
      */
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
+             "SELECT SUM(speed*per_km)/SUM(speed) \
              FROM engine_data \
              WHERE time > DATETIME('NOW', '-%lu seconds') \
              AND per_km != -1",
@@ -109,15 +109,14 @@ json_averages(unsigned long int timespan)
         
         if (ret == SQLITE_ROW)
         {
-            add_double(averages, "timespan", sqlite3_column_double(stmt, 1));
-            add_double(averages, "timespan_new", sqlite3_column_double(stmt, 0));
+            add_double(averages, "timespan", sqlite3_column_double(stmt, 0));
         }
     } while(ret != SQLITE_DONE);
     
     sqlite3_finalize(stmt);
 
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*per_km)/SUM(speed), AVG(per_km) \
+             "SELECT SUM(speed*per_km)/SUM(speed) \
              FROM engine_data \
              WHERE per_km != -1");
     
@@ -145,8 +144,7 @@ json_averages(unsigned long int timespan)
         
         if (ret == SQLITE_ROW)
         {
-            add_double(averages, "total", sqlite3_column_double(stmt, 1));
-            add_double(averages, "total_new", sqlite3_column_double(stmt, 0));
+            add_double(averages, "total", sqlite3_column_double(stmt, 0));
         }
     } while(ret != SQLITE_DONE);
     
@@ -354,7 +352,7 @@ json_generate(unsigned long int index_consumption, unsigned long int timespan_co
     json_object_object_add(json, "latest_data", json_latest_data());    
     
     // get averages
-    json_object_object_add(json, "averages", json_averages(timespan_speed));
+    json_object_object_add(json, "averages", json_averages(timespan_consumption));
     
     // graphing data 
     json_object_object_add(json, "graph_consumption", json_generate_graph("per_km", index_consumption, timespan_consumption));
