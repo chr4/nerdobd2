@@ -63,9 +63,10 @@
                     break;
                 }
             }
-
+            
             // prepend new data to series
-            this.series.data = data.concat(this.series.data);
+            // this.series.data = data.concat(this.series.data);
+            this.series.data = $.merge(this.series.data, data);
             
             this.updateOptions();
             this.plot();
@@ -132,7 +133,7 @@ $(document).ready(function() {
         if (json.averages.total)
             $("#total").html(json.averages.total.toFixed(2) + " l/km");
 
-        setTimeout(getData, 500);
+        setTimeout(getData, 300);
     }
 
 
