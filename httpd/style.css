@@ -1,67 +1,75 @@
 @font-face {  
-	font-family: white-rabbit ;  
-    src: url( white-rabbit.ttf ) format("truetype");  
+	font-family:white-rabbit ;  
+    src:url( white-rabbit.ttf ) format("truetype");  
 }  
 
 body
 {
     /* eeepc screen dimensions */
-    width: 800px;
-    height: 480px;
+    width:800px;
+    height:480px;
 
     padding:0px;
     margin:0px;
-    background-color: #eeeeee;
-    overflow: hidden; /* hide scroll bar */
+    background-color:#eeeeee;
+    overflow:hidden; /* hide scroll bar */
 }
 
 .graph {
-    width:540px;
     height:220px
+}
+
+#graph-consumption {
+    margin-left:7px;
+    width:533px;
+}
+
+#graph-speed {
+    width:540px;
 }
    
 .left-container {
     float:left;
-    width: 540px;
-    height: 220px;
-    margin: 10px;
-    padding: 0px;    
+    width:540px;
+    height:220px;
+    margin:10px;
+    padding:0px;    
 }
    
  .right-container {
      float:right;
-     width: 220px;
-     height: 220px;
-     margin: 10px;
-     padding: 0px;
+     width:220px;
+     height:220px;
+     margin:10px;
+     padding:0px;
  }
    
  .value {
-     width: 170px;
-     float: left;
-     margin-bottom: 10px;
-     margin-right: 5px;
-     text-align: right;
-     font-family: white-rabbit;
+     width:170px;
+     float:left;
+     margin-bottom:10px;
+     margin-right:5px;
+     text-align:right;
+     font-family:white-rabbit;
  }
  
- .value-big { font-size: 60px; height: 50px; line-height:60px;}
- .value-medium { font-size: 34px; height: 30px; line-height:34px; }
- .value-small { font-size: 22px; height: 20px; line-height:22px; }
+ .value-big { font-size:60px; height:50px; line-height:60px;}
+ .value-medium { font-size:34px; height:30px; line-height:34px; }
+ .value-small { font-size:22px; height:20px; line-height:22px; }
  
  
  .unit {
-     height: 16px;
-     float: right;
-     width: 40px;
-     margin-left: 5px;
-     margin-bottom: 10px;
-     font-size: 16px;
-     line-height: 16px;
-     text-align: left;
-     font-family: helvetica;
+     height:16px;
+     float:right;
+     width:40px;
+     margin-left:5px;
+     margin-bottom:10px;
+     font-size:16px;
+     line-height:16px;
+     text-align:left;
+     font-family:helvetica;
  }
    
-.unit-big { margin-top: 34px }
-.unit-medium { margin-top: 14px }
-.unit-small { margin-top: 4px }   
+.unit-big { margin-top:34px }
+.unit-medium { margin-top:14px }
+.unit-small { margin-top:4px }   
