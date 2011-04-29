@@ -12,6 +12,7 @@
 #define HEADER_CSS      SERVER_STRING SERVER_CON "Content-Type: text/css\r\n\r\n"
 #define HEADER_JS       SERVER_STRING SERVER_CON "Content-Type: application/x-javascript\r\n\r\n"
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
+#define HEADER_TTF      SERVER_STRING SERVER_CON "Content-Type: font/ttf\r\n\r\n"
 
 
 int
@@ -109,6 +110,11 @@ send_file(int fd, char *filename)
     else if (!strcmp(p, ".ico") )
     {
         if (write(fd, HEADER_ICON, strlen(HEADER_ICON)) <= 0)
+            return -1;
+    }
+    else if (!strcmp(p, ".ttf") )
+    {
+        if (write(fd, HEADER_TTF, strlen(HEADER_TTF)) <= 0)
             return -1;
     }
     else
