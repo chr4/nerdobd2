@@ -95,14 +95,14 @@ init_db(void)
   
     // create engine_data table
     exec_query("CREATE TABLE IF NOT EXISTS engine_data ( \
-                    id              INTEGER PRIMARY KEY, \
-                    time            DATE, \
-                    rpm             FLOAT, \
-                    speed           FLOAT, \
-                    injection_time  FLOAT, \
-                    oil_pressure    FLOAT, \
-                    per_km          FLOAT, \
-                    per_h           FLOAT )");
+                    id                    INTEGER PRIMARY KEY, \
+                    time                  DATE, \
+                    rpm                   FLOAT, \
+                    speed                 FLOAT, \
+                    injection_time        FLOAT, \
+                    oil_pressure          FLOAT, \
+                    consumption_per_100km FLOAT, \
+                    consumption_per_h     FLOAT )");
 
     // create other_data table
     exec_query("CREATE TABLE IF NOT EXISTS other_data ( \

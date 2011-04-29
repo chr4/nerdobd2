@@ -69,70 +69,9 @@ exec_query(char *query)
 }
 
 
-// get averages
-json_object *
-json_averages(unsigned long int timespan)
-{
-    char          query[LEN_QUERY];
-    sqlite3_stmt  *stmt;
-    
-    json_object *averages = json_object_new_object();
-    
-    /* TODO: averages from current timespan displayed
-     averages since last manual reset
-     averages since beginning of calculation
-     */
-    snprintf(query, sizeof(query),
-             "SELECT SUM(speed*per_km)/SUM(speed) \
-             FROM engine_data \
-             WHERE time > DATETIME('NOW', '-%lu seconds') \
-             AND per_km != -1",
-             timespan);
-    
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
-        printf("couldn't execute query: '%s'\n", query);
-        return NULL;
-    }
-    
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-            add_double(averages, "timespan", sqlite3_column_double(stmt, 0));
-    
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
-        printf("sqlite3_finalize() error\n");
-        return NULL;
-    }
-    
-    
-    // get the overall consumption average
-    snprintf(query, sizeof(query),
-             "SELECT SUM(speed*per_km)/SUM(speed) \
-             FROM engine_data \
-             WHERE per_km != -1");
-    
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
-        printf("couldn't execute query: '%s'\n", query);
-        return NULL;
-    }
-
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-            add_double(averages, "total", sqlite3_column_double(stmt, 0));
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
-        printf("sqlite3_finalize() error\n");
-        return NULL;
-    }    
-    
-    return averages;
-}
-
-
 // get latest data from database
 json_object *
-json_latest_data(void)
+json_latest_data(unsigned long int timespan)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -142,7 +81,7 @@ json_latest_data(void)
     // query engine data
     snprintf(query, sizeof(query),
              "SELECT rpm, speed, injection_time, \
-                     oil_pressure, per_km, per_h \
+                     oil_pressure, consumption_per_100km, consumption_per_h \
               FROM engine_data \
               ORDER BY id \
               DESC LIMIT 1");
@@ -166,8 +105,8 @@ json_latest_data(void)
             add_double(data, "speed", sqlite3_column_double(stmt, 1));
             add_double(data, "injection_time", sqlite3_column_double(stmt, 2));
             add_double(data, "oil_pressure", sqlite3_column_double(stmt, 3));
-            add_double(data, "per_km", sqlite3_column_double(stmt, 4));
-            add_double(data, "per_h", sqlite3_column_double(stmt, 5));
+            add_double(data, "consumption_per_100km", sqlite3_column_double(stmt, 4));
+            add_double(data, "consumption_per_h", sqlite3_column_double(stmt, 5));
     }
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
@@ -209,6 +148,53 @@ json_latest_data(void)
         return NULL;
     }   
 
+    /* TODO: averages from current timespan displayed
+     averages since last manual reset
+     averages since beginning of calculation
+     */
+    snprintf(query, sizeof(query),
+             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+             FROM engine_data \
+             WHERE time > DATETIME('NOW', '-%lu seconds') \
+             AND consumption_per_100km != -1",
+             timespan);
+    
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
+    
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        add_double(data, "consumption_average_timespan", sqlite3_column_double(stmt, 0));
+    
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }
+    
+    
+    // get the overall consumption average
+    snprintf(query, sizeof(query),
+             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+             FROM engine_data \
+             WHERE consumption_per_100km != -1");
+    
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return NULL;
+    }
+    
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+        add_double(data, "consumption_average_total", sqlite3_column_double(stmt, 0));
+    
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+        printf("sqlite3_finalize() error\n");
+        return NULL;
+    }    
     
     return data;
 }
@@ -278,13 +264,10 @@ json_generate(unsigned long int index_consumption, unsigned long int timespan_co
     exec_query("BEGIN TRANSACTION");
     
     // get latest engine data from database
-    json_object_object_add(json, "latest_data", json_latest_data());    
-    
-    // get averages
-    json_object_object_add(json, "averages", json_averages(timespan_consumption));
-    
+    json_object_object_add(json, "latest_data", json_latest_data(timespan_consumption));
+ 
     // graphing data 
-    json_object_object_add(json, "graph_consumption", json_generate_graph("per_km", index_consumption, timespan_consumption));
+    json_object_object_add(json, "graph_consumption", json_generate_graph("consumption_per_100km", index_consumption, timespan_consumption));
     json_object_object_add(json, "graph_speed", json_generate_graph("speed", index_speed, timespan_speed));
     
     exec_query("END TRANSACTION");

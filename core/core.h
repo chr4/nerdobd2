@@ -26,8 +26,8 @@ typedef struct engine_data
     float speed;
 
     // consumption (will be calculated)
-    float per_h;
-    float per_km;
+    float consumption_per_h;
+    float consumption_per_100km;
 } engine_data;
 
 // struct for other data

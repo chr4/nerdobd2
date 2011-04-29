@@ -53,12 +53,18 @@ main (int argc, char **argv)
         handle_data("rpm", 1000 + i * 100);
         handle_data("injection_time", 0.15 * i);
         handle_data("oil_pressure", i);
-        handle_data("speed", 3 * i );
         handle_data("temp_engine", 90);
         handle_data("temp_air_intake", 35);
         handle_data("voltage", 0.01 * i);
-        usleep(300000);
         
+        if (!i % 15)
+            handle_data("speed", 0);
+        else
+            handle_data("speed", 3 * i);
+
+        usleep(300000);
+      
+         
         if (i > 35)
             flag = 1;
         if (i < 2)
@@ -123,7 +129,8 @@ insert_engine_data(engine_data e)
              NULL, DATETIME('NOW'), \
              %f, %f, %f, %f, %f, %f )",
              e.rpm, e.speed, e.injection_time,
-             e.oil_pressure, e.per_km, e.per_h);
+             e.oil_pressure, e.consumption_per_100km,
+             e.consumption_per_h);
     
     exec_query(query);
 
@@ -175,13 +182,13 @@ handle_data(char *name, float value)
         engine.speed = value;
 
         // calculate consumption per hour
-        engine.per_h = 60 * 4 * MULTIPLIER * engine.rpm * engine.injection_time;
+        engine.consumption_per_h = 60 * 4 * MULTIPLIER * engine.rpm * engine.injection_time;
 
         // calculate consumption per hour
         if ( engine.speed > 0)
-            engine.per_km = engine.per_h / engine.speed * 100;
+            engine.consumption_per_100km = engine.consumption_per_h / engine.speed * 100;
         else
-            engine.per_km = -1;
+            engine.consumption_per_100km = -1;
 
 
         insert_engine_data(engine);
