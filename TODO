@@ -1,0 +1,5 @@
+- insert null instead of -1 for consumption graph (seperate segments)
+- implement "reset" timestamp function
+- align total counter to the small values
+- insert graph and axis labels
+- implement websockets-push, or play with poll time
