@@ -91,6 +91,47 @@
 
         this.construct();
     } 
+    
+    function Value(Name, Unit, Accuracy)
+    {
+        var name;
+        var unit; 
+        var size;
+        var accuracy;
+    
+        this.update = function(data)
+        {
+            if (typeof data[this.name] === 'undefined')
+            {
+                alert(this.name + " undefined!");
+                return;
+            }
+                
+            // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
+            if (this.name == "consumption_per_100km" && data[this.name] == -1)
+                this.set(data['consumption_per_h'], "l/h");
+            else        
+                this.set(data[this.name], this.unit);
+        }
+        
+        this.set = function(value, theunit)
+        {
+            $('#' + this.name).html(value.toFixed(this.accuracy));
+            
+            // set the unit for consumption accordingly
+            if (this.name == "consumption_per_100km")
+                $('#' + this.name + '-unit').html(theunit);        
+        }
+        
+        this.construct = function()
+        {
+            this.name = Name;
+            this.unit = Unit;
+            this.accuracy = Accuracy;
+        }
+        
+        this.construct();
+    }
 
   
 $(document).ready(function() {
@@ -113,39 +154,32 @@ $(document).ready(function() {
                                  "yaxis": { "min": 0, "max": "150" }, 
                                  "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                1800000);
-                               
-                               
+
+    var values = new Array();
+    
+    values.push(new Value("consumption_per_100km", "l/km", 2));
+    values.push(new Value("speed",  "km/h", 1));
+    values.push(new Value("consumption_average_timespan", "l/km", 2));
+    values.push(new Value("consumption_average_total", "l/km", 2));
+    values.push(new Value("consumption_per_h", "l/h", 2));
+    values.push(new Value("rpm", "rpm", 0));
+    values.push(new Value("temp_engine", "°C", 1));
+    values.push(new Value("temp_air_intake", "°C", 1));
+    values.push(new Value("voltage", "°C", 1));
+
+
     function onDataReceived(json) {
-                
-        if (json.graph_consumption.index)
-            ConsumptionGraph.setIndex(json.graph_consumption.index);
-        if (json.graph_speed.index)
-            SpeedGraph.setIndex(json.graph_speed.index);
-
+        var i;
+        
+        for (i = values.length - 1; i >= 0; i--)
+            values[i].update(json.latest_data);
+                    
+        ConsumptionGraph.setIndex(json.graph_consumption.index);
         ConsumptionGraph.appendData(json.graph_consumption.data);
+        
         SpeedGraph.appendData(json.graph_speed.data);
-
-        if (json.latest_data.speed)
-            $("#speed").html(json.latest_data.speed.toFixed(1));
-        if (json.latest_data.per_km)
-            $("#per_km").html(json.latest_data.per_km.toFixed(2));
-            
-        if (json.averages.timespan)
-            $("#timespan").html(json.averages.timespan.toFixed(2));
-        if (json.averages.total)
-            $("#total").html(json.averages.total.toFixed(2));
-
-        if (json.latest_data.per_h)
-            $("#per_h").html(json.latest_data.per_h.toFixed(1));
-        if (json.latest_data.rpm)
-            $("#rpm").html(json.latest_data.rpm.toFixed(0));            
-        if (json.latest_data.temp_engine)
-            $("#temp_engine").html(json.latest_data.temp_engine.toFixed(1));
-        if (json.latest_data.temp_air_intake)
-            $("#temp_air_intake").html(json.latest_data.temp_air_intake.toFixed(1));
-        if (json.latest_data.voltage)
-            $("#voltage").html(json.latest_data.voltage.toFixed(1));
-
+        SpeedGraph.setIndex(json.graph_speed.index);
+        
         setTimeout(getData, 300);
     }
 
@@ -175,11 +209,11 @@ $(document).ready(function() {
    </div>   
 
      <div class="right-container">
-       <span id="per_km" class="value value-big">-</span><span class="unit unit-big">l/km</span>     
+       <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>     
        <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
       
-       <span id="timespan" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
-       <span id="total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
+       <span id="consumption_average_timespan" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+       <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
      </div>
    
    <div class="left-container">      
@@ -187,7 +221,7 @@ $(document).ready(function() {
   </div>
    
      <div class="right-container">
-       <span id="per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>     
+       <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>     
        <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
        <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
        <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
