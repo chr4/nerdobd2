@@ -3,6 +3,7 @@
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>nerdobd2</title>
+  <link rel="stylesheet" href="style.css" type="text/css" media="all" />
   <script language="javascript" type="text/javascript" src="js/jquery.min.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.flot.min.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.flot.threshold.min.js"></script>
@@ -94,7 +95,9 @@
   
 $(document).ready(function() {
 
-    var ConsumptionGraph = new Graph("#graph_consumption",
+
+    // maybe we can put those options somewhere better maintainable
+    var ConsumptionGraph = new Graph("#graph-consumption",
                                      { "data": [], "color": "rgb(200, 20, 30)",
                                        "lines": { "fill": false, "steps": true },
                                        "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } },
@@ -103,7 +106,7 @@ $(document).ready(function() {
                                        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                      300000);
 
-    var SpeedGraph = new Graph("#graph_speed",
+    var SpeedGraph = new Graph("#graph-speed",
                                { "data": [], "color": "rgb(0, 0, 0)",
                                  "lines": { "fill": true } },    
                                { "series": { "shadowSize": 0 }, 
@@ -113,7 +116,7 @@ $(document).ready(function() {
                                
                                
     function onDataReceived(json) {
-
+                
         if (json.graph_consumption.index)
             ConsumptionGraph.setIndex(json.graph_consumption.index);
         if (json.graph_speed.index)
@@ -121,17 +124,27 @@ $(document).ready(function() {
 
         ConsumptionGraph.appendData(json.graph_consumption.data);
         SpeedGraph.appendData(json.graph_speed.data);
-    
-        if (json.latest_data.rpm)
-            $("#rpm").html(json.latest_data.rpm.toFixed(0) + " rpm");
+
         if (json.latest_data.speed)
-            $("#speed").html(json.latest_data.speed.toFixed(1) + " km/h");
+            $("#speed").html(json.latest_data.speed.toFixed(1));
         if (json.latest_data.per_km)
-            $("#per_km").html(json.latest_data.per_km.toFixed(2) + " l/km");
+            $("#per_km").html(json.latest_data.per_km.toFixed(2));
+            
         if (json.averages.timespan)
-            $("#timespan").html(json.averages.timespan.toFixed(2) + " l/km");
+            $("#timespan").html(json.averages.timespan.toFixed(2));
         if (json.averages.total)
-            $("#total").html(json.averages.total.toFixed(2) + " l/km");
+            $("#total").html(json.averages.total.toFixed(2));
+
+        if (json.latest_data.per_h)
+            $("#per_h").html(json.latest_data.per_h.toFixed(1));
+        if (json.latest_data.rpm)
+            $("#rpm").html(json.latest_data.rpm.toFixed(0));            
+        if (json.latest_data.temp_engine)
+            $("#temp_engine").html(json.latest_data.temp_engine.toFixed(1));
+        if (json.latest_data.temp_air_intake)
+            $("#temp_air_intake").html(json.latest_data.temp_air_intake.toFixed(1));
+        if (json.latest_data.voltage)
+            $("#voltage").html(json.latest_data.voltage.toFixed(1));
 
         setTimeout(getData, 300);
     }
@@ -147,6 +160,7 @@ $(document).ready(function() {
             method: 'GET',
             dataType: 'json',
             success: onDataReceived
+            //error: setTimeout(getData, 300)
         });
     }
 
@@ -156,19 +170,30 @@ $(document).ready(function() {
 
  </head>
   <body>
-    <div id="graphs">
-      <div id="graph_consumption" style="width:470px;height:150px"></div>
-      <div id="graph_speed" style="width:470px;height:150px"></div>
-    </div>
+    <div class="left-container">
+      <div id="graph-consumption" class="graph"></div>
+   </div>   
 
-    <div id="data" style="position:fixed;top:0px;left:500px;float:right;font-size:48px">
-      <div id="rpm"></div>
-      <div id="speed"></div>
-      <div id="per_km"></div>
-      <div id="timespan"></div>
-      <div id="timespan_new"></div>
-      <div id="total"></div>
-      <div id="total_new"></div>      
+     <div class="right-container">
+       <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
+       <span id="per_km" class="value value-big">-</span><span class="unit unit-big">l/km</span>
+      
+       <span id="timespan" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+       <span id="total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
+     </div>
+   
+   <div class="left-container">      
+      <div id="graph-speed" class="graph"></div>
+  </div>
+   
+     <div class="right-container">
+       <span id="per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>     
+       <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
+       <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
+       <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
+       <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>     
+     </div>     
+      
     </div>
  </body>
 </html>
