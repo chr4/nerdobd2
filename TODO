@@ -3,3 +3,6 @@
 - align total counter to the small values
 - insert graph and axis labels
 - implement websockets-push, or play with poll time
+
+- try how multiple http requests affect performance
+- create HTML on the fly
