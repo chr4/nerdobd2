@@ -10,7 +10,7 @@
 
   <script language="javascript" type="text/javascript">
 
-    function Graph(Name, Series, Options, Timespan)
+    function Graph(name, series, options, timespan)
     {
         var name;
         var index;
@@ -73,40 +73,57 @@
             this.plot();
         }
         
-
+        this.update = function()
+        {
+            // this is out of scope in onDataReceived
+            var that = this;
+            
+            function onDataReceived(json)
+            {
+                that.setIndex(json.index);
+                that.appendData(json.data);
+                
+                setTimeout(function() { that.update(); }, 300);
+            }
+                        
+            $.ajax({
+                url: this.name + ".json" + 
+                     "?index=" + this.index +
+                     "&timespan=" + this.timespan / 1000,
+                method: 'GET',
+                dataType: 'json',
+                success: onDataReceived
+            });
+        }
         
         this.plot = function()
         {
-            $.plot($(this.name), [ this.series ], this.options);
+            $.plot($("#graph-" + this.name), [ this.series ], this.options);
         }
         
         this.construct = function()
         {
-            this.name = Name;
-            this.series = Series;
-            this.options = Options;
-            this.timespan = Timespan;
+            this.name = name;
+            this.series = series;
+            this.options = options;
+            this.timespan = timespan;
             this.index = 0;
+            
+            this.update();
         }
 
         this.construct();
     } 
     
-    function Value(Name, Unit, Accuracy)
+    
+    function Value(name, unit, accuracy)
     {
         var name;
         var unit; 
-        var size;
         var accuracy;
-    
+
         this.update = function(data)
-        {
-            if (typeof data[this.name] === 'undefined')
-            {
-                alert(this.name + " undefined!");
-                return;
-            }
-                
+        {                
             // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
             if (this.name == "consumption_per_100km" && data[this.name] == -1)
                 this.set(data['consumption_per_h'], "l/h");
@@ -125,9 +142,9 @@
         
         this.construct = function()
         {
-            this.name = Name;
-            this.unit = Unit;
-            this.accuracy = Accuracy;
+            this.name = name;
+            this.unit = unit;
+            this.accuracy = accuracy;
         }
         
         this.construct();
@@ -138,7 +155,7 @@ $(document).ready(function() {
 
 
     // maybe we can put those options somewhere better maintainable
-    var ConsumptionGraph = new Graph("#graph-consumption",
+    var ConsumptionGraph = new Graph("consumption",
                                      { "data": [], "color": "rgb(200, 20, 30)",
                                        "lines": { "fill": false, "steps": true },
                                        "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } },
@@ -147,7 +164,7 @@ $(document).ready(function() {
                                        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                      300000);
 
-    var SpeedGraph = new Graph("#graph-speed",
+    var SpeedGraph = new Graph("speed",
                                { "data": [], "color": "rgb(0, 0, 0)",
                                  "lines": { "fill": true } },    
                                { "series": { "shadowSize": 0 }, 
@@ -155,8 +172,27 @@ $(document).ready(function() {
                                  "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                1800000);
 
-    var values = new Array();
+
+    function onDataReceived(json)
+    {
+        for (var i = values.length - 1; i >= 0; i--)
+            values[i].update(json);
+            
+        setTimeout(getData, 300);
+    }
+
+    function getData()
+    {
+        $.ajax({
+            url: "data.json",
+            method: 'GET',
+            dataType: 'json',
+            success: onDataReceived
+        });
+    }
     
+    var values = new Array();
+     
     values.push(new Value("consumption_per_100km", "l/km", 2));
     values.push(new Value("speed",  "km/h", 1));
     values.push(new Value("consumption_average_timespan", "l/km", 2));
@@ -167,38 +203,8 @@ $(document).ready(function() {
     values.push(new Value("temp_air_intake", "°C", 1));
     values.push(new Value("voltage", "°C", 1));
 
-
-    function onDataReceived(json) {
-        var i;
-        
-        for (i = values.length - 1; i >= 0; i--)
-            values[i].update(json.latest_data);
-                    
-        ConsumptionGraph.setIndex(json.graph_consumption.index);
-        ConsumptionGraph.appendData(json.graph_consumption.data);
-        
-        SpeedGraph.appendData(json.graph_speed.data);
-        SpeedGraph.setIndex(json.graph_speed.index);
-        
-        setTimeout(getData, 300);
-    }
-
-
-    function getData() {
-        $.ajax({
-            url: "data.json" + 
-                 "?consumption_index=" + ConsumptionGraph.getIndex() +
-                 "&consumption_timespan=" + ConsumptionGraph.getTimespan() / 1000 + 
-                 "&speed_index=" + SpeedGraph.getIndex() + 
-                 "&speed_timespan=" + SpeedGraph.getTimespan() / 1000,
-            method: 'GET',
-            dataType: 'json',
-            success: onDataReceived
-            //error: setTimeout(getData, 300)
-        });
-    }
-
     getData();
+
 });    
   </script>
 

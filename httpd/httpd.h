@@ -16,4 +16,5 @@
 
 int open_db(void);
 
-const char *json_generate(unsigned long int, unsigned long int, unsigned long int, unsigned long int);
+const char *json_latest_data(unsigned long int);
+const char *json_graph_data(char *, unsigned long int, unsigned long int);

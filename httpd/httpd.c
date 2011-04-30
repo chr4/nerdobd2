@@ -138,46 +138,18 @@ send_file(int fd, char *filename)
     return 0;
 }
 
-
 int
-send_json_data(int fd, char *args)
-{  
-    char       *p;
-    char        out[LEN_BUFFER];
-    long        consumption_index = 0;
-    long        consumption_timespan = 300;
-    long        speed_index = 0;
-    long        speed_timespan = 300;
-    const char *json;
-    
-    // parse arguments
-    if (strtok(args, "?") != NULL)
-    {
-        p = strtok(NULL, "=");
-        while (p != NULL)
-        {
-            if (!strcmp(p, "consumption_index"))
-                consumption_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(p, "consumption_timespan"))
-                consumption_timespan = atoi(strtok(NULL, "&"));
-            else if (!strcmp(p, "speed_index"))
-                speed_index = atoi(strtok(NULL, "&"));
-            else if (!strcmp(p, "speed_timespan"))
-                speed_timespan = atoi(strtok(NULL, "&"));
-            
-            p = strtok(NULL, "=");
-        }
-    }
-    
-    json = json_generate(consumption_index, consumption_timespan, speed_index, speed_timespan);
-    
-#ifdef DEBUG_AJAX 
-    // printf("serving json:\n%s\n", json);
-#endif
+send_json(int fd, const char *json)
+{
+    char out[LEN_BUFFER];
     
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
              "Content-Length: %d\r\n", strlen(json));
+    
+#ifdef DEBUG_AJAX 
+    // printf("serving json:\n%s\n", json);
+#endif
     
     if (write(fd, out, strlen(out)) <= 0)
         return -1;
@@ -188,6 +160,67 @@ send_json_data(int fd, char *args)
     if (write(fd, json, strlen(json)) <= 0)
         return -1;
     
+    return 0;    
+}
+
+
+int
+send_latest_data(int fd, char *args)
+{
+    char       *p;
+    const char *json;
+    long        timespan = 300;
+    
+    // parse arguments
+    if (strtok(args, "?") != NULL)
+    {
+        p = strtok(NULL, "=");
+        while (p != NULL)
+        {
+            if (!strcmp(p, "timespan"))
+                timespan = atoi(strtok(NULL, "&"));
+            
+            p = strtok(NULL, "=");
+        }
+    }
+    
+    json = json_latest_data(timespan);
+    
+    if (send_json(fd, json) == -1)
+        return -1;
+        
+    return 0;
+}
+
+
+int
+send_graph_data(int fd, char *graph, char *args)
+{
+    char       *p;
+    const char *json;
+    long        index = 0;
+    long        timespan = 300;
+
+    // parse arguments
+    if (strtok(args, "?") != NULL)
+    {
+        p = strtok(NULL, "=");
+        while (p != NULL)
+        {
+            if (!strcmp(p, "index"))
+                index = atoi(strtok(NULL, "&"));
+            else if (!strcmp(p, "timespan"))
+                timespan = atoi(strtok(NULL, "&"));
+            
+            p = strtok(NULL, "=");
+        }
+    }
+
+    json = json_graph_data(graph, index, timespan);
+
+    if (send_json(fd, json) == -1)
+        return -1;
+
     return 0;
 }
 
@@ -267,7 +300,11 @@ handle_client(int fd)
     
     // send json data
     if (!strncmp(p, "/data.json", 10) )
-        send_json_data(fd, buffer);
+        send_latest_data(fd, buffer);
+    else if (!strncmp(p, "/consumption.json", 17) )
+        send_graph_data(fd, "consumption_per_100km", buffer);
+    else if (!strncmp(p, "/speed.json", 11) )
+        send_graph_data(fd, "speed", buffer);
  
     // send file
     else
