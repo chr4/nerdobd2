@@ -22,16 +22,16 @@ send_error(int fd, char *message)
 
     snprintf(out, sizeof(out), HTTP_ERROR
              "Content-Length: %d\r\n", strlen(message));
-    
+
     if (write(fd, out, strlen(out)) <= 0)
         return -1;
-    
+
     if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
         return -1;
-    
+
     if (write(fd, message, strlen(message)) <= 0)
-        return -1;    
-    
+        return -1;
+
     return 0;
 }
 
@@ -45,10 +45,10 @@ send_file(int fd, char *filename)
     char out[LEN_BUFFER];
     struct stat stats;
     char path[LEN];
-    
-    
+
+
     // terminate arguments after ?
-    if ( (p = strchr(filename, '?')) != NULL) 
+    if ( (p = strchr(filename, '?')) != NULL)
         *p = '\0';
 
     // search for last dot in filename
@@ -57,37 +57,37 @@ send_file(int fd, char *filename)
         printf("no . found in filename!\n");
         return -1;
     }
-    
+
     // merge filename with docroot path
     snprintf(path, sizeof(path), "%s%s", DOCROOT, filename);
 
     if (stat(path, &stats) == -1)
     {
-#ifdef DEBUG_AJAX        
+#ifdef DEBUG_AJAX
         printf("file with 0bytes: %s\n", path);
-#endif        
+#endif
         return -1;
     }
-    
-    
+
+
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
              "Content-Length: %jd\r\n", (intmax_t) stats.st_size);
     if (write(fd, out, strlen(out)) <= 0)
         return -1;
-        
-    
+
+
 #ifdef DEBUG_AJAX
     printf("sending file: %s with %9jd length\n", path, (intmax_t) stats.st_size);
 #endif
-    
+
     // is file type known?
     if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
     {
         if (write(fd, HEADER_HTML, strlen(HEADER_HTML)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".png") ) 
+    else if (!strcmp(p, ".png") )
     {
         if (write(fd, HEADER_PNG, strlen(HEADER_PNG)) <= 0)
             return -1;
@@ -122,18 +122,18 @@ send_file(int fd, char *filename)
         printf("extention not found\n");
         return -1;
     }
-    
+
     // open and send file
     if(( file_fd = open(path, O_RDONLY)) == -1)
     {
         perror("open()");
         return -1;
     }
-    
+
     while ( (r = read(file_fd, out, sizeof(out))) > 0 )
         if (write(fd, out, r) <= 0)
             return -1;
-    
+
     close(file_fd);
     return 0;
 }
@@ -142,25 +142,25 @@ int
 send_json(int fd, const char *json)
 {
     char out[LEN_BUFFER];
-    
+
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
              "Content-Length: %d\r\n", strlen(json));
-    
-#ifdef DEBUG_AJAX 
+
+#ifdef DEBUG_AJAX
     // printf("serving json:\n%s\n", json);
 #endif
-    
+
     if (write(fd, out, strlen(out)) <= 0)
         return -1;
-    
+
     if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
         return -1;
-    
+
     if (write(fd, json, strlen(json)) <= 0)
         return -1;
-    
-    return 0;    
+
+    return 0;
 }
 
 
@@ -170,7 +170,7 @@ send_latest_data(int fd, char *args)
     char       *p;
     const char *json;
     long        timespan = 300;
-    
+
     // parse arguments
     if (strtok(args, "?") != NULL)
     {
@@ -179,16 +179,16 @@ send_latest_data(int fd, char *args)
         {
             if (!strcmp(p, "timespan"))
                 timespan = atoi(strtok(NULL, "&"));
-            
+
             p = strtok(NULL, "=");
         }
     }
-    
+
     json = json_latest_data(timespan);
-    
+
     if (send_json(fd, json) == -1)
         return -1;
-        
+
     return 0;
 }
 
@@ -211,7 +211,7 @@ send_graph_data(int fd, char *graph, char *args)
                 index = atoi(strtok(NULL, "&"));
             else if (!strcmp(p, "timespan"))
                 timespan = atoi(strtok(NULL, "&"));
-            
+
             p = strtok(NULL, "=");
         }
     }
@@ -232,21 +232,21 @@ handle_client(int fd)
     int i;
     char *p;
     static char buffer[LEN_BUFFER];
-    
-    
+
+
     // read socket
     if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
     {
         printf("read() failed\n");
         return;
     }
-    
+
     // terminate received string
     if ( r > 0 && r < sizeof(buffer))
         buffer[r] = '\0';
     else
         buffer[0] = '\0';
-    
+
     printf("buffer: %s\n", buffer);
 
     // filter requests we don't support
@@ -255,7 +255,7 @@ handle_client(int fd)
         send_error(fd, "not supported (only GET and POST)");
         return;
     }
-    
+
     // look for second space (or newline) and terminate string (skip headers)
     if ( (p = strchr(buffer, ' ')) != NULL)
     {
@@ -274,18 +274,18 @@ handle_client(int fd)
         send_error(fd, "invalid request.\n");
         return;
     }
-    
+
     // convert / to index.html
-    if (!strncmp(buffer, "GET /\0", 6)) 
+    if (!strncmp(buffer, "GET /\0", 6))
         strncpy(buffer, "GET /index.html", sizeof(buffer));
-    
-    
-    // check for illegal parent directory requests   
+
+
+    // check for illegal parent directory requests
     for (i = 0; ; i++)
     {
         if (buffer[i] == '\0' || buffer[i + 1] == '\0')
             break;
-        
+
         if(buffer[i] == '.' && buffer[i + 1] == '.')
         {
             send_error(fd, ".. detected.\n");
@@ -296,8 +296,8 @@ handle_client(int fd)
     // point p to filename
     if ( (p = strchr(buffer, '/')) == NULL)
         return;
-    
-    
+
+
     // send json data
     if (!strncmp(p, "/data.json", 10) )
         send_latest_data(fd, buffer);
@@ -305,12 +305,12 @@ handle_client(int fd)
         send_graph_data(fd, "consumption_per_100km", buffer);
     else if (!strncmp(p, "/speed.json", 11) )
         send_graph_data(fd, "speed", buffer);
- 
+
     // send file
     else
         if (send_file(fd, p) != 0)
             send_error(fd, "could not send file.\n");
-    
+
     return;
 }
 
@@ -319,15 +319,15 @@ int
 main(int argc, char **argv)
 {
     int s;
-    
+
     if (open_db() == -1)
         return -1;
-    
+
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;
-    
+
     tcp_loop_accept(s, &handle_client);
-    
+
     // should never be reached
     return 0;
 }

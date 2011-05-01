@@ -1,7 +1,7 @@
-@font-face {  
-	font-family:white-rabbit ;  
-    src:url( white-rabbit.ttf ) format("truetype");  
-}  
+@font-face {
+	font-family:white-rabbit ;
+    src:url( white-rabbit.ttf ) format("truetype");
+}
 
 body
 {
@@ -27,15 +27,15 @@ body
 #graph-speed {
     width:540px;
 }
-   
+
 .left-container {
     float:left;
     width:540px;
     height:220px;
     margin:10px;
-    padding:0px;    
+    padding:0px;
 }
-   
+
  .right-container {
      float:right;
      width:220px;
@@ -43,7 +43,7 @@ body
      margin:10px;
      padding:0px;
  }
-   
+
  .value {
      width:170px;
      float:left;
@@ -52,12 +52,12 @@ body
      text-align:right;
      font-family:white-rabbit;
  }
- 
+
  .value-big { font-size:60px; height:50px; line-height:60px;}
  .value-medium { font-size:34px; height:30px; line-height:34px; }
  .value-small { font-size:22px; height:20px; line-height:22px; }
- 
- 
+
+
  .unit {
      height:16px;
      float:right;
@@ -69,7 +69,7 @@ body
      text-align:left;
      font-family:helvetica;
  }
-   
+
 .unit-big { margin-top:34px }
 .unit-medium { margin-top:14px }
-.unit-small { margin-top:4px }   
+.unit-small { margin-top:4px }

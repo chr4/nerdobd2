@@ -10,147 +10,196 @@
 
   <script language="javascript" type="text/javascript">
 
-    function Graph(name, series, options, timespan)
+    function Graph(Name, Series, Options, Timespan)
     {
         var name;
         var index;
         var timespan;
-        
+
         var options;
         var series;
-                
-        this.setIndex = function(index)
+
+        this.setIndex = function(newIndex)
         {
-            this.index = index;
+            index = newIndex;
         }
-        
+
         this.getIndex = function()
         {
-            return this.index;
+            return index;
         }
-        
-        this.setTimespan = function(timespan)
+
+        this.setTimespan = function(newTimespan)
         {
-            this.timespan = timespan;
+            timespan = newTimespan;
         }
-        
+
         this.getTimespan = function()
         {
-            return this.timespan;
+            return timespan;
         }
-       
+
         this.updateOptions = function()
-        {                   
+        {
             var now = (new Date()).getTime();
 
             // adjust the xaxis, so graph moves forward
-            this.options.xaxis.min = now - this.timespan;
-            this.options.xaxis.max = now - 1000;            // prevent small empty gaps at the beginning of the graph
+            options.xaxis.min = now - timespan;
+            options.xaxis.max = now - 1000;            // prevent small empty gaps at the beginning of the graph
         }
-        
+
         this.appendData = function(data)
         {
             var i;
             var now = (new Date()).getTime();
-                    
+
             // loop reverse, for better performance
             for (i = data.length - 1; i >= 0; i--)
             {
                 // after we find the first element that is outdated
-                if (data[i][0] <= now - this.timespan)
+                if (data[i][0] <= now - timespan)
                 {
                     // remove everything up to this element
                     data.splice(0, i);
                     break;
                 }
             }
-            
+
             // prepend new data to series
             // this.series.data = data.concat(this.series.data);
-            this.series.data = $.merge(this.series.data, data);
-            
+            series.data = $.merge(series.data, data);
+
             this.updateOptions();
             this.plot();
         }
-        
+
         this.update = function()
         {
             // this is out of scope in onDataReceived
             var that = this;
-            
+
             function onDataReceived(json)
             {
                 that.setIndex(json.index);
                 that.appendData(json.data);
-                
-                setTimeout(function() { that.update(); }, 300);
+
+                // wtf js!
+                // update every 1 second on 5min graph, others accordingly
+                setTimeout(function() { that.update(); }, timespan / 300);
             }
-                        
+
             $.ajax({
-                url: this.name + ".json" + 
-                     "?index=" + this.index +
-                     "&timespan=" + this.timespan / 1000,
+                url: name + ".json" +
+                     "?index=" + index +
+                     "&timespan=" + timespan / 1000,
                 method: 'GET',
                 dataType: 'json',
                 success: onDataReceived
             });
         }
-        
+
         this.plot = function()
         {
-            $.plot($("#graph-" + this.name), [ this.series ], this.options);
+            $.plot($("#graph-" + name), [ series ], options);
         }
-        
+
         this.construct = function()
         {
-            this.name = name;
-            this.series = series;
-            this.options = options;
-            this.timespan = timespan;
-            this.index = 0;
-            
+            name = Name;
+            series = Series;
+            options = Options;
+            timespan = Timespan;
+            index = 0;
+
             this.update();
         }
 
         this.construct();
-    } 
-    
-    
-    function Value(name, unit, accuracy)
+    }
+
+
+    function Value(Name, Unit, Accuracy)
     {
         var name;
-        var unit; 
+        var unit;
         var accuracy;
 
         this.update = function(data)
-        {                
+        {
             // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
-            if (this.name == "consumption_per_100km" && data[this.name] == -1)
+            if (name == "consumption_per_100km" && data[name] == -1)
                 this.set(data['consumption_per_h'], "l/h");
-            else        
-                this.set(data[this.name], this.unit);
+            else
+                this.set(data[name], unit);
         }
-        
+
         this.set = function(value, theunit)
         {
-            $('#' + this.name).html(value.toFixed(this.accuracy));
-            
+            $('#' + name).html(value.toFixed(accuracy));
+
             // set the unit for consumption accordingly
-            if (this.name == "consumption_per_100km")
-                $('#' + this.name + '-unit').html(theunit);        
+            if (name == "consumption_per_100km")
+                $('#' + name + '-unit').html(theunit);
         }
-        
+
         this.construct = function()
         {
-            this.name = name;
-            this.unit = unit;
-            this.accuracy = accuracy;
+            name = Name;
+            unit = Unit;
+            accuracy = Accuracy;
         }
-        
+
         this.construct();
     }
 
-  
+
+    function Values()
+    {
+        var elements;
+
+        this.create = function(name, unit, accuracy)
+        {
+            elements.push(new Value(name, unit, accuracy));
+        }
+
+        this.update = function update()
+        {
+            function onDataReceived(json)
+            {
+                for (var i = elements.length - 1; i >= 0; i--)
+                    elements[i].update(json);
+
+                // wtf js!
+                setTimeout(update, 300);
+            }
+
+            // return if we don't have any elements yet
+            if (elements.length == 0)
+            {
+                setTimeout(update, 300);
+                return;
+            }
+            else
+            {
+                $.ajax({
+                    url: "data.json",
+                    method: 'GET',
+                    dataType: 'json',
+                    success: onDataReceived
+                });
+            }
+        }
+
+        this.construct = function()
+        {
+            elements = [];
+            setTimeout(this.update, 300);
+        }
+
+        this.construct();
+    }
+
+
 $(document).ready(function() {
 
 
@@ -159,81 +208,63 @@ $(document).ready(function() {
                                      { "data": [], "color": "rgb(200, 20, 30)",
                                        "lines": { "fill": false, "steps": true },
                                        "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } },
-                                     { "series": { "shadowSize": 0 }, 
-                                       "yaxis": { "min": 0, "max": "20" }, 
+                                     { "series": { "shadowSize": 0 },
+                                       "yaxis": { "min": 0, "max": "20" },
                                        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                      300000);
 
     var SpeedGraph = new Graph("speed",
                                { "data": [], "color": "rgb(0, 0, 0)",
-                                 "lines": { "fill": true } },    
-                               { "series": { "shadowSize": 0 }, 
-                                 "yaxis": { "min": 0, "max": "150" }, 
+                                 "lines": { "fill": true } },
+                               { "series": { "shadowSize": 0 },
+                                 "yaxis": { "min": 0, "max": "150" },
                                  "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
                                1800000);
 
 
-    function onDataReceived(json)
-    {
-        for (var i = values.length - 1; i >= 0; i--)
-            values[i].update(json);
-            
-        setTimeout(getData, 300);
-    }
 
-    function getData()
-    {
-        $.ajax({
-            url: "data.json",
-            method: 'GET',
-            dataType: 'json',
-            success: onDataReceived
-        });
-    }
-    
-    var values = new Array();
-     
-    values.push(new Value("consumption_per_100km", "l/km", 2));
-    values.push(new Value("speed",  "km/h", 1));
-    values.push(new Value("consumption_average_timespan", "l/km", 2));
-    values.push(new Value("consumption_average_total", "l/km", 2));
-    values.push(new Value("consumption_per_h", "l/h", 2));
-    values.push(new Value("rpm", "rpm", 0));
-    values.push(new Value("temp_engine", "°C", 1));
-    values.push(new Value("temp_air_intake", "°C", 1));
-    values.push(new Value("voltage", "°C", 1));
 
-    getData();
+    var Data = new Values();
 
-});    
+    Data.create("consumption_per_100km", "l/km", 2);
+    Data.create("speed",  "km/h", 1);
+    Data.create("consumption_average_timespan", "l/km", 2);
+    Data.create("consumption_average_total", "l/km", 2);
+    Data.create("consumption_per_h", "l/h", 2);
+    Data.create("rpm", "rpm", 0);
+    Data.create("temp_engine", "°C", 1);
+    Data.create("temp_air_intake", "°C", 1);
+    Data.create("voltage", "°C", 1);
+
+});
   </script>
 
  </head>
   <body>
     <div class="left-container">
       <div id="graph-consumption" class="graph"></div>
-   </div>   
+   </div>
 
      <div class="right-container">
-       <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>     
+       <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
        <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
-      
+
        <span id="consumption_average_timespan" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
        <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
      </div>
-   
-   <div class="left-container">      
+
+   <div class="left-container">
       <div id="graph-speed" class="graph"></div>
   </div>
-   
+
      <div class="right-container">
-       <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>     
+       <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
        <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
        <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
        <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
-       <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>     
-     </div>     
-      
+       <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+     </div>
+
     </div>
  </body>
 </html>
