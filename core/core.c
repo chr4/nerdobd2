@@ -15,7 +15,7 @@ cleanup (int signo)
 	cleaning_up = 1;
 	
 	sync_db();
-    
+
 	printf("closing serial port...\n");
 	kw1281_close();
 	
@@ -35,16 +35,16 @@ main (int argc, char **argv)
     if (kw1281_open (DEVICE) == -1)
         return -1;
 #endif
-    
+
     // initialize database
     if (init_db() == -1)
         return -1;
-    
+
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	
-    
-    
+
+
 #ifdef TEST
     // for testing purposes
     int i = 0, flag = 0;
@@ -56,43 +56,43 @@ main (int argc, char **argv)
         handle_data("temp_engine", 90);
         handle_data("temp_air_intake", 35);
         handle_data("voltage", 0.01 * i);
-        
+
         if (!i % 15)
             handle_data("speed", 0);
         else
             handle_data("speed", 3 * i);
 
         usleep(300000);
-      
-         
+
+
         if (i > 35)
             flag = 1;
         if (i < 2)
             flag = 0;
-        
+
         if (flag)
             i--;
         else
             i++;
     }
-#endif    
-    
+#endif
+
     for ( ; ; )
     {
-        
-        printf ("init\n");                
-        
+
+        printf ("init\n");
+
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
         ret = kw1281_init (0x01);
-        
+
         // soft error, e.g. communication error
         if (ret == -1)
         {
             printf("init failed, retrying...\n");
             continue;
         }
-        
+
         // hard error (e.g. serial cable unplugged)
         else if (ret == -2)
         {
@@ -100,16 +100,16 @@ main (int argc, char **argv)
             cleanup(0);
         }
 
-        
+
         ret = kw1281_mainloop();
-        
+
         // on errors, restart
         if (ret == -1)
         {
             printf("errors. restarting...\n");
             continue;
         }
-        
+
     }
 
     // should never be reached
@@ -131,7 +131,7 @@ insert_engine_data(engine_data e)
              e.rpm, e.speed, e.injection_time,
              e.oil_pressure, e.consumption_per_100km,
              e.consumption_per_h);
-    
+
     exec_query(query);
 
     exec_query("END TRANSACTION");
@@ -141,15 +141,15 @@ void
 insert_other_data(other_data o)
 {
     char query[LEN_QUERY];
-   
+
     exec_query("BEGIN TRANSACTION");
- 
-    snprintf(query, sizeof(query), 
+
+    snprintf(query, sizeof(query),
              "INSERT INTO other_data VALUES ( \
              NULL, DATETIME('NOW'), \
              %f, %f, %f)",
              o.temp_engine, o.temp_air_intake, o.voltage);
-    
+
     exec_query(query);
 
     exec_query("END TRANSACTION");

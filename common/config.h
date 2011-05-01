@@ -8,7 +8,7 @@
 #define DEBUG_AJAX
 #define TEST
 
-/* writing to database is too slow on my eeepc, 
+/* writing to database is too slow on my eeepc,
  * thus provoking "resource temporarily not available" errors
  * putting database in /dev/shm, and syncing it from time to time
  * should help.
@@ -25,8 +25,8 @@
 /* constants for calculating consumption
  * out of injection time, rpm and speed
  *
- * consumption per hour = 
- *    60 (minutes) * 4 (zylinders) * 
+ * consumption per hour =
+ *    60 (minutes) * 4 (zylinders) *
  *    MULTIPLIER * rpm * injection time
  */
 #define MULTIPLIER      0.00000089  // for my 1.0l seat arosa 2004

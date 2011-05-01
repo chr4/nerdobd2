@@ -10,39 +10,39 @@ busy(void *unused __attribute__((unused)), int count)
 {
 	usleep(500000);
     puts("retrying query...\n");
-    
+
     // give up after 30 seconds
 	return (count < 60);
 }
 
-int 
+int
 exec_query(char *query)
 {
-    
+
     sqlite3_stmt  *stmt;
-    
+
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
 #endif
-    
+
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("sqlite3_prepare_v2() error\n");
         return -1;
     }
-    
+
     if (sqlite3_step(stmt) != SQLITE_DONE)
     {
         printf("sqlite3_step error\n");
         return -1;
     }
-    
+
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
         printf("sqlite3_finalize() error\n");
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -81,18 +81,18 @@ init_db(void)
         printf("Can not open database: %s", DB_RAM);
         return -1;
     }
-    
+
     // retry on busy errors
-    sqlite3_busy_handler(db, busy, NULL);    
-  
+    sqlite3_busy_handler(db, busy, NULL);
+
     exec_query("BEGIN TRANSACTION");
-    
+
     // disable waiting for write to be completed
     exec_query("PRAGMA synchronous = OFF");
-    
+
     // disable journal
     exec_query("PRAGMA journal_mode = OFF");
-  
+
     // create engine_data table
     exec_query("CREATE TABLE IF NOT EXISTS engine_data ( \
                     id                    INTEGER PRIMARY KEY, \
