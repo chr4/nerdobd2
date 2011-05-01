@@ -7,7 +7,7 @@ add_string(json_object *parent, char *key, char *value)
     json_object_object_add(parent, key, new_obj);
 
     return new_obj;
-}  
+}
 
 json_object *
 add_int(json_object *parent, char *key, int value)

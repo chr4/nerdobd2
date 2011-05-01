@@ -33,16 +33,16 @@ int
 kw1281_empty_buffer(void)
 {
     char c[LEN_BUFFER];
-    
+
     int res;
     struct timeval timeout;
     fd_set rfds;                // file descriptor set
-    
+
     // set timeout value within input loop
     timeout.tv_usec = 200000;   // milliseconds
     timeout.tv_sec  = 0.2;      // seconds
-    
-    
+
+
     /* doing do-while to catch EINTR
      * it's not absolutely necessary, but i read
      * somewhere that it's better to do it that way...
@@ -50,16 +50,16 @@ kw1281_empty_buffer(void)
     do {
         FD_ZERO(&rfds);
         FD_SET(fd, &rfds);
-        
+
         res = select(fd + 1, &rfds, NULL, NULL, &timeout);
-        
+
         if (errno == EINTR)
             printf("read: select() got EINTR\n");
         if (res == -1)
             printf("read: select() failed\n");
-        
+
     } while (res == -1 && errno == EINTR);
-    
+
     if (res > 0)
     {
         if (read (fd, &c, sizeof(c)) == -1)
@@ -71,24 +71,24 @@ kw1281_empty_buffer(void)
     {
         return -1;
     }
-    
-    return 0;    
+
+    return 0;
 }
 
 int
 kw1281_read_timeout(void)
 {
     unsigned char c;
-    
+
     int res;
     struct timeval timeout;
     fd_set rfds;            // file descriptor set
-    
+
     // set timeout value within input loop
     timeout.tv_usec = 0;    // milliseconds
     timeout.tv_sec  = 1;    // seconds
-    
-    
+
+
     /* doing do-while to catch EINTR
      * it's not absolutely necessary, but i read
      * somewhere that it's better to do it that way...
@@ -96,9 +96,9 @@ kw1281_read_timeout(void)
     do {
         FD_ZERO(&rfds);
         FD_SET(fd, &rfds);
-    
+
         res = select(fd + 1, &rfds, NULL, NULL, &timeout);
-        
+
         if (res == -1)
         {
             if (errno == EINTR)
@@ -134,16 +134,16 @@ kw1281_read_timeout(void)
 
 int
 kw1281_write_timeout(unsigned char c)
-{  
+{
     int res;
     struct timeval timeout;
-    
+
     fd_set wfds;    /* file descriptor set */
-    
+
     /* set timeout value within input loop */
     timeout.tv_usec = 0;  /* milliseconds */
     timeout.tv_sec  = 1;  /* seconds */
-    
+
     /* doing do-while to catch EINTR
      * it's not absolutely necessary, but i read
      * somewhere that it's better to do it that way...
@@ -151,20 +151,20 @@ kw1281_write_timeout(unsigned char c)
     do {
         FD_ZERO(&wfds);
         FD_SET(fd, &wfds);
-    
+
         res = select(fd + 1, NULL, &wfds, NULL, &timeout);
-        
+
         if (res == -1)
         {
             if (errno == EINTR)
                 printf("write: select() got EINTR\n");
-            
+
             else
                 printf("write: select() failed\n");
         }
-        
+
     } while (res == -1 && errno == EINTR);
-    
+
     if (res > 0)
     {
         if (write (fd, &c, 1) <= 0)
@@ -183,7 +183,7 @@ kw1281_write_timeout(unsigned char c)
         return -1;
     }
 
-    
+
     return 0;
 }
 
@@ -238,22 +238,22 @@ kw1281_recv_byte_ack (void)
         printf("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
-    
+
     d = 0xff - c;
     usleep (WRITE_DELAY);
-    
+
     if (kw1281_write_timeout(d) == -1)
     {
         printf("kw1281_recv_byte_ack: write() error\n");
         return -1;
     }
-    
+
     if ( (d = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_recv_byte_ack: read() error\n");
         return -1;
     }
-    
+
     if (0xff - c != d)
     {
         printf ("kw1281_recv_byte_ack: echo error recv: 0x%02x (!= 0x%02x)\n",
@@ -273,19 +273,19 @@ kw1281_send_byte_ack (unsigned char c)
     // unsigned char d;
 
     usleep (WRITE_DELAY);
-    
+
     if (kw1281_write_timeout(c) == -1)
     {
         printf("kw1281_send_byte_ack: write() error\n");
         return -1;
     }
-    
+
     if ( (d = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
-    
+
     if (c != d)
     {
         printf ("kw1281_send_byte_ack: echo error (0x%02x != 0x%02x)\n", c,
@@ -299,7 +299,7 @@ kw1281_send_byte_ack (unsigned char c)
         printf("kw1281_send_byte_ack: read() error\n");
         return -1;
     }
-    
+
     if (0xff - c != d)
     {
         printf ("kw1281_send_byte_ack: ack error (0x%02x != 0x%02x)\n",
@@ -307,7 +307,7 @@ kw1281_send_byte_ack (unsigned char c)
         printf("kw1281_send_byte_ack: ack error\n");
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -337,19 +337,19 @@ kw1281_send_ack (void)
     /* block end */
     c = 0x03;
     usleep (WRITE_DELAY);
-    
+
     if (kw1281_write_timeout(c) == -1)
     {
         printf("kw1281_send_ack: write() error\n");
         return -1;
     }
-    
+
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_send_ack: read() error\n");
         return -1;
     }
-    
+
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
@@ -404,26 +404,26 @@ kw1281_send_block (unsigned char n)
     /* block end */
     c = 0x03;
     usleep (WRITE_DELAY);
-    
+
     if (kw1281_write_timeout(c) == -1)
     {
         printf("kw1281_send_block: write() error\n");
         return -1;
     }
-    
+
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_send_block: read() error\n");
         return -1;
     }
-    
+
     if (c != 0x03)
     {
         printf ("echo error (0x03 != 0x%02x)\n", c);
         printf("echo error\n");
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -432,11 +432,11 @@ int
 kw1281_recv_block (unsigned char n)
 {
     int i;
-    
+
     // we need int, so we can capture -1 as well
     int c, l, t;
     //unsigned char c, l, t;
-    
+
     unsigned char buf[LEN];
 
     /* block length */
@@ -550,7 +550,7 @@ kw1281_recv_block (unsigned char n)
                     }
                     break;
                 */
-                    
+
                 case 0x0f:        // injection time
                     handle_data("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
@@ -577,8 +577,8 @@ kw1281_recv_block (unsigned char n)
                 case 0x13:        // tank content
                     handle_data("tank_content", 0.01 * buf[i + 1] * buf[i + 2]);
                     break;
-                */ 
-    
+                */
+
                 default:
 #ifdef DEBUG_SERIAL
                     printf ("unknown value: 0x%02x: a = %d, b = %d\n",
@@ -620,7 +620,7 @@ kw1281_recv_block (unsigned char n)
     {
         got_ack = 1;
     }
-    
+
     return 0;
 }
 
@@ -632,13 +632,13 @@ kw1281_get_block (unsigned char n)
         printf("kw1281_get_block() error\n");
         return -1;
     }
-    
+
     if (kw1281_recv_block(n) == -1)
     {
         printf("kw1281_get_block() error\n");
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -646,12 +646,12 @@ int
 kw1281_get_ascii_blocks(void)
 {
     got_ack = 0;
-    
+
     while (!got_ack)
     {
         if (kw1281_recv_block (0x00) == -1)
             return -1;
-        
+
         if (!got_ack)
             if (kw1281_send_ack () == -1)
                 return -1;
@@ -692,15 +692,15 @@ kw1281_open (char *device)
         printf ("TIOCSSERIAL failed\n");
         return -1;
     }
-    
+
     tcgetattr (fd, &oldtio);
-    
+
     newtio.c_cflag = B38400 | CLOCAL | CREAD;   // 38400 baud, so custom baud rate above works
     newtio.c_iflag = IGNPAR;                    // ICRNL provokes bogus replys after block 12
     newtio.c_oflag = 0;
     newtio.c_cc[VMIN] = 1;
     newtio.c_cc[VTIME] = 0;
-    
+
     tcflush (fd, TCIFLUSH);
     if (tcsetattr (fd, TCSANOW, &newtio) == -1)
     {
@@ -716,13 +716,13 @@ int
 kw1281_close(void)
 {
     printf("shutting down serial port\n");
-    
+
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
     {
         printf ("TIOCSSERIAL failed\n");
         return -1;
     }
-    
+
     // allow buffer to drain, discard input
     // TCSADRAIN for only letting it drain
     if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
@@ -736,14 +736,14 @@ kw1281_close(void)
         printf("TIOCMSET failed.\n");
         return -1;
     }
-    
+
     // check close
     if (close(fd))
     {
         perror("close");
     }
 
-    return 0;    
+    return 0;
 }
 
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
@@ -755,34 +755,34 @@ kw1281_init (int address)
     int c; // we need int so we can capture -1 as well
     // unsigned char c;
     int     in;
-    
-    
+
+
 #ifdef DEBUG_SERIAL
     printf("emptying buffer...\n");
-#endif 
-    
+#endif
+
     // empty receive buffer
     kw1281_empty_buffer();
-    
 
-#ifdef DEBUG_SERIAL    
+
+#ifdef DEBUG_SERIAL
     printf("waiting idle time...\n");
-#endif    
-    
+#endif
+
     // wait the idle time
     usleep(300000);
-    
-    
+
+
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
         printf("TIOCMGET failed.\n");
         return -2;
     }
-    
+
     // save old flags so we can restore them later
     oldflags = flags;
-    
+
     flags &= ~(TIOCM_DTR | TIOCM_RTS);
 
     if (ioctl (fd, TIOCMSET, &flags) < 0)
@@ -792,7 +792,7 @@ kw1281_init (int address)
     }
 
     usleep (INIT_DELAY);
-    
+
     _set_bit (0);               // start bit
     usleep (INIT_DELAY);        // 5 baud
     p = 1;
@@ -808,7 +808,7 @@ kw1281_init (int address)
     usleep (INIT_DELAY);
     _set_bit (1);               // stop bit
     usleep (INIT_DELAY);
-    
+
     // set dtr
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
@@ -822,7 +822,7 @@ kw1281_init (int address)
         printf("TIOCMSET failed.\n");
         return -2;
     }
- 
+
     // read bogus values, if any
     if (ioctl (fd, FIONREAD, &in) < 0)
     {
@@ -833,7 +833,7 @@ kw1281_init (int address)
 #ifdef DEBUG_SERIAL
     printf("found %d chars to ignore\n", in);
 #endif
-    
+
     while (in--)
     {
         if ( (c = kw1281_read_timeout()) == -1)
@@ -845,7 +845,7 @@ kw1281_init (int address)
         printf ("ignore 0x%02x\n", c);
 #endif
     }
-    
+
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_init: read() error\n");
@@ -854,7 +854,7 @@ kw1281_init (int address)
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
 #endif
-    
+
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_init: read() error\n");
@@ -863,16 +863,16 @@ kw1281_init (int address)
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
 #endif
-    
+
     if ( (c = kw1281_recv_byte_ack ()) == -1)
         return -1;
-    
+
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x (and sent ack)\n", c);
 #endif
-    
+
     counter = 1;
-    
+
     return 0;
 }
 
@@ -883,7 +883,7 @@ kw1281_mainloop (void)
     printf ("receive blocks\n");
 #endif
 
-    
+
     if (kw1281_get_ascii_blocks() == -1)
         return -1;
 	
@@ -899,7 +899,7 @@ kw1281_mainloop (void)
         // (speed)
         if (kw1281_get_block(0x05) == -1)
             return -1;
- 
+
         /* don't request temperatures and
          * voltage too often
          */
@@ -909,8 +909,8 @@ kw1281_mainloop (void)
             // (temperatures + voltage)
             if (kw1281_get_block(0x04) == -1)
                 return -1;
-        } 
+        }
     }
-    
+
     return 0;
 }
