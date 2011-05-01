@@ -1,8 +1,8 @@
-- insert null instead of -1 for consumption graph (seperate segments)
-- implement "reset" timestamp function
 - align total counter to the small values
 - insert graph and axis labels
-- implement websockets-push, or play with poll time
+- average since last reset, since last start, since beginning
+- open db rw (and create blank db if not existent) in db_client.c
+- make db_client use sqlite.c as well
 
-- try how multiple http requests affect performance
+- implement websockets-push, or play with poll time
 - create HTML on the fly

@@ -165,26 +165,11 @@ send_json(int fd, const char *json)
 
 
 int
-send_latest_data(int fd, char *args)
+send_latest_data(int fd)
 {
-    char       *p;
     const char *json;
-    long        timespan = 300;
 
-    // parse arguments
-    if (strtok(args, "?") != NULL)
-    {
-        p = strtok(NULL, "=");
-        while (p != NULL)
-        {
-            if (!strcmp(p, "timespan"))
-                timespan = atoi(strtok(NULL, "&"));
-
-            p = strtok(NULL, "=");
-        }
-    }
-
-    json = json_latest_data(timespan);
+    json = json_latest_data();
 
     if (send_json(fd, json) == -1)
         return -1;
@@ -300,7 +285,7 @@ handle_client(int fd)
 
     // send json data
     if (!strncmp(p, "/data.json", 10) )
-        send_latest_data(fd, buffer);
+        send_latest_data(fd);
     else if (!strncmp(p, "/consumption.json", 17) )
         send_graph_data(fd, "consumption_per_100km", buffer);
     else if (!strncmp(p, "/speed.json", 11) )

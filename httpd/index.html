@@ -45,7 +45,7 @@
 
             // adjust the xaxis, so graph moves forward
             options.xaxis.min = now - timespan;
-            options.xaxis.max = now - 1000;            // prevent small empty gaps at the beginning of the graph
+            options.xaxis.max = now - 1000; // prevent small empty gaps at the beginning of the graph
         }
 
         this.appendData = function(data)
@@ -228,7 +228,7 @@ $(document).ready(function() {
 
     Data.create("consumption_per_100km", "l/km", 2);
     Data.create("speed",  "km/h", 1);
-    Data.create("consumption_average_timespan", "l/km", 2);
+    Data.create("consumption_average_startup", "l/km", 2);
     Data.create("consumption_average_total", "l/km", 2);
     Data.create("consumption_per_h", "l/h", 2);
     Data.create("rpm", "rpm", 0);
@@ -249,7 +249,7 @@ $(document).ready(function() {
        <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
        <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
 
-       <span id="consumption_average_timespan" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+       <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
        <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
      </div>
 
