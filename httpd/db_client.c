@@ -158,21 +158,17 @@ json_get_other_data(json_object *data)
 
 
 int
-json_get_averages(json_object *data, unsigned long int timespan)
+json_get_averages(json_object *data)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
 
-    /* TODO: averages from current timespan displayed
-     averages since last manual reset
-     averages since beginning of calculation
-     */
+    // average since last startup
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
              FROM engine_data \
-             WHERE time > DATETIME('NOW', '-%lu seconds') \
-             AND consumption_per_100km != -1",
-             timespan);
+             WHERE consumption_per_100km != -1 \
+             AND id > ( SELECT engine_data FROM setpoints WHERE name = 'startup' )");
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -181,7 +177,7 @@ json_get_averages(json_object *data, unsigned long int timespan)
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
-        add_double(data, "consumption_average_timespan", sqlite3_column_double(stmt, 0));
+        add_double(data, "consumption_average_startup", sqlite3_column_double(stmt, 0));
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
@@ -189,8 +185,18 @@ json_get_averages(json_object *data, unsigned long int timespan)
         return -1;
     }
 
+    // average since timespan
+    /*
+    snprintf(query, sizeof(query),
+             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+             FROM engine_data \
+             WHERE time > DATETIME('NOW', '-%lu seconds') \
+             AND consumption_per_100km != -1",
+             timespan);
+    */
+    
 
-    // get the overall consumption average
+    // overall consumption average
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
              FROM engine_data \
@@ -217,7 +223,7 @@ json_get_averages(json_object *data, unsigned long int timespan)
 
 // get latest data from database
 const char *
-json_latest_data(unsigned long int timespan)
+json_latest_data()
 {
     json_object *data = json_object_new_object();
 
@@ -225,7 +231,7 @@ json_latest_data(unsigned long int timespan)
 
     json_get_engine_data(data);
     json_get_other_data(data);
-    json_get_averages(data, timespan);
+    json_get_averages(data);
 
     exec_query("END TRANSACTION");
 

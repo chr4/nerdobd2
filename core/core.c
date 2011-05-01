@@ -40,6 +40,18 @@ main (int argc, char **argv)
     if (init_db() == -1)
         return -1;
 
+    // since this is startup,
+    // set the startup set point to the last index we can find
+    exec_query("INSERT OR REPLACE INTO setpoints VALUES ( \
+                    'startup', ( \
+                        SELECT CASE WHEN count(*) = 0 \
+                        THEN 0 \
+                        ELSE id END \
+                        FROM engine_data \
+                        ORDER BY id DESC LIMIT 1 \
+                    ) \
+                )");
+    
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	

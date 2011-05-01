@@ -111,7 +111,12 @@ init_db(void)
                     temp_engine     FLOAT, \
                     temp_air_intake FLOAT, \
                     voltage         FLOAT )");
-
+    
+    // create table where set point information is stored
+    exec_query("CREATE TABLE IF NOT EXISTS setpoints ( \
+                    name        VARCHAR PRIMARY KEY, \
+                    engine_data INTEGER)");
+    
     exec_query("END TRANSACTION");
     return 0;
 }
