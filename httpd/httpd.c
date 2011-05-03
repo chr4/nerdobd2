@@ -14,6 +14,8 @@
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 #define HEADER_TTF      SERVER_STRING SERVER_CON "Content-Type: font/ttf\r\n\r\n"
 
+// sqlite database handle
+sqlite3 *db;
 
 int
 send_error(int fd, char *message)
@@ -169,7 +171,7 @@ send_latest_data(int fd)
 {
     const char *json;
 
-    json = json_latest_data();
+    json = json_latest_data(db);
 
     if (send_json(fd, json) == -1)
         return -1;
@@ -201,7 +203,7 @@ send_graph_data(int fd, char *graph, char *args)
         }
     }
 
-    json = json_graph_data(graph, index, timespan);
+    json = json_graph_data(db, graph, index, timespan);
 
     if (send_json(fd, json) == -1)
         return -1;
@@ -305,7 +307,7 @@ main(int argc, char **argv)
 {
     int s;
 
-    if (open_db() == -1)
+    if ( (db = init_db()) == NULL)
         return -1;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)

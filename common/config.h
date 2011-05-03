@@ -13,7 +13,6 @@
  * putting database in /dev/shm, and syncing it from time to time
  * should help.
  */
-#define DB_RAM         "/dev/shm/nerdob2.sqlite3"
 #define DB_DISK        "database.sqlite3"
 
 

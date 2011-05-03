@@ -1,75 +1,7 @@
 #include "httpd.h"
-#include <sqlite3.h>
-
-sqlite3 *db;
-
-
-static int
-busy(void *unused __attribute__((unused)), int count)
-{
-	usleep(500000);
-    puts("retrying query...\n");
-
-    // give up after 15 seconds (30 iterations)
-	return (count < 30);
-}
-
 
 int
-open_db(void)
-{
-    if (access(DB_RAM, R_OK) != 0)
-    {
-        perror("could not open database");
-        return -1;
-    }
-
-    if (sqlite3_open(DB_RAM, &db) != 0)
-    {
-        perror("could not open database");
-        return -1;
-    }
-
-    // retry on busy errors
-    sqlite3_busy_handler(db, busy, NULL);
-
-    return 0;
-}
-
-
-int
-exec_query(char *query)
-{
-    sqlite3_stmt  *stmt;
-
-#ifdef DEBUG_SQLITE
-    printf("sql: %s\n", query);
-#endif
-
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
-        printf("sqlite3_prepare_v2() error\n");
-        return -1;
-    }
-
-    if (sqlite3_step(stmt) != SQLITE_DONE)
-    {
-        printf("sqlite3_step error\n");
-        return -1;
-    }
-
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
-        printf("sqlite3_finalize() error\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-
-int
-json_get_engine_data(json_object *data)
+json_get_engine_data(sqlite3 *db, json_object *data)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -116,7 +48,7 @@ json_get_engine_data(json_object *data)
 
 
 int
-json_get_other_data(json_object *data)
+json_get_other_data(sqlite3 *db, json_object *data)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -158,7 +90,7 @@ json_get_other_data(json_object *data)
 
 
 int
-json_get_averages(json_object *data)
+json_get_averages(sqlite3 *db, json_object *data)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -223,17 +155,17 @@ json_get_averages(json_object *data)
 
 // get latest data from database
 const char *
-json_latest_data()
+json_latest_data(sqlite3 *db)
 {
     json_object *data = json_object_new_object();
 
-    exec_query("BEGIN TRANSACTION");
+    exec_query(db, "BEGIN TRANSACTION");
 
-    json_get_engine_data(data);
-    json_get_other_data(data);
-    json_get_averages(data);
+    json_get_engine_data(db, data);
+    json_get_other_data(db, data);
+    json_get_averages(db, data);
 
-    exec_query("END TRANSACTION");
+    exec_query(db, "END TRANSACTION");
 
     return json_object_to_json_string(data);
 }
@@ -245,7 +177,7 @@ json_latest_data()
  * but not older than timepsan seconds
  */
 const char *
-json_graph_data(char *key, unsigned long int index, unsigned long int timespan)
+json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long int timespan)
 {
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
@@ -253,7 +185,7 @@ json_graph_data(char *key, unsigned long int index, unsigned long int timespan)
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
 
-    exec_query("BEGIN TRANSACTION");
+    exec_query(db, "BEGIN TRANSACTION");
 
     snprintf(query, sizeof(query),
              "SELECT id, strftime('%%s000', time), %s \
@@ -289,7 +221,7 @@ json_graph_data(char *key, unsigned long int index, unsigned long int timespan)
         return NULL;
     }
 
-    exec_query("END TRANSACTION");
+    exec_query(db, "END TRANSACTION");
 
     add_int(graph, "index", index);
 

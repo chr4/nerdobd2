@@ -1,6 +1,8 @@
+- make ajax failure resistent
+- check whether it's better to use non-sync-file instead of /dev/shm
 - align total counter to the small values
 - insert graph and axis labels
-- average since last reset, since last start, since beginning
+- average since manual reset
 - open db rw (and create blank db if not existent) in db_client.c
 - make db_client use sqlite.c as well
 

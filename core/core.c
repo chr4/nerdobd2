@@ -1,8 +1,10 @@
 #include "core.h"
 
-void	cleanup (int);
+// sqlite database handle
+sqlite3 *db;
 
-// flag for cleanup function
+
+void	cleanup (int);
 char	cleaning_up = 0;
 
 void
@@ -14,7 +16,7 @@ cleanup (int signo)
 	
 	cleaning_up = 1;
 	
-	sync_db();
+	close_db(db);
 
 	printf("closing serial port...\n");
 	kw1281_close();
@@ -37,12 +39,12 @@ main (int argc, char **argv)
 #endif
 
     // initialize database
-    if (init_db() == -1)
+    if ( (db = init_db()) == NULL)
         return -1;
 
     // since this is startup,
     // set the startup set point to the last index we can find
-    exec_query("INSERT OR REPLACE INTO setpoints VALUES ( \
+    exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
                     'startup', ( \
                         SELECT CASE WHEN count(*) = 0 \
                         THEN 0 \
@@ -134,7 +136,7 @@ insert_engine_data(engine_data e)
 {
     char query[LEN_QUERY];
 
-    exec_query("BEGIN TRANSACTION");
+    exec_query(db, "BEGIN TRANSACTION");
 
     snprintf(query, sizeof(query),
              "INSERT INTO engine_data VALUES ( \
@@ -144,9 +146,9 @@ insert_engine_data(engine_data e)
              e.oil_pressure, e.consumption_per_100km,
              e.consumption_per_h);
 
-    exec_query(query);
+    exec_query(db, query);
 
-    exec_query("END TRANSACTION");
+    exec_query(db, "END TRANSACTION");
 }
 
 void
@@ -154,7 +156,7 @@ insert_other_data(other_data o)
 {
     char query[LEN_QUERY];
 
-    exec_query("BEGIN TRANSACTION");
+    exec_query(db, "BEGIN TRANSACTION");
 
     snprintf(query, sizeof(query),
              "INSERT INTO other_data VALUES ( \
@@ -162,9 +164,9 @@ insert_other_data(other_data o)
              %f, %f, %f)",
              o.temp_engine, o.temp_air_intake, o.voltage);
 
-    exec_query(query);
+    exec_query(db, query);
 
-    exec_query("END TRANSACTION");
+    exec_query(db, "END TRANSACTION");
 }
 
 // this struct collects all engine data

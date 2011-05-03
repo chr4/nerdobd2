@@ -19,7 +19,6 @@
 #include "../common/config.h"
 
 // sqlite functions
-int   exec_query(char *);
-int   init_db(void);
-void  close_db(void);
-void  sync_db(void);
+int      exec_query(sqlite3 *, char *);
+sqlite3 *init_db(void);
+void     close_db(sqlite3 *);
