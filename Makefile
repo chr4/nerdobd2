@@ -17,14 +17,14 @@ kw1281.o : core/kw1281.c
 
 
 # http server
-httpd : httpd.o db_client.o tcp.o json.o
-	$(CC) $(CC_OPTIONS_HTTPD) -o nerdobd2_httpd httpd/httpd.o httpd/db_client.o common/tcp.o common/json.o
+httpd : httpd.o db2json.o tcp.o json.o sqlite.o
+	$(CC) $(CC_OPTIONS_HTTPD) -o nerdobd2_httpd httpd/httpd.o httpd/db2json.o common/tcp.o common/json.o common/sqlite.o
 
 httpd.o : httpd/httpd.c
 	$(CC) $(CC_OPTIONS_HTTPD) -c httpd/httpd.c -o httpd/httpd.o
 	
-db_client.o : httpd/db_client.c
-	$(CC) $(CC_OPTIONS_HTTPD) -c httpd/db_client.c -o httpd/db_client.o
+db2json.o : httpd/db2json.c
+	$(CC) $(CC_OPTIONS_HTTPD) -c httpd/db2json.c -o httpd/db2json.o
 	
 
 # sqlite access

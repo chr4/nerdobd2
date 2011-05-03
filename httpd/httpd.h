@@ -13,8 +13,7 @@
 #include "../common/config.h"
 
 #include "../common/json.h"
+#include "../common/sqlite.h"
 
-int open_db(void);
-
-const char *json_latest_data(void);
-const char *json_graph_data(char *, unsigned long int, unsigned long int);
+const char *json_latest_data(sqlite3 *);
+const char *json_graph_data(sqlite3 *, char *, unsigned long int, unsigned long int);
