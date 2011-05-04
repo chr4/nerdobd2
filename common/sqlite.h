@@ -20,5 +20,8 @@
 
 // sqlite functions
 int      exec_query(sqlite3 *, char *);
-sqlite3 *init_db(void);
+sqlite3 *open_db(void);
+void     init_db(sqlite3 *);
 void     close_db(sqlite3 *);
+void     sync2disk(void);
+int      sync2ram(void);
