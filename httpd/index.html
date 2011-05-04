@@ -80,8 +80,11 @@
 
             function onDataReceived(json)
             {
-                that.setIndex(json.index);
-                that.appendData(json.data);
+                if (typeof(json.index) !== "undefined")
+                    that.setIndex(json.index);
+                    
+                if (typeof(json.data) !== "undefined")
+                    that.appendData(json.data);
 
                 // wtf js!
                 // update every 1 second on 5min graph, others accordingly
@@ -166,8 +169,9 @@
         {
             function onDataReceived(json)
             {
-                for (var i = elements.length - 1; i >= 0; i--)
-                    elements[i].update(json);
+                if (typeof(json) !== "undefined")
+                    for (var i = elements.length - 1; i >= 0; i--)
+                        elements[i].update(json);
 
                 // wtf js!
                 setTimeout(update, 300);
