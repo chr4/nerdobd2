@@ -39,9 +39,16 @@
             return timespan;
         }
 
+        this.getLocalTime = function()
+        {
+            // get localtime
+            var t = new Date();
+            return t.getTime() - t.getTimezoneOffset() * 60000;
+        }
+
         this.updateOptions = function()
         {
-            var now = (new Date()).getTime();
+            var now = this.getLocalTime();
 
             // adjust the xaxis, so graph moves forward
             options.xaxis.min = now - timespan;
@@ -51,13 +58,12 @@
         this.appendData = function(data)
         {
             var i;
-            var now = (new Date()).getTime();
 
             // loop reverse, for better performance
             for (i = data.length - 1; i >= 0; i--)
             {
                 // after we find the first element that is outdated
-                if (data[i][0] <= now - timespan)
+                if (data[i][0] <= this.getLocalTime() - timespan)
                 {
                     // remove everything up to this element
                     data.splice(0, i);
@@ -82,13 +88,9 @@
             {
                 if (typeof(json.index) !== "undefined")
                     that.setIndex(json.index);
-                    
+
                 if (typeof(json.data) !== "undefined")
                     that.appendData(json.data);
-
-                // wtf js!
-                // update every 1 second on 5min graph, others accordingly
-                setTimeout(function() { that.update(); }, timespan / 300);
             }
 
             $.ajax({
@@ -97,7 +99,8 @@
                      "&timespan=" + timespan / 1000,
                 method: 'GET',
                 dataType: 'json',
-                success: onDataReceived
+                success: onDataReceived,
+                complete: setTimeout(function() { that.update(); }, timespan / 300)
             });
         }
 
@@ -172,9 +175,6 @@
                 if (typeof(json) !== "undefined")
                     for (var i = elements.length - 1; i >= 0; i--)
                         elements[i].update(json);
-
-                // wtf js!
-                setTimeout(update, 300);
             }
 
             // return if we don't have any elements yet
@@ -189,7 +189,8 @@
                     url: "data.json",
                     method: 'GET',
                     dataType: 'json',
-                    success: onDataReceived
+                    success: onDataReceived,
+                    complete: setTimeout(update, 300)
                 });
             }
         }

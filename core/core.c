@@ -150,7 +150,7 @@ insert_engine_data(engine_data e)
 
     snprintf(query, sizeof(query),
              "INSERT INTO engine_data VALUES ( \
-             NULL, DATETIME('NOW'), \
+             NULL, DATETIME('NOW', 'localtime'), \
              %f, %f, %f, %f, %f, %f )",
              e.rpm, e.speed, e.injection_time,
              e.oil_pressure, e.consumption_per_100km,
@@ -170,7 +170,7 @@ insert_other_data(other_data o)
 
     snprintf(query, sizeof(query),
              "INSERT INTO other_data VALUES ( \
-             NULL, DATETIME('NOW'), \
+             NULL, DATETIME('NOW', 'localtime'), \
              %f, %f, %f)",
              o.temp_engine, o.temp_air_intake, o.voltage);
 
