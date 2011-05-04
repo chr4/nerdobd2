@@ -16,9 +16,11 @@ cleanup (int signo)
 	
 	cleaning_up = 1;
 	
+    // close database and sync file to disk
 	close_db(db);
+    sync2disk();
 
-	printf("closing serial port...\n");
+    // close serial port
 	kw1281_close();
 	
 	printf("exiting.\n");
@@ -31,28 +33,17 @@ main (int argc, char **argv)
 {
     int     ret;
 
-#ifndef TEST
-    // kw1281_open() somehow has to be started
-    // before any fork() open()
-    if (kw1281_open (DEVICE) == -1)
+    // sync database from disk to ram
+    if (sync2ram() == -1)
         return -1;
-#endif
-
-    // initialize database
-    if ( (db = init_db()) == NULL)
+    
+    // open it
+    if ( (db = open_db()) == NULL)
         return -1;
 
-    // since this is startup,
-    // set the startup set point to the last index we can find
-    exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
-                    'startup', ( \
-                        SELECT CASE WHEN count(*) = 0 \
-                        THEN 0 \
-                        ELSE id END \
-                        FROM engine_data \
-                        ORDER BY id DESC LIMIT 1 \
-                    ) \
-                )");
+    // and initialize
+    init_db(db);
+    
     
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
@@ -91,34 +82,54 @@ main (int argc, char **argv)
     }
 #endif
 
+    ret = SERIAL_HARD_ERROR; 
+    
     for ( ; ; )
     {
-
+        if (ret == SERIAL_HARD_ERROR)
+        {
+            while (kw1281_open (DEVICE) == -1)
+                usleep(500000);
+         
+            /* since this restarts the serial connection,
+             * it is probably due to a new ride was started, since we
+             * set the startup set point to the last index we can find
+             */
+            exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
+                           'startup', ( \
+                           SELECT CASE WHEN count(*) = 0 \
+                           THEN 0 \
+                           ELSE id END \
+                           FROM engine_data \
+                           ORDER BY id DESC LIMIT 1 \
+                           ) \
+                       )");
+        }
+        
         printf ("init\n");
 
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
-        ret = kw1281_init (0x01);
+        ret = kw1281_init(0x01);
 
         // soft error, e.g. communication error
-        if (ret == -1)
+        if (ret == SERIAL_SOFT_ERROR)
         {
             printf("init failed, retrying...\n");
             continue;
         }
 
         // hard error (e.g. serial cable unplugged)
-        else if (ret == -2)
+        else if (ret == SERIAL_HARD_ERROR)
         {
             printf("serial port error\n");
-            cleanup(0);
+            kw1281_close();
+            continue;
         }
 
 
-        ret = kw1281_mainloop();
-
-        // on errors, restart
-        if (ret == -1)
+        // start main loop, restart on errors
+        if (kw1281_mainloop() == SERIAL_SOFT_ERROR)
         {
             printf("errors. restarting...\n");
             continue;
