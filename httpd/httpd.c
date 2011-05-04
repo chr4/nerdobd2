@@ -234,7 +234,6 @@ handle_client(int fd)
     else
         buffer[0] = '\0';
 
-    printf("buffer: %s\n", buffer);
 
     // filter requests we don't support
     if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
@@ -284,6 +283,9 @@ handle_client(int fd)
     if ( (p = strchr(buffer, '/')) == NULL)
         return;
 
+#ifdef DEBUG_AJAX
+    printf("requested: %s\n", p);
+#endif
 
     // send json data
     if (!strncmp(p, "/data.json", 10) )
