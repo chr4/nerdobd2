@@ -122,7 +122,7 @@ json_get_averages(sqlite3 *db, json_object *data)
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
              FROM engine_data \
-             WHERE time > DATETIME('NOW', '-%lu seconds') \
+             WHERE time > DATETIME('NOW', '-%lu seconds', 'localtime') \
              AND consumption_per_100km != -1",
              timespan);
     */
@@ -191,7 +191,7 @@ json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long i
              "SELECT id, strftime('%%s000', time), %s \
               FROM   engine_data \
               WHERE id > %lu \
-              AND time > DATETIME('NOW', '-%lu seconds') \
+              AND time > DATETIME('NOW', '-%lu seconds', 'localtime') \
               ORDER BY id",
              key, index, timespan);
 
