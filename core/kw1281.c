@@ -718,30 +718,19 @@ kw1281_close(void)
     printf("shutting down serial port\n");
 
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
-    {
         printf ("TIOCSSERIAL failed\n");
-        return -1;
-    }
 
     // allow buffer to drain, discard input
     // TCSADRAIN for only letting it drain
     if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
-    {
         printf("tcsetattr() failed.\n");
-        return -1;
-    }
 
     if (ioctl (fd, TIOCMSET, &oldflags) < 0)
-    {
         printf("TIOCMSET failed.\n");
-        return -1;
-    }
 
     // check close
     if (close(fd))
-    {
         perror("close");
-    }
 
     return 0;
 }
@@ -777,7 +766,7 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
         printf("TIOCMGET failed.\n");
-        return -2;
+        return SERIAL_HARD_ERROR;
     }
 
     // save old flags so we can restore them later
@@ -788,7 +777,7 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
         printf("TIOCMSET failed.\n");
-        return -2;
+        return SERIAL_HARD_ERROR;
     }
 
     usleep (INIT_DELAY);
@@ -813,21 +802,21 @@ kw1281_init (int address)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
     {
         printf("TIOCMGET failed.\n");
-        return -2;
+        return SERIAL_HARD_ERROR;
     }
 
      flags |= TIOCM_DTR;
     if (ioctl (fd, TIOCMSET, &flags) < 0)
     {
         printf("TIOCMSET failed.\n");
-        return -2;
+        return SERIAL_HARD_ERROR;
     }
 
     // read bogus values, if any
     if (ioctl (fd, FIONREAD, &in) < 0)
     {
         printf("FIONREAD failed.\n");
-        return -1;
+        return SERIAL_SOFT_ERROR;
     }
 
 #ifdef DEBUG_SERIAL
@@ -839,7 +828,7 @@ kw1281_init (int address)
         if ( (c = kw1281_read_timeout()) == -1)
         {
             printf("kw1281_init: read() error\n");
-            return -1;
+            return SERIAL_SOFT_ERROR;
         }
 #ifdef DEBUG_SERIAL
         printf ("ignore 0x%02x\n", c);
@@ -849,7 +838,7 @@ kw1281_init (int address)
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_init: read() error\n");
-        return -1;
+        return SERIAL_SOFT_ERROR;
     }
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
@@ -858,14 +847,14 @@ kw1281_init (int address)
     if ( (c = kw1281_read_timeout()) == -1)
     {
         printf("kw1281_init: read() error\n");
-        return -1;
+        return SERIAL_SOFT_ERROR;
     }
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x\n", c);
 #endif
 
     if ( (c = kw1281_recv_byte_ack ()) == -1)
-        return -1;
+        return SERIAL_SOFT_ERROR;
 
 #ifdef DEBUG_SERIAL
     printf ("read 0x%02x (and sent ack)\n", c);

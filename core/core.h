@@ -17,6 +17,11 @@
 // we need sqlite3 access
 #include "../common/sqlite.h"
 
+
+#define SERIAL_HARD_ERROR   -2
+#define SERIAL_SOFT_ERROR   -1
+
+
 // the engine data struct
 typedef struct engine_data
 {
