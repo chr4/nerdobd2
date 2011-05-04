@@ -22,9 +22,8 @@ cleanup (int signo)
 
     // close serial port
 	kw1281_close();
-	
-	printf("exiting.\n");
-	exit(0);
+    
+    exit(0);
 }
 
 

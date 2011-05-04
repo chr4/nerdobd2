@@ -309,7 +309,7 @@ main(int argc, char **argv)
 {
     int s;
 
-    if ( (db = init_db()) == NULL)
+    if ( (db = open_db()) == NULL)
         return -1;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
