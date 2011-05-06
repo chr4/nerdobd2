@@ -241,6 +241,11 @@ $(document).ready(function() {
     Data.create("temp_air_intake", "°C", 1);
     Data.create("voltage", "°C", 1);
 
+    Data.create("consumption_liters_startup", "l", 2);
+    Data.create("kilometers_startup", "km", 2);
+    Data.create("consumption_liters_total", "l", 2);
+    Data.create("kilometers_total", "km", 2);
+    
 });
   </script>
 
@@ -263,11 +268,19 @@ $(document).ready(function() {
   </div>
 
      <div class="right-container">
+       <span id="consumption_liters_startup" class="value value-small">-</span><span class="unit unit-small">l</span>
+       <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
+       <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
+       <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
+            
+     <!--
        <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
        <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
+     -->
        <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
        <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
        <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+
      </div>
 
     </div>

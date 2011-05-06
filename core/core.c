@@ -50,21 +50,31 @@ main (int argc, char **argv)
 
 
 #ifdef TEST
+    exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
+                   'startup', ( \
+                   SELECT CASE WHEN count(*) = 0 \
+                   THEN 0 \
+                   ELSE id END \
+                   FROM engine_data \
+                   ORDER BY id DESC LIMIT 1 \
+                   ) \
+               )");
+
     // for testing purposes
     int i = 0, flag = 0;
     for (; ;)
     {
-        handle_data("rpm", 1000 + i * 100);
-        handle_data("injection_time", 0.15 * i);
-        handle_data("oil_pressure", i);
-        handle_data("temp_engine", 90);
-        handle_data("temp_air_intake", 35);
-        handle_data("voltage", 0.01 * i);
+        handle_data("rpm", 1000 + i * 100, 0);
+        handle_data("injection_time", 0.15 * i, 1);
+        handle_data("oil_pressure", i, 0);
+        handle_data("temp_engine", 90, 0);
+        handle_data("temp_air_intake", 35, 0);
+        handle_data("voltage", 0.01 * i, 0);
 
         if (!i % 15)
-            handle_data("speed", 0);
+            handle_data("speed", 0, 1);
         else
-            handle_data("speed", 3 * i);
+            handle_data("speed", 3 * i, 1);
 
         usleep(300000);
 
@@ -151,10 +161,13 @@ insert_engine_data(engine_data e)
     snprintf(query, sizeof(query),
              "INSERT INTO engine_data VALUES ( \
              NULL, DATETIME('NOW', 'localtime'), \
-             %f, %f, %f, %f, %f, %f )",
+             %f, %f, %f, %f, %f, %f, %f, %f, %f, %f )",
              e.rpm, e.speed, e.injection_time,
              e.oil_pressure, e.consumption_per_100km,
-             e.consumption_per_h);
+             e.consumption_per_h,
+             e.duration_consumption, e.duration_speed,
+             e.consumption_per_h / 3600 * e.duration_consumption,
+             e.speed / 3600 * e.duration_speed);
 
     exec_query(db, query);
 
@@ -185,7 +198,7 @@ engine_data engine;
 other_data  other;
 
 void
-handle_data(char *name, float value)
+handle_data(char *name, float value, float duration)
 {
     /* first block gets rpm, injection time, oil pressure
      * second block gets speed
@@ -195,7 +208,10 @@ handle_data(char *name, float value)
     if (!strcmp(name, "rpm"))
         engine.rpm = value;
     else if (!strcmp(name, "injection_time"))
+    {
         engine.injection_time = value;
+        engine.duration_consumption = duration;
+    }
     else if (!strcmp(name, "oil_pressure"))
         engine.oil_pressure = value;
 
@@ -214,6 +230,8 @@ handle_data(char *name, float value)
         else
             engine.consumption_per_100km = -1;
 
+        
+        engine.duration_speed = duration;
 
         insert_engine_data(engine);
     }

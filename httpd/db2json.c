@@ -97,7 +97,7 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     // average since last startup
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+             "SELECT SUM(speed*consumption_per_100km)/SUM(speed), SUM(liters), SUM(kilometers) \
              FROM engine_data \
              WHERE consumption_per_100km != -1 \
              AND id > ( SELECT engine_data FROM setpoints WHERE name = 'startup' )");
@@ -109,8 +109,12 @@ json_get_averages(sqlite3 *db, json_object *data)
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         add_double(data, "consumption_average_startup", sqlite3_column_double(stmt, 0));
-
+        add_double(data, "consumption_liters_startup", sqlite3_column_double(stmt, 1));
+        add_double(data, "kilometers_startup", sqlite3_column_double(stmt, 2));        
+    }
+    
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
         printf("sqlite3_finalize() error\n");
@@ -130,7 +134,7 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     // overall consumption average
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+             "SELECT SUM(speed*consumption_per_100km)/SUM(speed), SUM(liters), SUM(kilometers) \
              FROM engine_data \
              WHERE consumption_per_100km != -1");
 
@@ -141,8 +145,12 @@ json_get_averages(sqlite3 *db, json_object *data)
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
         add_double(data, "consumption_average_total", sqlite3_column_double(stmt, 0));
-
+        add_double(data, "consumption_liters_total", sqlite3_column_double(stmt, 1));
+        add_double(data, "kilometers_total", sqlite3_column_double(stmt, 2));
+    }
+    
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
         printf("sqlite3_finalize() error\n");
