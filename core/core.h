@@ -9,6 +9,7 @@
 #include <linux/serial.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/time.h>
 
 // include common defines
 #include "../common/common.h"
@@ -33,6 +34,10 @@ typedef struct engine_data
     // consumption (will be calculated)
     float consumption_per_h;
     float consumption_per_100km;
+    
+    float duration_consumption;
+    float duration_speed;
+    
 } engine_data;
 
 // struct for other data
@@ -41,6 +46,7 @@ typedef struct other_data
     float temp_engine;
     float temp_air_intake;
     float voltage;
+    
 } other_data;
 
 
@@ -49,5 +55,4 @@ int  kw1281_close(void);
 int  kw1281_init (int);
 int  kw1281_mainloop (void);
 
-void handle_data(char *, float);
-
+void handle_data(char *, float, float);

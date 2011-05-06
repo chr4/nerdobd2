@@ -175,7 +175,11 @@ init_db(sqlite3 *db)
                         injection_time        FLOAT, \
                         oil_pressure          FLOAT, \
                         consumption_per_100km FLOAT, \
-                        consumption_per_h     FLOAT )");
+                        consumption_per_h     FLOAT, \
+                        duration_consumption  FLOAT, \
+                        duration_speed        FLOAT, \
+                        liters                FLOAT, \
+                        kilometers            FLOAT)");
 
     // create other_data table
     exec_query(db, "CREATE TABLE IF NOT EXISTS other_data ( \

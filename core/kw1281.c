@@ -427,6 +427,13 @@ kw1281_send_block (unsigned char n)
     return 0;
 }
 
+
+struct timeval consumption_start, consumption_stop;
+struct timeval speed_start, speed_stop;
+char consumption_first_run = 1;
+char speed_first_run = 1;
+
+
 /* receive a complete block */
 int
 kw1281_recv_block (unsigned char n)
@@ -438,6 +445,10 @@ kw1281_recv_block (unsigned char n)
     //unsigned char c, l, t;
 
     unsigned char buf[LEN];
+    
+    float duration_consumption = 0;
+    float duration_speed = 0;
+    
 
     /* block length */
     if ( (l = kw1281_recv_byte_ack ()) == -1)
@@ -536,7 +547,7 @@ kw1281_recv_block (unsigned char n)
             {
                 case 0x01:        // rpm
                     if (i == 0)
-                        handle_data("rpm", 0.2 * buf[i + 1] * buf[i + 2]);
+                        handle_data("rpm", 0.2 * buf[i + 1] * buf[i + 2], 0);
                     break;
 
                 /* can't calculate load properly, thus leaving it alone
@@ -552,26 +563,48 @@ kw1281_recv_block (unsigned char n)
                 */
 
                 case 0x0f:        // injection time
-                    handle_data("injection_time", 0.01 * buf[i + 1] * buf[i + 2]);
+                    
+					if (!consumption_first_run)
+					{
+						gettimeofday(&consumption_stop, NULL);
+						duration_consumption = (float) ( ( consumption_stop.tv_sec + ( consumption_stop.tv_usec * 0.000001 ) ) -
+                                             ( consumption_start.tv_sec + ( consumption_start.tv_usec * 0.000001 ) ) );
+					}
+					consumption_first_run = 0;
+					gettimeofday(&consumption_start, NULL);
+
+                    handle_data("injection_time", 0.01 * buf[i + 1] * buf[i + 2], duration_consumption);
+                    
                     break;
 
                 case 0x12:        // absolute pressure
-                    handle_data("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2]);
+                    handle_data("oil_pressure", 0.04 * buf[i + 1] * buf[i + 2], 0);
                     break;
 
                 case 0x05:        // temperature
                     if (i == 6)
-                        handle_data("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        handle_data("temp_engine", buf[i + 1] * (buf[i + 2] - 100) * 0.1, 0);
                     if (i == 9)
-                        handle_data("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1);
+                        handle_data("temp_air_intake", buf[i + 1] * (buf[i + 2] - 100) * 0.1, 0);
                     break;
 
                 case 0x07:        // speed
-                    handle_data("speed", 0.01 * buf[i + 1] * buf[i + 2]);
+                    
+					if (!speed_first_run)
+					{
+						gettimeofday(&speed_stop, NULL);
+						duration_speed = (float) ( ( speed_stop.tv_sec + ( speed_stop.tv_usec * 0.000001 ) ) -
+                                            ( speed_start.tv_sec + ( speed_start.tv_usec * 0.000001 ) ) );
+					}
+					speed_first_run = 0;
+					gettimeofday(&speed_start, NULL);
+
+                    handle_data("speed", 0.01 * buf[i + 1] * buf[i + 2], duration_speed);
+                    
                     break;
 
                 case 0x15:        // battery voltage
-                    handle_data("voltage", 0.001 * buf[i + 1] * buf[i + 2]);
+                    handle_data("voltage", 0.001 * buf[i + 1] * buf[i + 2], 0);
                     break;
                 /*
                 case 0x13:        // tank content
