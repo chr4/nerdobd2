@@ -51,7 +51,7 @@ main (int argc, char **argv)
 
 #ifdef TEST
     exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
-                   'startup', ( \
+                   'startup', DATETIME('now', 'localtime'), ( \
                    SELECT CASE WHEN count(*) = 0 \
                    THEN 0 \
                    ELSE id END \

@@ -192,6 +192,7 @@ init_db(sqlite3 *db)
     // create table where set point information is stored
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \
                         name        VARCHAR PRIMARY KEY, \
+                        time        DATE, \
                         engine_data INTEGER)");
     
     exec_query(db, "END TRANSACTION");
