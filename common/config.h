@@ -3,10 +3,10 @@
 #define HTTPD_PORT	8080
 #define DOCROOT		"httpd"
 
-#define DEBUG_SERIAL
+//#define DEBUG_SERIAL
 #define DEBUG_SQLITE
-#define DEBUG_AJAX
-#define TEST
+//#define DEBUG_AJAX
+//#define TEST
 
 /* writing to database is too slow on my eeepc,
  * thus provoking "resource temporarily not available" errors
@@ -29,4 +29,4 @@
  *    60 (minutes) * 4 (zylinders) *
  *    MULTIPLIER * rpm * injection time
  */
-#define MULTIPLIER      0.00000096  // for my 1.0l seat arosa 2004
+#define MULTIPLIER      0.000000935  // for my 1.0l seat arosa 2004
