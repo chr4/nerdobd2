@@ -14,6 +14,9 @@ json_get_engine_data(sqlite3 *db, json_object *data)
              ORDER BY id \
              DESC LIMIT 1");
 
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -60,6 +63,10 @@ json_get_other_data(sqlite3 *db, json_object *data)
              ORDER BY id \
              DESC LIMIT 1");
 
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
+    
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
@@ -105,6 +112,10 @@ json_get_averages(sqlite3 *db, json_object *data)
               WHERE  consumption_per_100km != -1 \
               AND    id > ( SELECT engine_data FROM setpoints WHERE name = 'startup' )");
 
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
+    
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
@@ -144,6 +155,10 @@ json_get_averages(sqlite3 *db, json_object *data)
               FROM   engine_data \
               WHERE  consumption_per_100km != -1");
 
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
+    
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
@@ -209,6 +224,10 @@ json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long i
               ORDER BY id",
              key, index, timespan);
 
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
+    
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
