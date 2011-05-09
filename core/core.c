@@ -10,18 +10,18 @@ char	cleaning_up = 0;
 void
 cleanup (int signo)
 {
-	// if we're already cleaning up, do nothing
-	if (cleaning_up)
-		return;
+    // if we're already cleaning up, do nothing
+    if (cleaning_up)
+        return;
 	
-	cleaning_up = 1;
+    cleaning_up = 1;
 	
     // close database and sync file to disk
-	close_db(db);
+    close_db(db);
     sync2disk();
 
     // close serial port
-	kw1281_close();
+    kw1281_close();
     
     exit(0);
 }
