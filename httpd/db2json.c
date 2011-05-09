@@ -97,10 +97,13 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     // average since last startup
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*consumption_per_100km)/SUM(speed), SUM(liters), SUM(kilometers) \
-             FROM engine_data \
-             WHERE consumption_per_100km != -1 \
-             AND id > ( SELECT engine_data FROM setpoints WHERE name = 'startup' )");
+             "SELECT strftime('%%s000', setpoints.time), \
+                     SUM(engine_data.speed * engine_data.consumption_per_100km) / SUM(engine_data.speed), \
+                     SUM(engine_data.liters), \
+                     SUM(engine_data.kilometers) \
+              FROM   setpoints, engine_data \
+              WHERE  consumption_per_100km != -1 \
+              AND    id > ( SELECT engine_data FROM setpoints WHERE name = 'startup' )");
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
@@ -110,9 +113,10 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        add_double(data, "consumption_average_startup", sqlite3_column_double(stmt, 0));
-        add_double(data, "consumption_liters_startup", sqlite3_column_double(stmt, 1));
-        add_double(data, "kilometers_startup", sqlite3_column_double(stmt, 2));        
+        add_double(data, "timestamp_startup", sqlite3_column_double(stmt, 0));
+        add_double(data, "consumption_average_startup", sqlite3_column_double(stmt, 1));
+        add_double(data, "consumption_liters_startup", sqlite3_column_double(stmt, 2));
+        add_double(data, "kilometers_startup", sqlite3_column_double(stmt, 3));        
     }
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
@@ -134,9 +138,11 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     // overall consumption average
     snprintf(query, sizeof(query),
-             "SELECT SUM(speed*consumption_per_100km)/SUM(speed), SUM(liters), SUM(kilometers) \
-             FROM engine_data \
-             WHERE consumption_per_100km != -1");
+             "SELECT SUM(speed * consumption_per_100km) / SUM(speed), \
+                     SUM(liters), \
+                     SUM(kilometers) \
+              FROM   engine_data \
+              WHERE  consumption_per_100km != -1");
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
