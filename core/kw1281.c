@@ -16,7 +16,7 @@ int     kw1281_read_timeout(void);
 int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
 
-int     fd;
+int     fd = -1;
 int     counter;        // kw1281 protocol block counter
 char    got_ack = 0;    // flag (true if ECU send ack block, thus ready to receive block requests)
 int     loopcount;      // counter for mainloop
@@ -748,6 +748,9 @@ kw1281_open (char *device)
 int
 kw1281_close(void)
 {
+    if (fd == -1)
+        return 0;
+
     printf("shutting down serial port\n");
 
     if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
@@ -761,7 +764,6 @@ kw1281_close(void)
     if (ioctl (fd, TIOCMSET, &oldflags) < 0)
         printf("TIOCMSET failed.\n");
 
-    // check close
     if (close(fd))
         perror("close");
 
