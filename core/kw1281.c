@@ -430,9 +430,6 @@ kw1281_send_block (unsigned char n)
 
 struct timeval consumption_start, consumption_stop;
 struct timeval speed_start, speed_stop;
-char consumption_first_run = 1;
-char speed_first_run = 1;
-
 
 /* receive a complete block */
 int
