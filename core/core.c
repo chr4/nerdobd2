@@ -113,6 +113,10 @@ main (int argc, char **argv)
                            ORDER BY id DESC LIMIT 1 \
                            ) \
                        )");
+
+            // set the first run flags
+            consumption_first_run = 1;
+            speed_first_run = 1;
         }
         
         printf ("init\n");

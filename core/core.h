@@ -50,6 +50,11 @@ typedef struct other_data
 } other_data;
 
 
+// flags if this is the first run
+char consumption_first_run;
+char speed_first_run;
+
+
 int  kw1281_open (char *device);
 int  kw1281_close(void);
 int  kw1281_init (int);
