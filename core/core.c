@@ -226,7 +226,7 @@ handle_data(char *name, float value, float duration)
         engine.speed = value;
 
         // calculate consumption per hour
-        engine.consumption_per_h = 60 * 4 * MULTIPLIER * engine.rpm * engine.injection_time;
+        engine.consumption_per_h = MULTIPLIER * engine.rpm * engine.injection_time;
 
         // calculate consumption per hour
         if ( engine.speed > 0)
