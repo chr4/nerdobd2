@@ -1,7 +1,5 @@
-#define DB_HOST	        "127.0.0.1"
-#define DB_PORT         4588
-#define HTTPD_PORT	8080
-#define DOCROOT		"httpd"
+#define HTTPD_PORT	   8080
+#define DOCROOT		   "httpd"
 
 //#define DEBUG_SERIAL
 #define DEBUG_SQLITE
@@ -32,7 +30,6 @@
 #define DEVICE          "/dev/obd2"
 
 #define BAUDRATE        10400   // for my seat arosa, vw polo needs 9600
-#define WRITE_DELAY     0       // milliseconds delay before serial writes, not needed anymore. (was 5700)
 #define INIT_DELAY      200000  // nanosec to wait to emulate 5baud
 
 /* constants for calculating consumption

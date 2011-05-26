@@ -240,7 +240,6 @@ kw1281_recv_byte_ack (void)
     }
 
     d = 0xff - c;
-    usleep (WRITE_DELAY);
 
     if (kw1281_write_timeout(d) == -1)
     {
@@ -271,8 +270,6 @@ kw1281_send_byte_ack (unsigned char c)
     // we need int, so we can capture -1 as well
     int d;
     // unsigned char d;
-
-    usleep (WRITE_DELAY);
 
     if (kw1281_write_timeout(c) == -1)
     {
@@ -336,7 +333,6 @@ kw1281_send_ack (void)
 
     /* block end */
     c = 0x03;
-    usleep (WRITE_DELAY);
 
     if (kw1281_write_timeout(c) == -1)
     {
@@ -403,7 +399,6 @@ kw1281_send_block (unsigned char n)
 
     /* block end */
     c = 0x03;
-    usleep (WRITE_DELAY);
 
     if (kw1281_write_timeout(c) == -1)
     {
