@@ -17,9 +17,22 @@
 #define DB_DISK        "database.sqlite3"
 
 
-#define DEVICE          "/dev/ttyUSB0"
+/* if the system suspends and then resumes, the kernel tries to newly
+ * assign /dev/ttyUSB0 to the USB to serial adapter. this fails, because
+ * we still have ttyUSB0 open, so it dynamically creates ttyUSB1 instead,
+ * so we cannot reopen ttyUSB0. As a workaround (so you don't have to replug
+ * your cable), I setup this udev rule in 
+ * /etc/udev/rules.d/70-persisent-usb-serial.rule
+ *
+ * SUBSYSTEMS=="usb", ATTRS{serial}=="A600bj0A", KERNEL=="ttyUSB[0123]", SYMLINK+="obd2"
+ *
+ * assigning the USB to serial adapter the fixed symlink /dev/obd2.
+ * find out your serial by using lsusb -v.
+ */
+#define DEVICE          "/dev/obd2"
+
 #define BAUDRATE        10400   // for my seat arosa, vw polo needs 9600
-#define WRITE_DELAY     0    // milliseconds delay before serial writes, not needed anymore. (was 5700)
+#define WRITE_DELAY     0       // milliseconds delay before serial writes, not needed anymore. (was 5700)
 #define INIT_DELAY      200000  // nanosec to wait to emulate 5baud
 
 /* constants for calculating consumption
