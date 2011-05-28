@@ -40,16 +40,15 @@ sync2disk(void)
     int   status;
     pid_t child;
     
-    if ( (child = fork()) > 0)
+    if ( (child = fork()) == 0)
     {
         printf("syncing db file to disk...\n");
         execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
-        _exit(1);
+        _exit(0);
     }
-    else
-    {
-        while(waitpid(child, &status, WNOHANG) > 0);
-    }
+
+    // wait for rsync to finish
+    waitpid(child, &status, 0);
 }
 
 
