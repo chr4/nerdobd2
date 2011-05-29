@@ -2,7 +2,7 @@
 #define DOCROOT		   "httpd"
 
 //#define DEBUG_SERIAL
-#define DEBUG_SQLITE
+//#define DEBUG_SQLITE
 //#define DEBUG_AJAX
 //#define TEST
 
