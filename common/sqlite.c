@@ -1,6 +1,5 @@
 #include "sqlite.h"
 
-
 static int
 busy(void *unused __attribute__((unused)), int count)
 {
@@ -35,20 +34,18 @@ exec_query(sqlite3 *db, char *query)
 
 // sync database in ram to disk
 void
-sync2disk(void)
+sync2disk(int n)
 {
-    int   status;
-    pid_t child;
-    
-    if ( (child = fork()) == 0)
+    if (fork() == 0)
     {
+        // be nice
+        if (nice(n) == -1)
+            perror("couldn't nice rsync process");
+
         printf("syncing db file to disk...\n");
         execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
         _exit(0);
     }
-
-    // wait for rsync to finish
-    waitpid(child, &status, 0);
 }
 
 
@@ -195,7 +192,22 @@ init_db(sqlite3 *db)
                         engine_data INTEGER)");
     
     exec_query(db, "END TRANSACTION");
-    
+
+
+    /*
+    // sync the file to disk periodically
+    if (fork() == 0)
+    {
+        for (; ;) 
+        {
+            sync2disk(SYNC_NICE);
+            sleep(SYNC_DELAY); 
+        }
+       
+        _exit(0);
+    }
+    */
+
     return;
 }
 

@@ -18,12 +18,30 @@ cleanup (int signo)
 	
     // close database and sync file to disk
     close_db(db);
-    sync2disk();
+    sync2disk(0);
 
     // close serial port
     kw1281_close();
+
+    // wait for all child processes
+    printf("waiting for child processes to finish...\n");
+
+    do {
+        wait(NULL);
+    } while (errno != ECHILD);
     
     exit(0);
+}
+
+
+void
+sig_chld(int signo)
+{
+        pid_t pid;
+        int   stat;
+
+        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
+        return;
 }
 
 
@@ -31,6 +49,9 @@ int
 main (int argc, char **argv)
 {
     int     ret;
+
+    // catch orphans
+    signal(SIGCHLD, sig_chld);
 
     // sync database from disk to ram
     if (sync2ram() == -1)
@@ -93,8 +114,11 @@ main (int argc, char **argv)
 
     ret = SERIAL_HARD_ERROR; 
     
-    for ( ; ; )
+    for (; ;)
     {
+        // sync database file to disk, using low priority
+        sync2disk(19);
+        
         if (ret == SERIAL_HARD_ERROR)
         {
             while (kw1281_open (DEVICE) == -1)
