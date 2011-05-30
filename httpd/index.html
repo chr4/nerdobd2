@@ -60,7 +60,7 @@
             var i;
 
             // loop reverse, for better performance
-            for (i = data.length - 1; i >= 0; i--)
+            for (i = data.length - 1; i > 0; i--)
             {
                 // after we find the first element that is outdated
                 if (data[i][0] <= this.getLocalTime() - timespan)
@@ -68,6 +68,18 @@
                     // remove everything up to this element
                     data.splice(0, i);
                     break;
+                }
+
+                /* display gaps of information as gaps,
+                 * don't just connect the dots
+                 * if the time between two dots is more than 60 sec
+                 * don't connect them (i.e. add a dot at -1)
+                 */
+                if (data[i][0] > data[i - 1][0] + 60000)
+                {
+                    // add two new dots with y value -1
+                    data.splice(i, 0, [ data[i][0],     -1 ]);
+                    data.splice(i, 0, [ data[i - 1][0], -1 ]);
                 }
             }
 
