@@ -56,7 +56,7 @@ main (int argc, char **argv)
     // sync database from disk to ram
     if (sync2ram() == -1)
         return -1;
-    
+
     // open it
     if ( (db = open_db()) == NULL)
         return -1;
@@ -116,9 +116,13 @@ main (int argc, char **argv)
     
     for (; ;)
     {
+        /* disabled, httpd crashed sometimes
+         * maybe because db is inconsistent
+
         // sync database file to disk, using low priority
         sync2disk(19);
-        
+        */
+
         if (ret == SERIAL_HARD_ERROR)
         {
             while (kw1281_open (DEVICE) == -1)
