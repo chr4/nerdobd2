@@ -27,7 +27,7 @@
  * your cable), I setup this udev rule in 
  * /etc/udev/rules.d/70-persisent-usb-serial.rule
  *
- * SUBSYSTEMS=="usb", ATTRS{serial}=="A600bj0A", KERNEL=="ttyUSB[0123]", SYMLINK+="obd2"
+ * SUBSYSTEMS=="usb", ATTRS{serial}=="A600bj0A", KERNEL=="ttyUSB*", SYMLINK+="obd2"
  *
  * assigning the USB to serial adapter the fixed symlink /dev/obd2.
  * find out your serial by using lsusb -v.
