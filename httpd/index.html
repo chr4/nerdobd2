@@ -59,14 +59,17 @@
         {
             var i;
 
+            // append new data to series
+            series.data = $.merge(series.data, data);
+
             // loop reverse, for better performance
-            for (i = data.length - 1; i > 0; i--)
+            for (i = series.data.length - 1; i > 0; i--)
             {
                 // after we find the first element that is outdated
-                if (data[i][0] <= this.getLocalTime() - timespan)
+                if (series.data[i][0] <= this.getLocalTime() - timespan)
                 {
                     // remove everything up to this element
-                    data.splice(0, i);
+                    series.data.splice(0, i);
                     break;
                 }
 
@@ -75,17 +78,13 @@
                  * if the time between two dots is more than 60 sec
                  * don't connect them (i.e. add a dot at -1)
                  */
-                if (data[i][0] > data[i - 1][0] + 60000)
+                if (series.data[i][0] > series.data[i - 1][0] + 60000)
                 {
                     // add two new dots with y value -1
-                    data.splice(i, 0, [ data[i][0],     -1 ]);
-                    data.splice(i, 0, [ data[i - 1][0], -1 ]);
+                    series.data.splice(i, 0, [ series.data[i][0], -1 ]);
+                    series.data.splice(i, 0, [ series.data[i - 1][0], -1 ]);
                 }
             }
-
-            // prepend new data to series
-            // this.series.data = data.concat(this.series.data);
-            series.data = $.merge(series.data, data);
 
             this.updateOptions();
             this.plot();
