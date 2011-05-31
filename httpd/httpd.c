@@ -304,10 +304,24 @@ handle_client(int fd)
 }
 
 
+void
+sig_chld(int signo)
+{
+        pid_t pid;
+        int   stat;
+
+        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
+        return;
+}
+
+
 int
 main(int argc, char **argv)
 {
     int s;
+
+    // catch orphans
+    signal(SIGCHLD, sig_chld);
 
     if ( (db = open_db()) == NULL)
         return -1;
