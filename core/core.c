@@ -7,6 +7,19 @@ sqlite3 *db;
 void	cleanup (int);
 char	cleaning_up = 0;
 
+
+
+void
+wait4childs(void)
+{
+    do {
+        wait(NULL);
+    } while (errno != ECHILD);
+
+    return;
+}
+
+
 void
 cleanup (int signo)
 {
@@ -17,8 +30,8 @@ cleanup (int signo)
     cleaning_up = 1;
 	
     // close database and sync file to disk
+    printf("closing database...\n");
     close_db(db);
-    sync2disk(0);
 
     // close serial port
     printf("shutting down serial port...\n");
@@ -26,10 +39,11 @@ cleanup (int signo)
 
     // wait for all child processes
     printf("waiting for child processes to finish...\n");
+    wait4childs();
 
-    do {
-        wait(NULL);
-    } while (errno != ECHILD);
+    // sync database to disk (without nicing)
+    sync2disk(0);
+    wait4childs();
 
     printf("exiting\n");    
     exit(0);
@@ -65,7 +79,11 @@ main (int argc, char **argv)
 
     // and initialize
     init_db(db);
-    
+
+    // start http server
+    printf("fireing up httpd server\n");
+    if (httpd_start(db) == -1)
+        return -1;
     
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);

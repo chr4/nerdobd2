@@ -18,6 +18,8 @@
 // we need sqlite3 access
 #include "../common/sqlite.h"
 
+// the http server
+#include "../common/httpd.h"
 
 #define SERIAL_HARD_ERROR   -2
 #define SERIAL_SOFT_ERROR   -1

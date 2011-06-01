@@ -303,34 +303,45 @@ handle_client(int fd)
     return;
 }
 
-
 void
-sig_chld(int signo)
+httpd_stop(int signo)
 {
-        pid_t pid;
-        int   stat;
+    printf(" - child (httpd): closing connections...\n");
+    do {
+        wait(NULL);
+    } while (errno != ECHILD);
 
-        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
-        return;
+    printf(" - child (httpd): closing database...\n");
+    close_db(db);
+
+    _exit(0);
 }
 
-
 int
-main(int argc, char **argv)
+httpd_start(sqlite3 *mydb)
 {
     int s;
 
-    // catch orphans
-    signal(SIGCHLD, sig_chld);
-
-    if ( (db = open_db()) == NULL)
-        return -1;
+    db = mydb;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;
 
-    tcp_loop_accept(s, &handle_client);
+    if (fork() == 0)
+    {
+        // add signal handler for cleanup function
+        signal(SIGINT, httpd_stop);
+        signal(SIGTERM, httpd_stop);
 
-    // should never be reached
+        tcp_loop_accept(s, &handle_client);
+
+        // should never be reached
+        _exit(0);
+    }
+
+    // we don't need the socket in this process
+    close(s);
+
     return 0;
 }
+

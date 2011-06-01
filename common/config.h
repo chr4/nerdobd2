@@ -1,5 +1,5 @@
 #define HTTPD_PORT	   8080
-#define DOCROOT		   "httpd"
+#define DOCROOT		   "html"
 
 //#define DEBUG_SERIAL
 //#define DEBUG_SQLITE
