@@ -42,7 +42,7 @@ sync2disk(int n)
         if (nice(n) == -1)
             perror("couldn't nice rsync process");
 
-        printf("syncing db file to disk...\n");
+        printf(" - child (rsync): syncing db file to disk...\n");
         execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
         _exit(0);
     }
