@@ -15,8 +15,8 @@
 #include <sqlite3.h>
 
 // include common defines
-#include "../common/common.h"
-#include "../common/config.h"
+#include "common.h"
+#include "config.h"
 
 // sqlite functions
 int      exec_query(sqlite3 *, char *);

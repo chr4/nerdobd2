@@ -5,37 +5,37 @@ nerdobd2 : core
 
 # core
 core : core.o kw1281.o sqlite.o httpd.o db2json.o json.o tcp.o
-	$(CC) $(CC_OPTIONS) -o nerdobd2 core/core.o core/kw1281.o common/sqlite.o common/db2json.o common/httpd.o common/tcp.o common/json.o
+	$(CC) $(CC_OPTIONS) -o nerdobd2 core.o kw1281.o sqlite.o db2json.o httpd.o tcp.o json.o
 
-core.o : core/core.c
-	$(CC) $(CC_OPTIONS) -c core/core.c -o core/core.o
+core.o : core.c
+	$(CC) $(CC_OPTIONS) -c core.c -o core.o
 	
-kw1281.o : core/kw1281.c
-	$(CC) $(CC_OPTIONS) -c core/kw1281.c -o core/kw1281.o
+kw1281.o : kw1281.c
+	$(CC) $(CC_OPTIONS) -c kw1281.c -o kw1281.o
 
 
 # http server
-httpd.o : common/httpd.c
-	$(CC) $(CC_OPTIONS) -c common/httpd.c -o common/httpd.o
+httpd.o : httpd.c
+	$(CC) $(CC_OPTIONS) -c httpd.c -o httpd.o
 	
-db2json.o : common/db2json.c
-	$(CC) $(CC_OPTIONS) -c common/db2json.c -o common/db2json.o
+db2json.o : db2json.c
+	$(CC) $(CC_OPTIONS) -c db2json.c -o db2json.o
 
 
 # sqlite access
-sqlite.o : common/sqlite.c
-	$(CC) $(CC_OPTIONS) -c common/sqlite.c -o common/sqlite.o
+sqlite.o : sqlite.c
+	$(CC) $(CC_OPTIONS) -c sqlite.c -o sqlite.o
 
 # tcp helpers
-tcp.o : common/tcp.c
-	$(CC) $(CC_OPTIONS) -c common/tcp.c -o common/tcp.o
+tcp.o : tcp.c
+	$(CC) $(CC_OPTIONS) -c tcp.c -o tcp.o
 
 # json helpers
-json.o : common/json.c
-	$(CC) $(CC_OPTIONS) -c common/json.c -o common/json.o
+json.o : json.c
+	$(CC) $(CC_OPTIONS) -c json.c -o json.o
 
 
 # cleaning	
 clean :
-	rm -f core/*.o common/*.o nerdobd2_*
+	rm -f *.o nerdobd2
 

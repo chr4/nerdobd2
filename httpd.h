@@ -9,11 +9,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "../common/common.h"
-#include "../common/config.h"
+#include "common.h"
+#include "config.h"
 
-#include "../common/json.h"
-#include "../common/sqlite.h"
+#include "json.h"
+#include "sqlite.h"
 
 int httpd_start(sqlite3 *);
 
