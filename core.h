@@ -12,14 +12,14 @@
 #include <sys/time.h>
 
 // include common defines
-#include "../common/common.h"
-#include "../common/config.h"
+#include "common.h"
+#include "config.h"
 
 // we need sqlite3 access
-#include "../common/sqlite.h"
+#include "sqlite.h"
 
 // the http server
-#include "../common/httpd.h"
+#include "httpd.h"
 
 #define SERIAL_HARD_ERROR   -2
 #define SERIAL_SOFT_ERROR   -1

@@ -1,5 +1,5 @@
 #include "httpd.h"
-#include "../common/tcp.h"
+#include "tcp.h"
 
 #define SERVER_STRING   "Server: nerdobd ajax server |0.9.4\r\n"
 #define SERVER_CON      "Connection: close\r\n"
