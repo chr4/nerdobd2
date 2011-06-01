@@ -29,7 +29,8 @@ cleanup (int signo)
     do {
         wait(NULL);
     } while (errno != ECHILD);
-    
+
+    printf("exiting\n");    
     exit(0);
 }
 

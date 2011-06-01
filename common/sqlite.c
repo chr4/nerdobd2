@@ -3,8 +3,8 @@
 static int
 busy(void *unused __attribute__((unused)), int count)
 {
-	usleep(500000);
-    puts("retrying query...\n");
+    usleep(500000);
+    printf("retrying query...\n");
 
     // give up after 30 seconds
 	return (count < 60);
