@@ -15,6 +15,7 @@ int     kw1281_empty_buffer(void);
 int     kw1281_read_timeout(void);
 int     kw1281_write_timeout(unsigned char c);
 void    kw1281_print (void);
+void    kw1281_restore(void);
 
 int     fd = -1;
 int     counter;        // kw1281 protocol block counter
@@ -25,7 +26,7 @@ int     loopcount;      // counter for mainloop
 // save old values
 struct  termios oldtio;
 struct  serial_struct ot, st;
-int     oldflags;
+int     oldflags = -1;
 
 
 // read 1024 bytes with 200ms timeout
@@ -190,7 +191,7 @@ kw1281_write_timeout(unsigned char c)
 
 /* manually set serial lines */
 static void
-_set_bit (int bit)
+_set_bit(int bit)
 {
     int     flags;
 
@@ -212,7 +213,7 @@ _set_bit (int bit)
 
 // increment the counter
 int
-kw1281_inc_counter (void)
+kw1281_inc_counter(void)
 {
     if (counter == 255)
     {
@@ -227,7 +228,7 @@ kw1281_inc_counter (void)
 
 /* receive one byte and acknowledge it */
 int
-kw1281_recv_byte_ack (void)
+kw1281_recv_byte_ack(void)
 {
     // we need int, so we can capture -1 as well
     int c, d;
@@ -265,7 +266,7 @@ kw1281_recv_byte_ack (void)
 
 /* send one byte and wait for acknowledgement */
 int
-kw1281_send_byte_ack (unsigned char c)
+kw1281_send_byte_ack(unsigned char c)
 {
     // we need int, so we can capture -1 as well
     int d;
@@ -310,7 +311,7 @@ kw1281_send_byte_ack (unsigned char c)
 
 // send an ACK block
 int
-kw1281_send_ack (void)
+kw1281_send_ack(void)
 {
     // we need int, so we can capture -1 as well
     int c;
@@ -358,7 +359,7 @@ kw1281_send_ack (void)
 
 /* send group reading block */
 int
-kw1281_send_block (unsigned char n)
+kw1281_send_block(unsigned char n)
 {
     // we need int, so we can capture -1 as well
     int c;
@@ -428,7 +429,7 @@ struct timeval speed_start, speed_stop;
 
 /* receive a complete block */
 int
-kw1281_recv_block (unsigned char n)
+kw1281_recv_block(unsigned char n)
 {
     int i;
 
@@ -650,7 +651,7 @@ kw1281_recv_block (unsigned char n)
 }
 
 int
-kw1281_get_block (unsigned char n)
+kw1281_get_block(unsigned char n)
 {
     if (kw1281_send_block(n) == -1)
     {
@@ -686,7 +687,7 @@ kw1281_get_ascii_blocks(void)
 }
 
 int
-kw1281_open (char *device)
+kw1281_open(char *device)
 {
     struct termios newtio;
 
@@ -733,6 +734,36 @@ kw1281_open (char *device)
     return 0;
 }
 
+
+void
+kw1281_restore(void)
+{
+    if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
+    {
+#ifdef DEBUG_SERIAL
+        printf ("TIOCSSERIAL failed\n");
+#endif
+    }
+
+    // allow buffer to drain, discard input
+    // TCSADRAIN for only letting it drain
+    if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
+    {
+#ifdef DEBUG_SERIAL
+        printf("tcsetattr() failed.\n");
+#endif
+    }
+
+    if (ioctl (fd, TIOCMSET, &oldflags) < 0)
+    {
+#ifdef DEBUG_SERIAL
+        printf("TIOCMSET failed.\n");
+#endif
+    }
+
+    return;
+}
+
 // restore old serial configuration and close port
 int
 kw1281_close(void)
@@ -740,18 +771,7 @@ kw1281_close(void)
     if (fd == -1)
         return 0;
 
-    printf("shutting down serial port\n");
-
-    if (ioctl (fd, TIOCSSERIAL, &ot) < 0)
-        printf ("TIOCSSERIAL failed\n");
-
-    // allow buffer to drain, discard input
-    // TCSADRAIN for only letting it drain
-    if (tcsetattr (fd, TCSAFLUSH, &oldtio) == -1)
-        printf("tcsetattr() failed.\n");
-
-    if (ioctl (fd, TIOCMSET, &oldflags) < 0)
-        printf("TIOCMSET failed.\n");
+    kw1281_restore();
 
     if (close(fd))
         perror("close");
@@ -761,7 +781,7 @@ kw1281_close(void)
 
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
 int
-kw1281_init (int address)
+kw1281_init(int address)
 {
     int     i, p, flags;
 
@@ -785,6 +805,9 @@ kw1281_init (int address)
     // wait the idle time
     usleep(300000);
 
+    // restore saved flags
+    if (oldflags != -1)
+        kw1281_restore();
 
     // prepare to send (clear dtr and rts)
     if (ioctl (fd, TIOCMGET, &flags) < 0)
@@ -794,7 +817,8 @@ kw1281_init (int address)
     }
 
     // save old flags so we can restore them later
-    oldflags = flags;
+    if (oldflags == -1)
+        oldflags = flags;
 
     flags &= ~(TIOCM_DTR | TIOCM_RTS);
 
@@ -890,7 +914,7 @@ kw1281_init (int address)
 }
 
 int
-kw1281_mainloop (void)
+kw1281_mainloop(void)
 {
 #ifdef DEBUG_SERIAL
     printf ("receive blocks\n");

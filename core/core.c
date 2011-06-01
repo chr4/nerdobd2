@@ -21,6 +21,7 @@ cleanup (int signo)
     sync2disk(0);
 
     // close serial port
+    printf("shutting down serial port...\n");
     kw1281_close();
 
     // wait for all child processes
@@ -164,7 +165,7 @@ main (int argc, char **argv)
         // hard error (e.g. serial cable unplugged)
         else if (ret == SERIAL_HARD_ERROR)
         {
-            printf("serial port error\n");
+            printf("serial port error, trying to recover...\n");
             kw1281_close();
             continue;
         }
