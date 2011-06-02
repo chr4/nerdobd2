@@ -10,14 +10,14 @@
 
   <script language="javascript" type="text/javascript">
 
-    function Graph(Name, Series, Options, Timespan)
+    function Graph(Name, Timespan)
     {
         var name;
         var index;
         var timespan;
 
-        var options;
-        var series;
+        var options = {};
+        var series = {};
 
         this.setIndex = function(newIndex)
         {
@@ -44,6 +44,11 @@
             // get localtime
             var t = new Date();
             return t.getTime() - t.getTimezoneOffset() * 60000;
+        }
+
+        this.updateLabel = function()
+        {
+            series.label = name + " (last " + timespan / 60000 + "min)";
         }
 
         this.updateOptions = function()
@@ -120,13 +125,39 @@
             $.plot($("#graph-" + name), [ series ], options);
         }
 
+        this.setOptions = function(Options)
+        {
+            jQuery.extend(options, Options);
+        }
+
+        this.setSeries = function(Series)
+        {
+            jQuery.extend(series, Series);
+        }
+
         this.construct = function()
         {
             name = Name;
-            series = Series;
-            options = Options;
             timespan = Timespan;
             index = 0;
+
+            // create data array and set label
+            series.data = [];
+
+            // disable shadows for better performance
+            options.series = {};
+            options.series.shadowSize = 0;
+
+            // configure the legend
+            options.legend = {};
+            options.legend.show = true;
+            options.legend.position = "nw";
+            options.legend.backgroundOpacity = 0;
+            options.legend.labelFormatter = function (label, series) {
+                return '<span style="font-family:helvetica;">' + label + '</span>';
+            }
+
+            this.updateLabel();
 
             this.update();
         }
@@ -219,27 +250,28 @@
 $(document).ready(function() {
 
 
-    // maybe we can put those options somewhere better maintainable
-    var ConsumptionGraph = new Graph("consumption",
-                                     { "data": [], "color": "rgb(200, 20, 30)",
-                                       "lines": { "fill": false, "steps": true },
-                                       "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } },
-                                     { "series": { "shadowSize": 0 },
-                                       "yaxis": { "min": 0, "max": "20" },
-                                       "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
-                                     300000);
+    // setting up consumption graph
+    var ConsumptionGraph = new Graph("consumption", 300000);
 
-    var SpeedGraph = new Graph("speed",
-                               { "data": [], "color": "rgb(0, 0, 0)",
-                                 "lines": { "fill": true } },
-                               { "series": { "shadowSize": 0 },
-                                 "yaxis": { "min": 0, "max": "150" },
-                                 "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } },
-                               1800000);
+    ConsumptionGraph.setSeries(  { "color": "rgb(200, 20, 30)",
+                                   "lines": { "fill": false, "steps": true },
+                                   "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } } );
+
+    ConsumptionGraph.setOptions( { "yaxis": { "min": 0, "max": "20" },
+                                   "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
 
 
+    // and setting up speed graph
+    var SpeedGraph = new Graph("speed", 1800000);
+
+    SpeedGraph.setSeries(  { "lines": { "fill": true } } );
+
+    SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
+                             "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
 
 
+
+    // setup all variables
     var Data = new Values();
 
     Data.create("consumption_per_100km", "l/km", 2);
