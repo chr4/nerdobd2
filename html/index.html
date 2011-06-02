@@ -12,9 +12,10 @@
 
     function Graph(Name, Timespan)
     {
-        var name;
-        var index;
-        var timespan;
+        var name = "";
+        var index = 0;
+        var timespan = 0;
+        var interval = 0;
 
         var options = {};
         var series = {};
@@ -31,7 +32,19 @@
 
         this.setTimespan = function(newTimespan)
         {
+            // reset index, if new timespan is larger than the old one
+            // so we will fetch older data as well
+            if (timespan < newTimespan)
+                index = 0;
+
+            // update timespan
             timespan = newTimespan;
+
+            // don't update more than once a second
+            if (timespan < 30000)
+                interval = 1000;
+            else
+                interval = timespan / 300;
         }
 
         this.getTimespan = function()
@@ -48,7 +61,11 @@
 
         this.updateLabel = function()
         {
-            series.label = name + " (last " + timespan / 60000 + "min)";
+            // display hours if graph is more than 60min
+            if (timespan > 3600000)
+                series.label = name + " (last " + timespan / 3600000 + "h)";
+            else
+                series.label = name + " (last " + timespan / 60000 + "min)";
         }
 
         this.updateOptions = function()
@@ -92,6 +109,7 @@
             }
 
             this.updateOptions();
+            this.updateLabel();
             this.plot();
         }
 
@@ -116,7 +134,7 @@
                 method: 'GET',
                 dataType: 'json',
                 success: onDataReceived,
-                complete: setTimeout(function() { that.update(); }, timespan / 300)
+                complete: setTimeout(function() { that.update(); }, interval)
             });
         }
 
@@ -138,8 +156,7 @@
         this.construct = function()
         {
             name = Name;
-            timespan = Timespan;
-            index = 0;
+            this.setTimespan(Timespan);
 
             // create data array and set label
             series.data = [];
@@ -268,7 +285,6 @@ $(document).ready(function() {
 
     SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
                              "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
-
 
 
     // setup all variables
