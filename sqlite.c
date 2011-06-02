@@ -4,7 +4,10 @@ static int
 busy(void *unused __attribute__((unused)), int count)
 {
     usleep(500000);
+
+#ifdef DEBUG_SQLITE
     printf("retrying query...\n");
+#endif
 
     // give up after 30 seconds
 	return (count < 60);
