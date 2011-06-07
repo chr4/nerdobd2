@@ -97,10 +97,10 @@
 
                 /* display gaps of information as gaps,
                  * don't just connect the dots
-                 * if the time between two dots is more than 60 sec
+                 * if the time between two dots is more than 20 sec
                  * don't connect them (i.e. add a dot at -1)
                  */
-                if (series.data[i][0] > series.data[i - 1][0] + 60000)
+                if (series.data[i][0] > series.data[i - 1][0] + 20000)
                 {
                     // add two new dots with y value -1
                     series.data.splice(i, 0, [ series.data[i][0], -1 ]);
