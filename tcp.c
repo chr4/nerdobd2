@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <error.h>
-#include <signal.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include "tcp.h"
 
 int
 tcp_listen(int port)
