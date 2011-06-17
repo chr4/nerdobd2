@@ -1,3 +1,4 @@
+#include "kw1281.h"
 #include "core.h"
 
 static void _set_bit (int);
