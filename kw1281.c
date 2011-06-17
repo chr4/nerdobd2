@@ -782,7 +782,7 @@ kw1281_close(void)
 
 /* write 7O1 address byte at 5 baud and wait for sync/keyword bytes */
 int
-kw1281_init(int address)
+kw1281_init(int address, int state)
 {
     int     i, p, flags;
 
@@ -806,8 +806,8 @@ kw1281_init(int address)
     // wait the idle time
     usleep(300000);
 
-    // restore saved flags
-    if (oldflags != -1)
+    // restore saved flags (on serial hard error, e.g. usb disconnect)
+    if (state == SERIAL_HARD_ERROR && oldflags != -1)
         kw1281_restore();
 
     // prepare to send (clear dtr and rts)

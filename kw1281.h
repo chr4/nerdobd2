@@ -13,7 +13,7 @@
 
 int  kw1281_open (char *device);
 int  kw1281_close(void);
-int  kw1281_init (int);
+int  kw1281_init (int, int);
 int  kw1281_mainloop (void);
 
 // flags if this is the first run
