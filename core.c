@@ -171,7 +171,7 @@ main (int argc, char **argv)
 
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
-        ret = kw1281_init(0x01);
+        ret = kw1281_init(0x01, ret);
 
         // soft error, e.g. communication error
         if (ret == SERIAL_SOFT_ERROR)
