@@ -17,6 +17,11 @@
 // the http server
 #include "httpd.h"
 
+#ifdef GPS
+// gps
+#include "gps.h"
+#endif
+
 // the engine data struct
 typedef struct engine_data
 {

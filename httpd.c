@@ -321,13 +321,14 @@ int
 httpd_start(sqlite3 *mydb)
 {
     int s;
+    pid_t pid;
 
     db = mydb;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;
 
-    if (fork() == 0)
+    if ( (pid = fork()) == 0)
     {
         // add signal handler for cleanup function
         signal(SIGINT, httpd_stop);
@@ -341,7 +342,6 @@ httpd_start(sqlite3 *mydb)
 
     // we don't need the socket in this process
     close(s);
-
-    return 0;
+    return pid;
 }
 

@@ -3,7 +3,12 @@
  */
 #include "gps.h"
 
+#ifdef GPS
 sqlite3 *db;
+
+static struct gps_data_t gpsdata;
+static time_t status_timer;     /* Time of last state change. */
+static bool magnetic_flag = false;
 
 /* Convert true heading to magnetic.  Taken from the Aviation
    Formulary v1.43.  Valid to within two degrees within the
@@ -73,13 +78,20 @@ static float true2magnetic(double lat, double lon, double heading)
 
 
 /* This gets called once for each new GPS sentence. */
-static void update_gps_panel(struct gps_data_t *gpsdata,
-			     char *message, size_t len UNUSED)
+static void
+update_gps(struct gps_data_t *gpsdata,
+           char *message, size_t len UNUSED)
 {
     int i, j;
     char scr[128];
     int newstate;
     bool usedflags[MAXCHANNELS];
+
+    static float altfactor = 1;
+    static float speedfactor = 3.6;
+    static char *altunits = "m";
+    static char *speedunits = "km/h";
+
 
     /* must build bit vector of which statellites are used from list */
     for (i = 0; i < MAXCHANNELS; i++) {
@@ -210,14 +222,26 @@ static void update_gps_panel(struct gps_data_t *gpsdata,
         puts(scr);
 }
 
+void
+gps_stop(int signo)
+{
+    // TODO: cleanly deregister from gpsd
+
+    printf(" - child (gps): closing database...\n");
+    close_db(db);
+
+    _exit(0);
+}
+
 int
-start_gps(sqlite3 *mydb)
+gps_start(sqlite3 *mydb)
 {
     db = mydb;
 
     struct timeval timeout;
     fd_set rfds;
     int data;
+    pid_t pid;
 
     /* Open the stream to gpsd. */
     if (gps_open_r(NULL, NULL, &gpsdata) != 0) {
@@ -225,35 +249,49 @@ start_gps(sqlite3 *mydb)
 	return -1;
     }
 
-    gps_set_raw_hook(&gpsdata, update_gps_panel);
+    if ( (pid = fork()) == 0)
+    {  
+        // add signal handler for cleanup function
+        signal(SIGINT, gps_stop);
+        signal(SIGTERM, gps_stop);
 
-    status_timer = time(NULL);
+        // run update_gps everytime new data is available
+        gps_set_raw_hook(&gpsdata, update_gps);
 
-    (void)gps_stream(&gpsdata, WATCH_ENABLE, NULL);
+        status_timer = time(NULL);
 
-    /* heart of the client */
-    for (;;) {
+        // register at gpsd
+        gps_stream(&gpsdata, WATCH_ENABLE, NULL);
 
-	/* watch to see when it has input */
-	FD_ZERO(&rfds);
-	FD_SET(gpsdata.gps_fd, &rfds);
+        for (;;) {
 
-	/* wait up to five seconds. */
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
+            // watch to see when it has input
+            FD_ZERO(&rfds);
+            FD_SET(gpsdata.gps_fd, &rfds);
 
-	/* check if we have new information */
-	data = select(gpsdata.gps_fd + 1, &rfds, NULL, NULL, &timeout);
+            // wait up to five seconds.
+            timeout.tv_sec = 5;
+            timeout.tv_usec = 0;
 
-	if (data == -1) {
-            puts("gps: select() error");
-            return -1;
-	} else if (data) {
-	    errno = 0;
-	    if (gps_read(&gpsdata) == -1) {
-                puts("gps_read() error");
+            // check if we have new information
+            data = select(gpsdata.gps_fd + 1, &rfds, NULL, NULL, &timeout);
+
+            if (data == -1) {
+                puts("gps: select() error");
                 return -1;
-	    }
-	}
+            } else if (data) {
+                    errno = 0;
+                if (gps_read(&gpsdata) == -1) {
+                    puts("gps_read() error");
+                    return -1;
+                }
+            }
+        }
+
+        // should never be reached
+        _exit(0);
     }
+
+    return pid;
 }
+#endif

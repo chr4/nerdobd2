@@ -7,7 +7,10 @@ sqlite3 *db;
 void	cleanup (int);
 char	cleaning_up = 0;
 
-
+pid_t   pid_httpd = -1;
+#ifdef GPS
+pid_t   pid_gps = -1;
+#endif
 
 void
 wait4childs(void)
@@ -28,6 +31,18 @@ cleanup (int signo)
         return;
 	
     cleaning_up = 1;
+
+    // shutdown httpd
+    printf("sending SIGTERM to httpd (%d)\n", pid_httpd);
+    if (pid_httpd != -1)
+        kill(pid_httpd, SIGTERM);
+
+#ifdef GPS
+    // shutdown gps
+    printf("sending SIGTERM to gps (%d)\n", pid_gps);
+    if (pid_gps != -1)
+       kill(pid_gps, SIGTERM);
+#endif
 	
     // close database and sync file to disk
     printf("closing database...\n");
@@ -81,10 +96,17 @@ main (int argc, char **argv)
     init_db(db);
 
     // start http server
-    printf("fireing up httpd server\n");
-    if (httpd_start(db) == -1)
-        return -1;
-    
+    puts("fireing up httpd server");
+    if ( (pid_httpd = httpd_start(db)) == -1)
+        cleanup(15);
+
+#ifdef GPS
+    // collect gps data
+    puts("connecting to gpsd, collecting gps data");
+    if ( (pid_gps = gps_start(db)) == -1)
+        cleanup(15); 
+#endif
+
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
     signal(SIGTERM, cleanup);	
