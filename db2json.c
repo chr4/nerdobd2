@@ -10,9 +10,9 @@ json_get_engine_data(sqlite3 *db, json_object *data)
     snprintf(query, sizeof(query),
              "SELECT rpm, speed, injection_time, \
                      oil_pressure, consumption_per_100km, consumption_per_h \
-             FROM engine_data \
-             ORDER BY id \
-             DESC LIMIT 1");
+              FROM engine_data \
+              ORDER BY id \
+              DESC LIMIT 1");
 
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
@@ -61,9 +61,9 @@ json_get_other_data(sqlite3 *db, json_object *data)
     // query other data
     snprintf(query, sizeof(query),
              "SELECT temp_engine, temp_air_intake, voltage \
-             FROM other_data \
-             ORDER BY id \
-             DESC LIMIT 1");
+              FROM other_data \
+              ORDER BY id \
+              DESC LIMIT 1");
 
 #ifdef DEBUG_SQLITE
     printf("sql: %s\n", query);
@@ -99,6 +99,68 @@ json_get_other_data(sqlite3 *db, json_object *data)
     return 0;
 }
 
+#ifdef GPS
+int
+json_get_gps_data(sqlite3 *db, json_object *data)
+{
+    char          query[LEN_QUERY];
+    sqlite3_stmt  *stmt;
+
+    // query engine data
+    snprintf(query, sizeof(query),
+             "SELECT mode, \
+                     latitude, longitude, altitude, \
+                     speed, climb, track, \
+                     err_latitude, err_longitude, err_altitude, \
+                     err_speed, err_climb, err_track \
+              FROM gps_data \
+              ORDER BY id \
+              DESC LIMIT 1");
+
+#ifdef DEBUG_SQLITE
+    printf("sql: %s\n", query);
+#endif
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return -1;
+    }
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
+    {
+        printf("couldn't execute query: '%s'\n", query);
+        return -1;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        add_double(data, "mode", sqlite3_column_double(stmt, 0));
+        add_double(data, "latitude", sqlite3_column_double(stmt, 1));
+        add_double(data, "longitude", sqlite3_column_double(stmt, 2));
+        add_double(data, "altitude", sqlite3_column_double(stmt, 3));
+        add_double(data, "speed", sqlite3_column_double(stmt, 4));
+        add_double(data, "climb", sqlite3_column_double(stmt, 5));
+        add_double(data, "track", sqlite3_column_double(stmt, 6));
+        add_double(data, "err_latitude", sqlite3_column_double(stmt, 7));
+        add_double(data, "err_longitude", sqlite3_column_double(stmt, 8));
+        add_double(data, "err_altitude", sqlite3_column_double(stmt, 9));
+        add_double(data, "err_speed", sqlite3_column_double(stmt, 10));
+        add_double(data, "err_climb", sqlite3_column_double(stmt, 11));
+        add_double(data, "err_track", sqlite3_column_double(stmt, 12));
+    }
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK)
+    {
+#ifdef DEBUG_SQLITE
+        printf("sqlite3_finalize() error\n");
+#endif 
+        return -1;
+    }
+
+    return 0;
+}
+#endif
 
 int
 json_get_averages(sqlite3 *db, json_object *data)
@@ -201,6 +263,11 @@ json_latest_data(sqlite3 *db)
     json_get_engine_data(db, data);
     json_get_other_data(db, data);
     json_get_averages(db, data);
+
+#ifdef GPS
+    json_object *gps = add_object(data, "gps");
+    json_get_gps_data(db, gps);
+#endif
 
     exec_query(db, "END TRANSACTION");
 
