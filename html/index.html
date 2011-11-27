@@ -3,7 +3,9 @@
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>nerdobd2</title>
-  <link rel="stylesheet" href="style.css" type="text/css" media="all" />
+  <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
+  <link rel="stylesheet" href="css/leaflet.css" />
+  <script language="javascript" type="text/javascript" src="js/leaflet.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.min.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.flot.min.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery.flot.threshold.min.js"></script>
@@ -191,11 +193,37 @@
 
         this.update = function(data)
         {
-            // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
-            if (name == "consumption_per_100km" && data[name] == -1)
-                this.set(data['consumption_per_h'], "l/h");
-            else
-                this.set(data[name], unit);
+            // if this is gps information, don't update <div>, but set location and stuff
+            if (name == "gps") {
+                loc = new L.LatLng(data[name]['latitude'], data[name]['longitude']);
+           
+                // 0.0 means no location, return
+                if (loc.equals(new L.LatLng(0, 0)))
+                    return;
+
+                window.map.panTo(loc);
+
+                // add the new location to the path polyline, unless we're still at the same place
+                last = window.path.getLatLngs();
+                if (!loc.equals(last[last.length-1])) {
+                    window.path.addLatLng(loc);
+
+                    // also add a clickable circle, containing the engine information
+                    var infoCircle = new L.Circle(loc, 1);
+                    infoCircle.bindPopup('<span>speed: ' + data['speed'] + '(gps: ' + data[name]['speed'] + ')</span><br/>' +
+                                         '<span>consumption: ' + data['consumption_per_100km'].toFixed(2) + '</span>');
+                    window.map.addLayer(infoCircle);
+                }
+            }
+
+            // for non-gps data, update corresponding <div>
+            else {
+                // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
+                if (name == "consumption_per_100km" && data[name] == -1)
+                    this.set(data['consumption_per_h'], "l/h");
+                else
+                    this.set(data[name], unit);
+           }
         }
 
         this.set = function(value, theunit)
@@ -266,6 +294,19 @@
 
 $(document).ready(function() {
 
+    // setup map
+    window.map = new L.Map('map');
+    var cloudmadeUrl = 'tiles/{z}/{x}/{y}.png',
+    cloudmade = new L.TileLayer(cloudmadeUrl, {minZoom: 10, maxZoom: 16});
+    window.map.addLayer(cloudmade);
+
+    // and a polyline for tracking our path
+    window.path = new L.Polyline( [ ], {color: 'blue', opacity: 0.5});
+    window.map.addLayer(path);
+ 
+    // set initial map point to frankfurt
+    window.map.setView(new L.LatLng(50.053612, 9.14611), 15);
+
 
     // setting up consumption graph
     var ConsumptionGraph = new Graph("consumption", 300000);
@@ -304,45 +345,45 @@ $(document).ready(function() {
     Data.create("kilometers_startup", "km", 2);
     Data.create("consumption_liters_total", "l", 2);
     Data.create("kilometers_total", "km", 2);
-    
+   
+    Data.create("gps", "d", 0) 
 });
   </script>
 
  </head>
-  <body>
-    <div class="left-container">
-      <div id="graph-consumption" class="graph"></div>
-   </div>
+ <body>
 
-     <div class="right-container">
-       <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
-       <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
-
-       <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
-       <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
-     </div>
-
-   <div class="left-container">
-      <div id="graph-speed" class="graph"></div>
+  <div class="left-container">
+   <div id="graph-consumption" class="graph"></div>
+   <div id="graph-speed" class="graph"></div>
   </div>
 
-     <div class="right-container">
-       <span id="consumption_liters_startup" class="value value-small">-</span><span class="unit unit-small">l</span>
-       <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
-       <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
-       <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
-            
-     <!--
-       <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
-       <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
-     -->
-       <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
-       <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
-       <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+  <div class="right-container">
+   <div id="map"></map>
 
-     </div>
+   <div class="value-container">
+    <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
+    <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
 
-    </div>
+    <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+    <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
+
+    <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">l</span>
+    <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
+    <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
+    <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
+          
+   <!--
+    <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
+    <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
+   -->
+    <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
+    <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
+    <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+   </div>
+
+  </div>
+
  </body>
 </html>
 
