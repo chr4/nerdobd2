@@ -201,18 +201,14 @@
                 if (loc.equals(new L.LatLng(0, 0)))
                     return;
 
-                window.map.panTo(loc);
-
-                // add the new location to the path polyline, unless we're still at the same place
-                last = window.path.getLatLngs();
-                if (!loc.equals(last[last.length-1])) {
-                    window.path.addLatLng(loc);
-
-                    // also add a clickable circle, containing the engine information
-                    var infoCircle = new L.Circle(loc, 1);
-                    infoCircle.bindPopup('<span>speed: ' + data['speed'] + '(gps: ' + data[name]['speed'] + ')</span><br/>' +
-                                         '<span>consumption: ' + data['consumption_per_100km'].toFixed(2) + '</span>');
-                    window.map.addLayer(infoCircle);
+                // pan to the new location and update location circle
+                if (!loc.equals(window.last_location)) {
+                    window.map.panTo(loc);
+                    window.marker.bindPopup('<span>speed: ' + data['speed'] + 
+                                            ' (gps: ' + data[name]['speed'] + ')</span><br/>' +
+                                            '<span>consumption: ' + data['consumption_per_100km'] + '</span>');
+                    window.marker.setLatLng(loc);
+                    window.last_location = loc;
                 }
             }
 
@@ -300,12 +296,16 @@ $(document).ready(function() {
     cloudmade = new L.TileLayer(cloudmadeUrl, {minZoom: 10, maxZoom: 16});
     window.map.addLayer(cloudmade);
 
-    // and a polyline for tracking our path
-    window.path = new L.Polyline( [ ], {color: 'blue', opacity: 0.5});
-    window.map.addLayer(path);
- 
     // set initial map point to frankfurt
-    window.map.setView(new L.LatLng(50.053612, 9.14611), 15);
+    ffm = new L.LatLng(50.118845, 8.660713);
+    window.map.setView(ffm, 15);
+
+    // display circle at current location
+    window.marker = new L.Circle(ffm, 50);
+    window.map.addLayer(marker);
+
+    // store last location
+    window.last_location = L.LatLng(0, 0);
 
 
     // setting up consumption graph
@@ -327,7 +327,6 @@ $(document).ready(function() {
     SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
                              "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
 
-
     // setup all variables
     var Data = new Values();
 
@@ -346,7 +345,7 @@ $(document).ready(function() {
     Data.create("consumption_liters_total", "l", 2);
     Data.create("kilometers_total", "km", 2);
    
-    Data.create("gps", "d", 0) 
+    Data.create("gps", "", 0) 
 });
   </script>
 
