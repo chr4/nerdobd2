@@ -9,7 +9,7 @@ json_get_engine_data(sqlite3 *db, json_object *data)
     // query engine data
     snprintf(query, sizeof(query),
              "SELECT rpm, speed, injection_time, \
-             oil_pressure, consumption_per_100km, consumption_per_h \
+                     oil_pressure, consumption_per_100km, consumption_per_h \
              FROM engine_data \
              ORDER BY id \
              DESC LIMIT 1");
@@ -42,7 +42,9 @@ json_get_engine_data(sqlite3 *db, json_object *data)
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
+#ifdef DEBUG_SQLITE
         printf("sqlite3_finalize() error\n");
+#endif
         return -1;
     }
 
@@ -88,7 +90,9 @@ json_get_other_data(sqlite3 *db, json_object *data)
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
+#ifdef DEBUG_SQLITE
         printf("sqlite3_finalize() error\n");
+#endif
         return -1;
     }
 
@@ -132,7 +136,9 @@ json_get_averages(sqlite3 *db, json_object *data)
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
+#ifdef DEBUG_SQLITE
         printf("sqlite3_finalize() error\n");
+#endif
         return -1;
     }
 
@@ -174,7 +180,9 @@ json_get_averages(sqlite3 *db, json_object *data)
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
+#ifdef DEBUG_SQLITE
         printf("sqlite3_finalize() error\n");
+#endif
         return -1;
     }
 
@@ -250,7 +258,9 @@ json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long i
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
+#ifdef DEBUG_SQLITE
         printf("sqlite3_finalize() error\n");
+#endif
         return NULL;
     }
 
