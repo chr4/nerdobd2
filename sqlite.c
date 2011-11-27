@@ -187,7 +187,27 @@ init_db(sqlite3 *db)
                         temp_engine     FLOAT, \
                         temp_air_intake FLOAT, \
                         voltage         FLOAT )");
-    
+
+#ifdef GPS
+    // create gps_data table
+    exec_query(db, "CREATE TABLE IF NOT EXISTS gps_data ( \
+                        id            INTEGER PRIMARY KEY, \
+                        time          DATE, \
+                        mode          INTEGER, \
+                        latitude      FLOAT, \
+                        longitude     FLOAT, \
+                        altitude      FLOAT, \
+                        speed         FLOAT, \
+                        climb         FLOAT, \
+                        track         FLOAT, \
+                        err_latitude  FLOAT, \
+                        err_longitude FLOAT, \
+                        err_altitude  FLOAT, \
+                        err_speed     FLOAT, \
+                        err_climb     FLOAT, \
+                        err_track     FLOAT )");
+#endif
+
     // create table where set point information is stored
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \
                         name        VARCHAR PRIMARY KEY, \

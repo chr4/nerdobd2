@@ -10,6 +10,76 @@ static struct gps_data_t gpsdata;
 static time_t status_timer;     /* Time of last state change. */
 static bool magnetic_flag = false;
 
+double last_latitude = -1;
+double last_longitude = -1;
+
+void
+insert_gps_data(struct gps_fix_t g)
+{
+    char query[LEN_QUERY];
+    double rounded_latitude, rounded_longitude;
+
+    // return if we don't have a gps fix
+    if (g.mode < MODE_2D)
+        return;
+
+    // if a value is not set, replace with -1
+    if (isnan(g.latitude) != 0)
+      g.latitude = -1;
+    if (isnan(g.longitude) != 0)
+      g.longitude = -1;
+    if (isnan(g.altitude) != 0)
+      g.altitude = -1;
+
+    if (isnan(g.speed) != 0)
+      g.speed = -1;
+    if (isnan(g.climb) != 0)
+      g.climb = -1;
+    if (isnan(g.track) != 0)
+      g.track = -1;
+
+    if (isnan(g.epy) != 0)
+      g.epy = -1;
+    if (isnan(g.epx) != 0)
+      g.epx = -1;
+    if (isnan(g.epv) != 0)
+      g.epv = -1;
+    if (isnan(g.eps) != 0)
+      g.eps = -1;
+    if (isnan(g.epc) != 0)
+      g.epc = -1;
+    if (isnan(g.epd) != 0)
+      g.epd = -1;
+
+    // return if lat/long wasn't changed (more than xx.xxxxx)
+    rounded_latitude  = floorf(g.latitude * 100000) / 100000;
+    rounded_longitude = floorf(g.longitude * 100000) / 100000;
+
+    if (rounded_latitude == last_latitude && rounded_longitude == last_longitude)
+      return;
+
+    last_latitude  = rounded_latitude;
+    last_longitude = rounded_longitude;
+
+
+    exec_query(db, "BEGIN TRANSACTION");
+
+    snprintf(query, sizeof(query),
+             "INSERT INTO gps_data VALUES ( \
+             NULL, DATETIME('NOW', 'localtime'), \
+             %d, %f, %f, %f, \
+             %f, %f, %f, \
+             %f, %f, %f, %f, %f, %f )",
+             g.mode, g.latitude, g.longitude, g.altitude,
+             g.speed * 3.6, g.climb, g.track, // * 3.6 to convert to km/h
+             g.epy, g.epx, g.epv, g.eps * 3.6, g.epc, g.epd);
+
+    exec_query(db, query);
+
+    exec_query(db, "END TRANSACTION");
+}
+
+
 /* Convert true heading to magnetic.  Taken from the Aviation
    Formulary v1.43.  Valid to within two degrees within the
    continiental USA except for the following airports: MO49 MO86 MO50
@@ -76,61 +146,45 @@ static float true2magnetic(double lat, double lon, double heading)
 }
 
 
-
 /* This gets called once for each new GPS sentence. */
 static void
 update_gps(struct gps_data_t *gpsdata,
            char *message, size_t len UNUSED)
 {
-    int i, j;
     char scr[128];
-    int newstate;
-    bool usedflags[MAXCHANNELS];
 
-    static float altfactor = 1;
-    static float speedfactor = 3.6;
-    static char *altunits = "m";
-    static char *speedunits = "km/h";
+   insert_gps_data(gpsdata->fix);
 
 
-    /* must build bit vector of which statellites are used from list */
-    for (i = 0; i < MAXCHANNELS; i++) {
-	usedflags[i] = false;
-	for (j = 0; j < gpsdata->satellites_used; j++)
-	    if (gpsdata->used[j] == gpsdata->PRN[i])
-		usedflags[i] = true;
-    }
-
-
-    /* Fill in the latitude. */
+    // Fill in the latitude.
     if (gpsdata->fix.mode >= MODE_2D && isnan(gpsdata->fix.latitude) == 0)
         printf("%f\n", gpsdata->fix.latitude); 
     else
         puts("n/a");
 
-    /* Fill in the longitude. */
+    // Fill in the longitude.
     if (gpsdata->fix.mode >= MODE_2D && isnan(gpsdata->fix.longitude) == 0)
         printf("%f\n", gpsdata->fix.longitude);
     else
         puts("n/a");
 
-    /* Fill in the altitude. */
+    // Fill in the altitude.
     if (gpsdata->fix.mode == MODE_3D && isnan(gpsdata->fix.altitude) == 0)
-	(void)snprintf(scr, sizeof(scr), "%.1f %s",
-		       gpsdata->fix.altitude * altfactor, altunits);
+	(void)snprintf(scr, sizeof(scr), "%.1f m",
+		       gpsdata->fix.altitude);
     else
 	(void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-    /* Fill in the speed. */
+    // Fill in the speed.
     if (gpsdata->fix.mode >= MODE_2D && isnan(gpsdata->fix.track) == 0)
-	(void)snprintf(scr, sizeof(scr), "%.1f %s",
-		       gpsdata->fix.speed * speedfactor, speedunits);
+	(void)snprintf(scr, sizeof(scr), "%.1f km/h",
+		       gpsdata->fix.speed * 3.6);
     else
 	(void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-    /* Fill in the heading. */
+    // Fill in the heading.
     if (gpsdata->fix.mode >= MODE_2D && isnan(gpsdata->fix.track) == 0)
     {
 	if (!magnetic_flag) {
@@ -146,21 +200,18 @@ update_gps(struct gps_data_t *gpsdata,
 	(void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-    /* Fill in the rate of climb. */
+    // Fill in the rate of climb.
     if (gpsdata->fix.mode == MODE_3D && isnan(gpsdata->fix.climb) == 0)
-	(void)snprintf(scr, sizeof(scr), "%.1f %s/min",
-		       gpsdata->fix.climb * altfactor * 60, altunits);
+	(void)snprintf(scr, sizeof(scr), "%.1f m/min",
+		       gpsdata->fix.climb * 60);
     else
 	(void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-    /* Fill in the GPS status and the time since the last state
-     * change. */
+    // Fill in the GPS status and the time since the last state change
     if (gpsdata->online == 0) {
-	newstate = 0;
 	(void)snprintf(scr, sizeof(scr), "OFFLINE");
     } else {
-	newstate = gpsdata->fix.mode;
 	switch (gpsdata->fix.mode) {
 	case MODE_2D:
 	    (void)snprintf(scr, sizeof(scr), "2D %sFIX (%d secs)",
@@ -182,30 +233,30 @@ update_gps(struct gps_data_t *gpsdata,
     }
     puts(scr);
     
-	/* Fill in the estimated horizontal position error. */
+	// Fill in the estimated horizontal position error.
 	if (isnan(gpsdata->fix.epx) == 0)
-	    (void)snprintf(scr, sizeof(scr), "+/- %d %s",
-			   (int)(gpsdata->fix.epx * altfactor), altunits);
+	    (void)snprintf(scr, sizeof(scr), "+/- %d m",
+			   (int)(gpsdata->fix.epx));
 	else
 	    (void)snprintf(scr, sizeof(scr), "n/a");
        puts(scr);
 
 	if (isnan(gpsdata->fix.epy) == 0)
-	    (void)snprintf(scr, sizeof(scr), "+/- %d %s",
-			   (int)(gpsdata->fix.epy * altfactor), altunits);
+	    (void)snprintf(scr, sizeof(scr), "+/- %d m",
+			   (int)(gpsdata->fix.epy));
 	else
 	    (void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-	/* Fill in the estimated vertical position error. */
+	// Fill in the estimated vertical position error. 
 	if (isnan(gpsdata->fix.epv) == 0)
-	    (void)snprintf(scr, sizeof(scr), "+/- %d %s",
-			   (int)(gpsdata->fix.epv * altfactor), altunits);
+	    (void)snprintf(scr, sizeof(scr), "+/- %d m",
+			   (int)(gpsdata->fix.epv));
 	else
 	    (void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-	/* Fill in the estimated track error. */
+	// Fill in the estimated track error. 
 	if (isnan(gpsdata->fix.epd) == 0)
 	    (void)snprintf(scr, sizeof(scr), "+/- %d deg",
 			   (int)(gpsdata->fix.epd));
@@ -213,13 +264,14 @@ update_gps(struct gps_data_t *gpsdata,
 	    (void)snprintf(scr, sizeof(scr), "n/a");
     puts(scr);
     
-	/* Fill in the estimated speed error. */
+	// Fill in the estimated speed error.
 	if (isnan(gpsdata->fix.eps) == 0)
-	    (void)snprintf(scr, sizeof(scr), "+/- %d %s",
-			   (int)(gpsdata->fix.eps * speedfactor), speedunits);
+	    (void)snprintf(scr, sizeof(scr), "+/- %d km/h",
+			   (int)(gpsdata->fix.eps * 3.6));
 	else
 	    (void)snprintf(scr, sizeof(scr), "n/a");
         puts(scr);
+
 }
 
 void
