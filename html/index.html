@@ -293,7 +293,7 @@ $(document).ready(function() {
     // setup map
     window.map = new L.Map('map');
     var cloudmadeUrl = 'tiles/{z}/{x}/{y}.png',
-    cloudmade = new L.TileLayer(cloudmadeUrl, {minZoom: 10, maxZoom: 16});
+    cloudmade = new L.TileLayer(cloudmadeUrl, {minZoom: 10, maxZoom: 18});
     window.map.addLayer(cloudmade);
 
     // set initial map point to frankfurt
