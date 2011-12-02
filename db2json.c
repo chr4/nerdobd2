@@ -135,19 +135,19 @@ json_get_gps_data(sqlite3 *db, json_object *data)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        add_double(data, "mode", sqlite3_column_double(stmt, 0));
-        add_double(data, "latitude", sqlite3_column_double(stmt, 1));
-        add_double(data, "longitude", sqlite3_column_double(stmt, 2));
-        add_double(data, "altitude", sqlite3_column_double(stmt, 3));
-        add_double(data, "speed", sqlite3_column_double(stmt, 4));
-        add_double(data, "climb", sqlite3_column_double(stmt, 5));
-        add_double(data, "track", sqlite3_column_double(stmt, 6));
-        add_double(data, "err_latitude", sqlite3_column_double(stmt, 7));
-        add_double(data, "err_longitude", sqlite3_column_double(stmt, 8));
-        add_double(data, "err_altitude", sqlite3_column_double(stmt, 9));
-        add_double(data, "err_speed", sqlite3_column_double(stmt, 10));
-        add_double(data, "err_climb", sqlite3_column_double(stmt, 11));
-        add_double(data, "err_track", sqlite3_column_double(stmt, 12));
+        add_double(data, "gps_mode", sqlite3_column_double(stmt, 0));
+        add_double(data, "gps_latitude", sqlite3_column_double(stmt, 1));
+        add_double(data, "gps_longitude", sqlite3_column_double(stmt, 2));
+        add_double(data, "gps_altitude", sqlite3_column_double(stmt, 3));
+        add_double(data, "gps_speed", sqlite3_column_double(stmt, 4));
+        add_double(data, "gps_climb", sqlite3_column_double(stmt, 5));
+        add_double(data, "gps_track", sqlite3_column_double(stmt, 6));
+        add_double(data, "gps_err_latitude", sqlite3_column_double(stmt, 7));
+        add_double(data, "gps_err_longitude", sqlite3_column_double(stmt, 8));
+        add_double(data, "gps_err_altitude", sqlite3_column_double(stmt, 9));
+        add_double(data, "gps_err_speed", sqlite3_column_double(stmt, 10));
+        add_double(data, "gps_err_climb", sqlite3_column_double(stmt, 11));
+        add_double(data, "gps_err_track", sqlite3_column_double(stmt, 12));
     }
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
@@ -265,8 +265,7 @@ json_latest_data(sqlite3 *db)
     json_get_averages(db, data);
 
 #ifdef GPS
-    json_object *gps = add_object(data, "gps");
-    json_get_gps_data(db, gps);
+    json_get_gps_data(db, data);
 #endif
 
     exec_query(db, "END TRANSACTION");
