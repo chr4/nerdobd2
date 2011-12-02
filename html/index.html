@@ -353,36 +353,34 @@ $(document).ready(function() {
  </head>
  <body>
 
-<!--
   <div class="left-container">
+<!--
    <div id="graph-consumption" class="graph"></div>
    <div id="graph-speed" class="graph"></div>
-  </div>
 -->
+   <div id="map"></div>
+  </div>
 
   <div class="right-container">
-   <div id="map"></map>
+   <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
+   <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
 
-   <div class="value-container">
-    <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
-    <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
+   <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+   <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
 
-    <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
-    <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
-
-    <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">l</span>
-    <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
-    <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
-    <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
-          
-   <!--
-    <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
-    <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
-   -->
-    <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
-    <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
-    <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
-   </div>
+   <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">l</span>
+   <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
+   <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
+   <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
+         
+  <!--
+   <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
+   <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
+  -->
+   <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
+   <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
+   <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+  </div>
 
   </div>
 
