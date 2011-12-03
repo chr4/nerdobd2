@@ -5,7 +5,7 @@ nerdobd2 : core
 
 # core
 core : core.o kw1281.o sqlite.o httpd.o db2json.o json.o tcp.o
-	$(CC) $(CC_OPTIONS) -o nerdobd2 core.o kw1281.o sqlite.o db2json.o httpd.o tcp.o json.o
+	$(CC) -o nerdobd2 core.o kw1281.o sqlite.o db2json.o httpd.o tcp.o json.o $(CC_OPTIONS)
 
 core.o : core.c
 	$(CC) $(CC_OPTIONS) -c core.c -o core.o
