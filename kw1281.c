@@ -705,7 +705,7 @@ kw1281_open(char *device)
         printf ("getting tio failed\n");
         return -1;
     }
-    memcpy (&st, &ot, sizeof (ot));
+    memcpy (&st, &ot, sizeof (st));
 
     // setting custom baud rate
     st.custom_divisor = st.baud_base / BAUDRATE;
