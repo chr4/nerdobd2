@@ -8,9 +8,6 @@ void	cleanup (int);
 char	cleaning_up = 0;
 
 pid_t   pid_httpd = -1;
-#ifdef GPS
-pid_t   pid_gps = -1;
-#endif
 
 void
 wait4childs(void)
@@ -37,13 +34,6 @@ cleanup (int signo)
     if (pid_httpd != -1)
         kill(pid_httpd, SIGTERM);
 
-#ifdef GPS
-    // shutdown gps
-    printf("sending SIGTERM to gps (%d)\n", pid_gps);
-    if (pid_gps != -1)
-       kill(pid_gps, SIGTERM);
-#endif
-	
     // close database and sync file to disk
     printf("closing database...\n");
     close_db(db);
@@ -100,12 +90,10 @@ main (int argc, char **argv)
     if ( (pid_httpd = httpd_start(db)) == -1)
         cleanup(15);
 
-#ifdef GPS
     // collect gps data
     puts("connecting to gpsd, collecting gps data");
-    if ( (pid_gps = gps_start(db)) == -1)
+    if (gps_start() == -1)
         cleanup(15); 
-#endif
 
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
@@ -224,24 +212,70 @@ main (int argc, char **argv)
     return 0;
 }
 
+void
+add_value(char *s, double value)
+{
+    char buffer[LEN_QUERY];
+
+    strncpy(buffer, s, LEN_QUERY);
+
+    if (!isnan(value))
+        snprintf(s, LEN_QUERY, "%s, %f", buffer, value);
+    else
+        snprintf(s, LEN_QUERY, "%s, ''", buffer);
+}
 
 void
 insert_engine_data(engine_data e)
 {
     char query[LEN_QUERY];
+    static struct gps_fix_t g; 
 
     exec_query(db, "BEGIN TRANSACTION");
 
-    snprintf(query, sizeof(query),
-             "INSERT INTO engine_data VALUES ( \
-             NULL, DATETIME('NOW', 'localtime'), \
-             %f, %f, %f, %f, %f, %f, %f, %f, %f, %f )",
-             e.rpm, e.speed, e.injection_time,
-             e.oil_pressure, e.consumption_per_100km,
-             e.consumption_per_h,
-             e.duration_consumption, e.duration_speed,
-             e.consumption_per_h / 3600 * e.duration_consumption,
-             e.speed / 3600 * e.duration_speed);
+    strlcpy(query, 
+            "INSERT INTO engine_data VALUES ( NULL, DATETIME('NOW', 'localtime')",
+            sizeof(query) );
+
+    // add engine data
+    add_value(query, e.rpm);
+    add_value(query, e.speed);
+    add_value(query, e.injection_time);
+    add_value(query, e.oil_pressure);
+    add_value(query, e.consumption_per_100km);
+    add_value(query, e.consumption_per_h);
+    add_value(query, e.duration_consumption);
+    add_value(query, e.duration_speed);
+    add_value(query, e.consumption_per_h / 3600 * e.duration_consumption);
+    add_value(query, e.speed / 3600 * e.duration_speed);
+
+    // add gps data, if available
+    if ( get_gps_data(&g) == 0)
+    {
+        add_value(query, (double) g.mode);
+        add_value(query, g.latitude);
+        add_value(query, g.longitude);
+        add_value(query, g.altitude);
+        add_value(query, g.speed);
+        add_value(query, g.climb);
+        add_value(query, g.track);
+        add_value(query, g.epy);
+        add_value(query, g.epx);
+        add_value(query, g.epv);
+        add_value(query, g.eps);
+        add_value(query, g.epc);
+        add_value(query, g.epd);
+    }
+    else
+    {
+        puts("couldn't get gps data");
+        // fill in empty column fields for gps data
+        strlcat(query,
+                ", '', '', '', '', '', '', '', '', '', '', '', '', ''",
+                sizeof(query));
+    }
+
+    strlcat(query, " )\n", sizeof(query));
 
     exec_query(db, query);
 
@@ -255,11 +289,16 @@ insert_other_data(other_data o)
 
     exec_query(db, "BEGIN TRANSACTION");
 
-    snprintf(query, sizeof(query),
-             "INSERT INTO other_data VALUES ( \
-             NULL, DATETIME('NOW', 'localtime'), \
-             %f, %f, %f)",
-             o.temp_engine, o.temp_air_intake, o.voltage);
+    strlcpy(query,
+            "INSERT INTO other_data VALUES ( NULL, DATETIME('NOW', 'localtime')",
+            sizeof(query) );
+
+    // add other data
+    add_value(query, o.temp_engine);
+    add_value(query, o.temp_air_intake);
+    add_value(query, o.voltage);
+
+    strlcat(query, " )\n", sizeof(query));
 
     exec_query(db, query);
 

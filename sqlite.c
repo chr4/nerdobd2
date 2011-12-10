@@ -178,7 +178,20 @@ init_db(sqlite3 *db)
                         duration_consumption  FLOAT, \
                         duration_speed        FLOAT, \
                         liters                FLOAT, \
-                        kilometers            FLOAT)");
+                        kilometers            FLOAT, \
+                        gps_mode              INTEGER, \
+                        gps_latitude          FLOAT, \
+                        gps_longitude         FLOAT, \
+                        gps_altitude          FLOAT, \
+                        gps_speed             FLOAT, \
+                        gps_climb             FLOAT, \
+                        gps_track             FLOAT, \
+                        gps_err_latitude      FLOAT, \
+                        gps_err_longitude     FLOAT, \
+                        gps_err_altitude      FLOAT, \
+                        gps_err_speed         FLOAT, \
+                        gps_err_climb         FLOAT, \
+                        gps_err_track         FLOAT )");
 
     // create other_data table
     exec_query(db, "CREATE TABLE IF NOT EXISTS other_data ( \
@@ -187,26 +200,6 @@ init_db(sqlite3 *db)
                         temp_engine     FLOAT, \
                         temp_air_intake FLOAT, \
                         voltage         FLOAT )");
-
-#ifdef GPS
-    // create gps_data table
-    exec_query(db, "CREATE TABLE IF NOT EXISTS gps_data ( \
-                        id            INTEGER PRIMARY KEY, \
-                        time          DATE, \
-                        mode          INTEGER, \
-                        latitude      FLOAT, \
-                        longitude     FLOAT, \
-                        altitude      FLOAT, \
-                        speed         FLOAT, \
-                        climb         FLOAT, \
-                        track         FLOAT, \
-                        err_latitude  FLOAT, \
-                        err_longitude FLOAT, \
-                        err_altitude  FLOAT, \
-                        err_speed     FLOAT, \
-                        err_climb     FLOAT, \
-                        err_track     FLOAT )");
-#endif
 
     // create table where set point information is stored
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \

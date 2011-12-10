@@ -1,4 +1,3 @@
-#define GPS                // collect gps data from gpsd
 #define HTTPD_PORT	   8080
 #define DOCROOT		   "html"
 

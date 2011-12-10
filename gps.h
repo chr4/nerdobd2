@@ -9,4 +9,6 @@
 
 #include "sqlite.h"
 
-int gps_start(sqlite3 *);
+int gps_start(void);
+void gps_stop(void);
+int get_gps_data(struct gps_fix_t *);
