@@ -47,6 +47,6 @@
  * some help in finding it out might be this (after recording some data
  * and refuling the car, knowing exactly what it actually consumed):
  * 
- * select SUM((YOUR_MULTIPLIER_HERE * rpm * injection_time) / speed * 100 * speed) / SUM(speed) from engine_data where speed > 0;
+ * select SUM((YOUR_MULTIPLIER_HERE * rpm * injection_time) / speed * 100 * speed) / SUM(speed) from data where speed > 0;
  */
 #define MULTIPLIER      0.000213400  // for my 1.0l seat arosa 2004

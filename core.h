@@ -21,7 +21,7 @@
 #include "gps.h"
 
 // the engine data struct
-typedef struct engine_data
+typedef struct obd_data_t
 {
     float rpm;
     float injection_time;
@@ -35,16 +35,9 @@ typedef struct engine_data
     float duration_consumption;
     float duration_speed;
     
-} engine_data;
-
-// struct for other data
-typedef struct other_data
-{
     float temp_engine;
     float temp_air_intake;
     float voltage;
-    
-} other_data;
-
+} obd_data_t;
 
 void handle_data(char *, float, float);

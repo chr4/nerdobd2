@@ -106,7 +106,7 @@ main (int argc, char **argv)
                    SELECT CASE WHEN count(*) = 0 \
                    THEN 0 \
                    ELSE id END \
-                   FROM engine_data \
+                   FROM data \
                    ORDER BY id DESC LIMIT 1 \
                    ) \
                )");
@@ -167,7 +167,7 @@ main (int argc, char **argv)
                            SELECT CASE WHEN count(*) = 0 \
                            THEN 0 \
                            ELSE id END \
-                           FROM engine_data \
+                           FROM data \
                            ORDER BY id DESC LIMIT 1 \
                            ) \
                        )");
@@ -226,45 +226,48 @@ add_value(char *s, double value)
 }
 
 void
-insert_engine_data(engine_data e)
+insert_data(obd_data_t obd)
 {
     char query[LEN_QUERY];
-    static struct gps_fix_t g; 
+    static struct gps_fix_t gps; 
 
     exec_query(db, "BEGIN TRANSACTION");
 
     strlcpy(query, 
-            "INSERT INTO engine_data VALUES ( NULL, DATETIME('NOW', 'localtime')",
+            "INSERT INTO data VALUES ( NULL, DATETIME('NOW', 'localtime')",
             sizeof(query) );
 
-    // add engine data
-    add_value(query, e.rpm);
-    add_value(query, e.speed);
-    add_value(query, e.injection_time);
-    add_value(query, e.oil_pressure);
-    add_value(query, e.consumption_per_100km);
-    add_value(query, e.consumption_per_h);
-    add_value(query, e.duration_consumption);
-    add_value(query, e.duration_speed);
-    add_value(query, e.consumption_per_h / 3600 * e.duration_consumption);
-    add_value(query, e.speed / 3600 * e.duration_speed);
+    // add obd data
+    add_value(query, obd.rpm);
+    add_value(query, obd.speed);
+    add_value(query, obd.injection_time);
+    add_value(query, obd.oil_pressure);
+    add_value(query, obd.consumption_per_100km);
+    add_value(query, obd.consumption_per_h);
+    add_value(query, obd.duration_consumption);
+    add_value(query, obd.duration_speed);
+    add_value(query, obd.consumption_per_h / 3600 * obd.duration_consumption);
+    add_value(query, obd.speed / 3600 * obd.duration_speed);
+    add_value(query, obd.temp_engine);
+    add_value(query, obd.temp_air_intake);
+    add_value(query, obd.voltage);
 
     // add gps data, if available
-    if ( get_gps_data(&g) == 0)
+    if ( get_gps_data(&gps) == 0)
     {
-        add_value(query, (double) g.mode);
-        add_value(query, g.latitude);
-        add_value(query, g.longitude);
-        add_value(query, g.altitude);
-        add_value(query, g.speed);
-        add_value(query, g.climb);
-        add_value(query, g.track);
-        add_value(query, g.epy);
-        add_value(query, g.epx);
-        add_value(query, g.epv);
-        add_value(query, g.eps);
-        add_value(query, g.epc);
-        add_value(query, g.epd);
+        add_value(query, (double) gps.mode);
+        add_value(query, gps.latitude);
+        add_value(query, gps.longitude);
+        add_value(query, gps.altitude);
+        add_value(query, gps.speed);
+        add_value(query, gps.climb);
+        add_value(query, gps.track);
+        add_value(query, gps.epy);
+        add_value(query, gps.epx);
+        add_value(query, gps.epv);
+        add_value(query, gps.eps);
+        add_value(query, gps.epc);
+        add_value(query, gps.epd);
     }
     else
     {
@@ -282,33 +285,9 @@ insert_engine_data(engine_data e)
     exec_query(db, "END TRANSACTION");
 }
 
-void
-insert_other_data(other_data o)
-{
-    char query[LEN_QUERY];
-
-    exec_query(db, "BEGIN TRANSACTION");
-
-    strlcpy(query,
-            "INSERT INTO other_data VALUES ( NULL, DATETIME('NOW', 'localtime')",
-            sizeof(query) );
-
-    // add other data
-    add_value(query, o.temp_engine);
-    add_value(query, o.temp_air_intake);
-    add_value(query, o.voltage);
-
-    strlcat(query, " )\n", sizeof(query));
-
-    exec_query(db, query);
-
-    exec_query(db, "END TRANSACTION");
-}
-
 // this struct collects all engine data
 // before sending it to database
-engine_data engine;
-other_data  other;
+obd_data_t obd_data;
 
 void
 handle_data(char *name, float value, float duration)
@@ -318,45 +297,41 @@ handle_data(char *name, float value, float duration)
      * third block gehts voltage and temperatures (not as often requested)
      */
 
-    if (!strcmp(name, "rpm"))
-        engine.rpm = value;
+    if (!strcmp(name, "temp_engine"))
+        obd_data.temp_engine = value;
+    else if (!strcmp(name, "temp_air_intake"))
+        obd_data.temp_air_intake = value;
+    else if (!strcmp(name, "voltage"))
+        obd_data.voltage = value;
+
+    else if (!strcmp(name, "rpm"))
+        obd_data.rpm = value;
     else if (!strcmp(name, "injection_time"))
     {
-        engine.injection_time = value;
-        engine.duration_consumption = duration;
+        obd_data.injection_time = value;
+        obd_data.duration_consumption = duration;
     }
     else if (!strcmp(name, "oil_pressure"))
-        engine.oil_pressure = value;
+       obd_data.oil_pressure = value;
 
     // everytime we get speed, calculate consumption
     // end send data to database
     else if (!strcmp(name, "speed"))
     {
-        engine.speed = value;
+        obd_data.speed = value;
 
         // calculate consumption per hour
-        engine.consumption_per_h = MULTIPLIER * engine.rpm * engine.injection_time;
+        obd_data.consumption_per_h = MULTIPLIER * obd_data.rpm * obd_data.injection_time;
 
-        // calculate consumption per hour
-        if ( engine.speed > 0)
-            engine.consumption_per_100km = engine.consumption_per_h / engine.speed * 100;
+        // calculate consumption per 100km
+        if ( obd_data.speed > 0)
+            obd_data.consumption_per_100km = obd_data.consumption_per_h / obd_data.speed * 100;
         else
-            engine.consumption_per_100km = -1;
+            obd_data.consumption_per_100km = -1;
 
         
-        engine.duration_speed = duration;
+        obd_data.duration_speed = duration;
 
-        insert_engine_data(engine);
-    }
-
-    // other data
-    else if (!strcmp(name, "temp_engine"))
-        other.temp_engine = value;
-    else if (!strcmp(name, "temp_air_intake"))
-        other.temp_air_intake = value;
-    else if (!strcmp(name, "voltage"))
-    {
-        other.voltage = value;
-        insert_other_data(other);
+        insert_data(obd_data);
     }
 }

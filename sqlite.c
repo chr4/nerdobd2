@@ -165,8 +165,8 @@ init_db(sqlite3 *db)
 {
     exec_query(db, "BEGIN TRANSACTION");
 
-    // create engine_data table
-    exec_query(db, "CREATE TABLE IF NOT EXISTS engine_data ( \
+    // create data table
+    exec_query(db, "CREATE TABLE IF NOT EXISTS data ( \
                         id                    INTEGER PRIMARY KEY, \
                         time                  DATE, \
                         rpm                   FLOAT, \
@@ -179,6 +179,9 @@ init_db(sqlite3 *db)
                         duration_speed        FLOAT, \
                         liters                FLOAT, \
                         kilometers            FLOAT, \
+                        temp_engine           FLOAT, \
+                        temp_air_intake       FLOAT, \
+                        voltage               FLOAT, \
                         gps_mode              INTEGER, \
                         gps_latitude          FLOAT, \
                         gps_longitude         FLOAT, \
@@ -193,19 +196,12 @@ init_db(sqlite3 *db)
                         gps_err_climb         FLOAT, \
                         gps_err_track         FLOAT )");
 
-    // create other_data table
-    exec_query(db, "CREATE TABLE IF NOT EXISTS other_data ( \
-                        id              INTEGER PRIMARY KEY, \
-                        time            DATE, \
-                        temp_engine     FLOAT, \
-                        temp_air_intake FLOAT, \
-                        voltage         FLOAT )");
 
     // create table where set point information is stored
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \
                         name        VARCHAR PRIMARY KEY, \
                         time        DATE, \
-                        engine_data INTEGER)");
+                        data        INTEGER)");
     
     exec_query(db, "END TRANSACTION");
 

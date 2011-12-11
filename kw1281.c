@@ -928,6 +928,15 @@ kw1281_mainloop(void)
     printf("init done.\n");
     for ( loopcount = 0; ;loopcount++)
     {
+        // don't request temperatures and voltage too often
+        if (! (loopcount % 15) )
+        {
+            // request block 0x04
+            // (temperatures + voltage)
+            if (kw1281_get_block(0x04) == -1)
+                return -1;
+        }
+
         // request block 0x02
         // (inj_time, rpm, load, oil_press)
         if (kw1281_get_block(0x02) == -1)
@@ -938,16 +947,6 @@ kw1281_mainloop(void)
         if (kw1281_get_block(0x05) == -1)
             return -1;
 
-        /* don't request temperatures and
-         * voltage too often
-         */
-        if (! (loopcount % 15) )
-        {
-            // request block 0x04
-            // (temperatures + voltage)
-            if (kw1281_get_block(0x04) == -1)
-                return -1;
-        }
     }
 
     return 0;
