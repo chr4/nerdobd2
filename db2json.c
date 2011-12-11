@@ -1,4 +1,15 @@
 #include "httpd.h"
+#include <math.h>
+
+// calls add_double, but checks if value actually is a number.
+void
+_add_double(json_object *parent, char *key, sqlite3_stmt *stmt, int column)
+{
+    if (sqlite3_column_type(stmt, column) == SQLITE_FLOAT)
+        add_double(parent, key, sqlite3_column_double(stmt, column));
+    else
+        add_double(parent, key, NAN);
+}
 
 int
 json_get_data(sqlite3 *db, json_object *data)
@@ -38,30 +49,29 @@ json_get_data(sqlite3 *db, json_object *data)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        add_double(data, "rpm", sqlite3_column_double(stmt, 0));
-        add_double(data, "speed", sqlite3_column_double(stmt, 1));
-        add_double(data, "injection_time", sqlite3_column_double(stmt, 2));
-        add_double(data, "oil_pressure", sqlite3_column_double(stmt, 3));
-        add_double(data, "consumption_per_100km", sqlite3_column_double(stmt, 4));
-        add_double(data, "consumption_per_h", sqlite3_column_double(stmt, 5));
-        add_double(data, "temp_engine", sqlite3_column_double(stmt, 6));
-        add_double(data, "temp_air_intake", sqlite3_column_double(stmt, 7));
-        add_double(data, "voltage", sqlite3_column_double(stmt, 8));
-        add_double(data, "gps_mode", sqlite3_column_double(stmt, 9));
-        add_double(data, "gps_latitude", sqlite3_column_double(stmt, 10));
-        add_double(data, "gps_longitude", sqlite3_column_double(stmt, 11));
-        add_double(data, "gps_altitude", sqlite3_column_double(stmt, 12));
-        add_double(data, "gps_speed", sqlite3_column_double(stmt, 13));
-        add_double(data, "gps_climb", sqlite3_column_double(stmt, 14));
-        add_double(data, "gps_track", sqlite3_column_double(stmt, 15));
-        add_double(data, "gps_err_latitude", sqlite3_column_double(stmt, 16));
-        add_double(data, "gps_err_longitude", sqlite3_column_double(stmt, 17));
-        add_double(data, "gps_err_altitude", sqlite3_column_double(stmt, 18));
-        add_double(data, "gps_err_speed", sqlite3_column_double(stmt, 19));
-        add_double(data, "gps_err_climb", sqlite3_column_double(stmt, 20));
-        add_double(data, "gps_err_track", sqlite3_column_double(stmt, 21));
+        _add_double(data, "rpm", stmt, 0);
+        _add_double(data, "speed", stmt, 1);
+        _add_double(data, "injection_time", stmt, 2);
+        _add_double(data, "oil_pressure", stmt, 3);
+        _add_double(data, "consumption_per_100km", stmt, 4);
+        _add_double(data, "consumption_per_h", stmt, 5);
+        _add_double(data, "temp_engine", stmt, 6);
+        _add_double(data, "temp_air_intake", stmt, 7);
+        _add_double(data, "voltage", stmt, 8);
+        _add_double(data, "gps_mode", stmt, 9);
+        _add_double(data, "gps_latitude", stmt, 10);
+        _add_double(data, "gps_longitude", stmt, 11);
+        _add_double(data, "gps_altitude", stmt, 12);
+        _add_double(data, "gps_speed", stmt, 13);
+        _add_double(data, "gps_climb", stmt, 14);
+        _add_double(data, "gps_track", stmt, 15);
+        _add_double(data, "gps_err_latitude", stmt, 16);
+        _add_double(data, "gps_err_longitude", stmt, 17);
+        _add_double(data, "gps_err_altitude", stmt, 18);
+        _add_double(data, "gps_err_speed", stmt, 19);
+        _add_double(data, "gps_err_climb", stmt, 20);
+        _add_double(data, "gps_err_track", stmt, 21);
     }
-
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
 #ifdef DEBUG_SQLITE
@@ -102,10 +112,10 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        add_double(data, "timestamp_startup", sqlite3_column_double(stmt, 0));
-        add_double(data, "consumption_average_startup", sqlite3_column_double(stmt, 1));
-        add_double(data, "consumption_liters_startup", sqlite3_column_double(stmt, 2));
-        add_double(data, "kilometers_startup", sqlite3_column_double(stmt, 3));        
+        _add_double(data, "timestamp_startup", stmt, 0);
+        _add_double(data, "consumption_average_startup", stmt, 1);
+        _add_double(data, "consumption_liters_startup", stmt, 2);
+        _add_double(data, "kilometers_startup", stmt, 3);        
     }
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
@@ -147,9 +157,9 @@ json_get_averages(sqlite3 *db, json_object *data)
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
     {
-        add_double(data, "consumption_average_total", sqlite3_column_double(stmt, 0));
-        add_double(data, "consumption_liters_total", sqlite3_column_double(stmt, 1));
-        add_double(data, "kilometers_total", sqlite3_column_double(stmt, 2));
+        _add_double(data, "consumption_average_total", stmt, 0);
+        _add_double(data, "consumption_liters_total", stmt, 1);
+        _add_double(data, "kilometers_total", stmt, 2);
     }
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <math.h>
 
 // include common defines
 #include "common.h"

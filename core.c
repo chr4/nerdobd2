@@ -222,7 +222,7 @@ add_value(char *s, double value)
     if (!isnan(value))
         snprintf(s, LEN_QUERY, "%s, %f", buffer, value);
     else
-        snprintf(s, LEN_QUERY, "%s, ''", buffer);
+        snprintf(s, LEN_QUERY, "%s, 'NaN'", buffer);
 }
 
 void
@@ -274,7 +274,7 @@ insert_data(obd_data_t obd)
         puts("couldn't get gps data");
         // fill in empty column fields for gps data
         strlcat(query,
-                ", '', '', '', '', '', '', '', '', '', '', '', '', ''",
+                ", 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN'",
                 sizeof(query));
     }
 
@@ -327,7 +327,7 @@ handle_data(char *name, float value, float duration)
         if ( obd_data.speed > 0)
             obd_data.consumption_per_100km = obd_data.consumption_per_h / obd_data.speed * 100;
         else
-            obd_data.consumption_per_100km = -1;
+            obd_data.consumption_per_100km = NAN;
 
         
         obd_data.duration_speed = duration;
