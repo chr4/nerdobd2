@@ -195,8 +195,12 @@
         {
             // if this is gps information, don't update <div>, but set location and stuff
             if (name == "gps_mode") {
+                // return if we don't have latlng
+                if ( isNaN(data['gps_latitude']) || isNaN(data['gps_longitude']))
+                    return;
+
                 loc = new L.LatLng(data['gps_latitude'], data['gps_longitude']);
-           
+
                 // 0.0 means no location, return
                 if (loc.equals(new L.LatLng(0, 0)))
                     return;
@@ -210,27 +214,32 @@
                         window.map.removeLayer(window.radius)
 
                     // and create a new one, if a location error is detected
-                    var locationError = (data['gps_err_latitude'] + data['gps_err_longitude']) / 2;
-                    if (locationError > 0) {
-                        window.radius = new L.Circle(loc, locationError);
-                        window.map.addLayer(window.radius);
+                    if ( !isNaN(data['gps_err_latitude']) && !isNaN(data['gps_err_longitude']) ) {
+                        var locationError = (data['gps_err_latitude'] + data['gps_err_longitude']) / 2;
+                        if (locationError > 0) {
+                            window.radius = new L.Circle(loc, locationError);
+                            window.map.addLayer(window.radius);
+                        }
                     }
 
                     window.marker.setLatLng(loc);
-                    // rotate arrow into driving direction
-                    $(window.marker._icon).css('-webkit-transform', 'rotate(' + data['gps_track'] + 'deg)');
-                    $(window.marker._icon).css('-moz-transform', 'rotate(' + data['gps_track'] + 'deg)');
 
-                    // fix for chrome, because arrow will be placed at 0, 0 after rotating
-                    //$(window.marker._icon).css('left', '387px');
-                    //$(window.marker._icon).css('top', '290px');
+                    // rotate arrow into driving direction
+                    if ( !isNaN(data['gps_track']) ) {
+                        $(window.marker._icon).css('-webkit-transform', 'rotate(' + data['gps_track'] + 'deg)');
+                        $(window.marker._icon).css('-moz-transform', 'rotate(' + data['gps_track'] + 'deg)');
+
+                        // fix for chrome, because arrow will be placed at 0, 0 after rotating
+                        //$(window.marker._icon).css('left', '387px');
+                        //$(window.marker._icon).css('top', '290px');
+                    }
 
                     window.last_location = loc;
                 }
             }
 
-            // switch to l/h if consumption_per_100km is -1 (means that speed == 0)
-            if (name == "consumption_per_100km" && data[name] == -1)
+            // switch to l/h if consumption_per_100km is nan (means that speed == 0)
+            if (name == "consumption_per_100km" && isNaN(data[name]))
                 this.set(data['consumption_per_h'], "l/h");
             else
                 this.set(data[name], unit);
@@ -257,7 +266,8 @@
               }
             }
             else {
-                $('#' + name).html(value.toFixed(accuracy));
+                if (!isNaN(value))
+                    $('#' + name).html(value.toFixed(accuracy));
 
                 // set the unit for consumption accordingly
                 if (name == "consumption_per_100km")
@@ -293,7 +303,6 @@
                     for (var i = elements.length - 1; i >= 0; i--)
                         elements[i].update(json);
             }
-
             // return if we don't have any elements yet
             if (elements.length == 0)
             {
