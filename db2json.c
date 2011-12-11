@@ -5,7 +5,8 @@
 void
 _add_double(json_object *parent, char *key, sqlite3_stmt *stmt, int column)
 {
-    if (sqlite3_column_type(stmt, column) == SQLITE_FLOAT)
+    if (sqlite3_column_type(stmt, column) == SQLITE_FLOAT ||
+        sqlite3_column_type(stmt, column) == SQLITE_INTEGER)
         add_double(parent, key, sqlite3_column_double(stmt, column));
     else
         add_string(parent, key, "null"); // json doesn't support NaN
