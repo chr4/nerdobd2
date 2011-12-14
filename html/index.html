@@ -392,8 +392,6 @@ $(document).ready(function() {
     Data.create("speed",  "km/h", 1);
     Data.create("consumption_average_startup", "l/km", 2);
     Data.create("consumption_average_total", "l/km", 2);
-    Data.create("consumption_per_h", "l/h", 2);
-    Data.create("rpm", "rpm", 0);
     Data.create("temp_engine", "°C", 1);
     Data.create("temp_air_intake", "°C", 1);
     Data.create("voltage", "°C", 1);
@@ -402,8 +400,9 @@ $(document).ready(function() {
     Data.create("kilometers_startup", "km", 2);
     Data.create("consumption_liters_total", "l", 2);
     Data.create("kilometers_total", "km", 2);
-   
+  
     Data.create("gps_speed", "km/h", 1) 
+    Data.create("gps_altitude", "m", 2); 
     Data.create("gps_climb", "m/min", 2) 
     Data.create("gps_mode", "gps", 0) 
 });
@@ -432,13 +431,12 @@ $(document).ready(function() {
    <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
    <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
          
-   <span id="consumption_per_h" class="value value-small">-</span><span class="unit unit-small">l/h</span>
-   <span id="rpm" class="value value-small">-</span><span class="unit unit-small">rpm</span>
    <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
    <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
    <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
 
-   <span id="gps_speed" class="value value-small">-</span><span class="unit unit-small">km/h</span>
+   <span id="gps_speed" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">km/h</span>
+   <span id="gps_altitude" class="value value-small">-</span><span class="unit unit-small">m</span>
    <span id="gps_climb" class="value value-small">-</span><span class="unit unit-small">m/min</span>
    <span id="gps_mode" class="value value-small">-</span><span class="unit unit-small">gps</span>
   </div>
