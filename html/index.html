@@ -214,12 +214,16 @@
                         window.map.removeLayer(window.radius)
 
                     // and create a new one, if a location error is detected
-                    if ( !isNaN(data['gps_err_latitude']) && !isNaN(data['gps_err_longitude']) ) {
-                        var locationError = (data['gps_err_latitude'] + data['gps_err_longitude']) / 2;
-                        if (locationError > 0) {
-                            window.radius = new L.Circle(loc, locationError);
-                            window.map.addLayer(window.radius);
-                        }
+                    var locationError = 0;
+                    if ( !isNaN(data['gps_err_latitude']) )
+                        locationError = data['gps_err_latitude'];
+
+                    if ( !isNaN(data['gps_err_longitude']) && data['gps_err_longitude'] > locationError)
+                        locationError = data['gps_err_longitude'];
+                          
+                    if (locationError > 0) {
+                        window.radius = new L.Circle(loc, locationError);
+                        window.map.addLayer(window.radius);
                     }
 
                     window.marker.setLatLng(loc);
