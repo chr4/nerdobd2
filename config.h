@@ -6,19 +6,8 @@
 //#define DEBUG_AJAX
 //#define TEST
 
-/* writing to database is too slow on my eeepc,
- * thus provoking "resource temporarily not available" errors
- * putting database in /dev/shm, and syncing it from time to time
- * should help.
- */
-#define DB_RAM         "/dev/shm/nerdob2.sqlite3"
-#define DB_DISK        "database.sqlite3"
+#define DB_SQLITE      "database.sqlite3"
 
-/* sync the database form ram to disk every SYNC_DELAY seconds
- * nicing the rsync process with SYNC_NICE
- */
-#define SYNC_NICE      19
-#define SYNC_DELAY     10
 
 /* if the system suspends and then resumes, the kernel tries to newly
  * assign /dev/ttyUSB0 to the USB to serial adapter. this fails, because

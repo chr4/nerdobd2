@@ -35,115 +35,21 @@ exec_query(sqlite3 *db, char *query)
 }
 
 
-// sync database in ram to disk
-void
-sync2disk(int n)
-{
-    if (fork() == 0)
-    {
-        // be nice
-        if (nice(n) == -1)
-            perror("couldn't nice rsync process");
-
-        printf(" - child (rsync): syncing db file to disk...\n");
-        execlp("rsync", "rsync", "-a", DB_RAM, DB_DISK, NULL);
-        _exit(0);
-    }
-}
-
-
-// sync database in disk to ram
-int
-sync2ram(void)
-{
-    int      hd;
-    int      ram;
-    int      n;
-    void    *buf;
-    sqlite3 *db;
-    
-    
-    /* check if database file exists in /dev/shm
-     * if not, look for one on the disk and use it
-     * if nothing is found, create a new one.
-     */
-    if (access(DB_RAM, W_OK) == 0)
-    {
-#ifdef DEBUG_SQLITE
-        printf("%s exists and is writeable, no sync needed\n", DB_RAM);
-#endif
-        return 0;        
-    }
-    else if (access(DB_DISK, R_OK) == 0)
-    {
-#ifdef DEBUG_SQLITE
-        printf("%s exists and is readable, syncing to ram...\n", DB_DISK);
-#endif
-    }
-    else
-    {
-#ifdef DEBUG_SQLITE
-        printf("no db file found, creating...\n");
-#endif
-        // create database file
-        if (sqlite3_open(DB_RAM, &db) != SQLITE_OK)
-        {
-            printf("Coudln't create database: %s", DB_RAM);
-            return -1;
-        }
-        close_db(db);
-        
-        return 0;
-    }    
-    
-    
-    buf = malloc(sizeof(void) * LEN);
-    
-    if ( (hd = open(DB_DISK, O_RDONLY)) == -1)
-    {
-        perror("open");
-        return -1;
-    }
-    
-    if ( (ram = open(DB_RAM, O_CREAT | O_RDWR, 0644)) == -1)
-    {
-        perror("open");
-        return -1;
-    }
-    
-    do
-    {
-        n = read(hd, buf, sizeof(buf));
-        if (write (ram, buf, n) == -1)
-        {
-            printf("error while copying file. (write() error)\n");
-            return -1;
-        }
-    }
-    while (n);
-    
-    close(hd);
-    close(ram);
-    
-    return 0;
-}
-
-
 sqlite3 * 
 open_db(void)
 {
     sqlite3 *db;
     
-    if (access(DB_RAM, W_OK) != 0)
+    if (access(DB_SQLITE, W_OK) != 0)
     {
-        printf("Couldn't open database: %s\n", DB_RAM);
+        printf("Couldn't open database: %s\n", DB_SQLITE);
         return NULL;
     }
     
     // open database file
-    if (sqlite3_open(DB_RAM, &db) != SQLITE_OK)
+    if (sqlite3_open(DB_SQLITE, &db) != SQLITE_OK)
     {
-        printf("Coudln't open database: %s", DB_RAM);
+        printf("Coudln't open database: %s", DB_SQLITE);
         return NULL;
     }
     
@@ -204,21 +110,6 @@ init_db(sqlite3 *db)
                         data        INTEGER)");
     
     exec_query(db, "END TRANSACTION");
-
-
-    /*
-    // sync the file to disk periodically
-    if (fork() == 0)
-    {
-        for (; ;) 
-        {
-            sync2disk(SYNC_NICE);
-            sleep(SYNC_DELAY); 
-        }
-       
-        _exit(0);
-    }
-    */
 
     return;
 }

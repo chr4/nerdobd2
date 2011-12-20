@@ -34,7 +34,7 @@ cleanup (int signo)
     if (pid_httpd != -1)
         kill(pid_httpd, SIGTERM);
 
-    // close database and sync file to disk
+    // close database
     printf("closing database...\n");
     close_db(db);
 
@@ -44,10 +44,6 @@ cleanup (int signo)
 
     // wait for all child processes
     printf("waiting for child processes to finish...\n");
-    wait4childs();
-
-    // sync database to disk (without nicing)
-    sync2disk(0);
     wait4childs();
 
     printf("exiting\n");    
@@ -74,11 +70,7 @@ main (int argc, char **argv)
     // catch orphans
     signal(SIGCHLD, sig_chld);
 
-    // sync database from disk to ram
-    if (sync2ram() == -1)
-        return -1;
-
-    // open it
+    // open the database
     if ( (db = open_db()) == NULL)
         return -1;
 
@@ -146,13 +138,6 @@ main (int argc, char **argv)
     
     for (; ;)
     {
-        /* disabled, httpd crashed sometimes
-         * maybe because db is inconsistent
-
-        // sync database file to disk, using low priority
-        sync2disk(19);
-        */
-
         if (ret == SERIAL_HARD_ERROR)
         {
             while (kw1281_open (DEVICE) == -1)
