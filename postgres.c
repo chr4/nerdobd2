@@ -7,15 +7,38 @@ exec_query(PGconn *db, char *query)
     PGresult   *res;
 
     res = PQexec(db, query);
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
-    {
-        fprintf(stderr, "query '%s' failed: %s", query, PQerrorMessage(db));
-        PQclear(res);
-        return -1;
+
+    switch(PQresultStatus(res)) {
+
+        case PGRES_TUPLES_OK:
+        case PGRES_COMMAND_OK:
+            // all OK, no data to process
+            PQclear(res);
+            return 0;
+            break;
+
+        case PGRES_EMPTY_QUERY:
+            // server had nothing to do, a bug maybe?
+            fprintf(stderr, "query '%s' failed (EMPTY_QUERY): %s\n", query, PQerrorMessage(db));
+            PQclear(res);
+            return -1;
+            break;
+
+        case PGRES_NONFATAL_ERROR:
+            // can continue, possibly retry the command
+            fprintf(stderr, "query '%s' failed (NONFATAL, retrying): %s\n", query, PQerrorMessage(db));
+            PQclear(res);
+            return exec_query(db, query);
+            break;
+
+        case PGRES_BAD_RESPONSE:
+        case PGRES_FATAL_ERROR:
+        default:
+            // fatal or unknown error, cannot continue
+            fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
     }
 
-    PQclear(res);
-    return 0;
+    return -1;
 }
 
 

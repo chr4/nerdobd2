@@ -15,13 +15,59 @@ _add_double(json_object *parent, char *key, PGresult *res, int column)
 }
 
 int
+json_query_and_add(PGconn *db, char *query, json_object *data)
+{
+    PGresult *res;
+    int      i;
+
+#ifdef DEBUG_DB
+    printf("sql: %s\n", query);
+#endif
+
+    res = PQexec(db, query);
+
+    switch(PQresultStatus(res)) {
+
+        case PGRES_TUPLES_OK:
+            if (PQntuples(res) > 0)
+                for (i = 0; i < PQnfields(res); i++)
+                    _add_double(data, PQfname(res, i), res, i);
+
+            PQclear(res);
+            return 0;
+            break;
+
+        case PGRES_COMMAND_OK:
+            // all OK, no data to process
+            break;
+
+        case PGRES_EMPTY_QUERY:
+            // server had nothing to do, a bug maybe?
+            fprintf(stderr, "query '%s' failed (EMPTY_QUERY): %s\n", query, PQerrorMessage(db));
+            break;
+
+        case PGRES_NONFATAL_ERROR:
+            // can continue, possibly retry the command
+            fprintf(stderr, "query '%s' failed (NONFATAL, retrying): %s\n", query, PQerrorMessage(db));
+            PQclear(res);
+            return json_query_and_add(db, query, data);
+            break;
+
+        case PGRES_BAD_RESPONSE:
+        case PGRES_FATAL_ERROR:
+        default:
+            // fatal or unknown error, cannot continue
+            fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
+    }
+
+    PQclear(res);
+    return -1;
+}
+
+int
 json_get_data(PGconn *db, json_object *data)
 {
-    char     query[LEN_QUERY];
-    PGresult *res;
-
-    // query data
-    snprintf(query, sizeof(query),
+    return json_query_and_add(db,
              "SELECT rpm, speed, injection_time, \
                      oil_pressure, consumption_per_100km, consumption_per_h, \
                      temp_engine, temp_air_intake, voltage, \
@@ -32,91 +78,26 @@ json_get_data(PGconn *db, json_object *data)
                      gps_err_speed, gps_err_climb, gps_err_track \
               FROM data \
               ORDER BY id \
-              DESC LIMIT 1");
-
-#ifdef DEBUG_DB
-    printf("sql: %s\n", query);
-#endif
-
-    res = PQexec(db, query);   
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
-        PQclear(res);
-        return -1;
-    }
-
-    if (PQntuples(res) > 0)
-    {
-        _add_double(data, "rpm", res, 0);
-        _add_double(data, "speed", res, 1);
-        _add_double(data, "injection_time", res, 2);
-        _add_double(data, "oil_pressure", res, 3);
-        _add_double(data, "consumption_per_100km", res, 4);
-        _add_double(data, "consumption_per_h", res, 5);
-        _add_double(data, "temp_engine", res, 6);
-        _add_double(data, "temp_air_intake", res, 7);
-        _add_double(data, "voltage", res, 8);
-        _add_double(data, "gps_mode", res, 9);
-        _add_double(data, "gps_latitude", res, 10);
-        _add_double(data, "gps_longitude", res, 11);
-        _add_double(data, "gps_altitude", res, 12);
-        _add_double(data, "gps_speed", res, 13);
-        _add_double(data, "gps_climb", res, 14);
-        _add_double(data, "gps_track", res, 15);
-        _add_double(data, "gps_err_latitude", res, 16);
-        _add_double(data, "gps_err_longitude", res, 17);
-        _add_double(data, "gps_err_altitude", res, 18);
-        _add_double(data, "gps_err_speed", res, 19);
-        _add_double(data, "gps_err_climb", res, 20);
-        _add_double(data, "gps_err_track", res, 21);
-    }
-
-    PQclear(res);
-    return 0;
+              DESC LIMIT 1", data);
 }
 
 
 int
 json_get_averages(PGconn *db, json_object *data)
 {
-    char     query[LEN_QUERY];
-    PGresult *res;
+    int ret = 0;
 
     // average since last startup
-    snprintf(query, sizeof(query),
-             "SELECT   date_part('epoch', setpoints.time), \
-                       SUM(data.speed * data.consumption_per_100km) / SUM(data.speed), \
-                       SUM(data.liters), \
-                       SUM(data.kilometers) \
+    if ( json_query_and_add(db,
+             "SELECT   date_part('epoch', setpoints.time) AS timestamp_startup, \
+                       SUM(data.speed * data.consumption_per_100km) / SUM(data.speed) AS consumption_average_startup, \
+                       SUM(data.liters) AS consumption_liters_startup, \
+                       SUM(data.kilometers) AS kilometers_startup \
               FROM     setpoints, data \
               WHERE    consumption_per_100km != 'NaN' \
               AND      data.id > ( SELECT data FROM setpoints WHERE name = 'startup' ) \
-              GROUP BY setpoints.time");
-
-#ifdef DEBUG_DB
-    printf("sql: %s\n", query);
-#endif
-
-    res = PQexec(db, query);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
-        PQclear(res);
-        return -1;
-    }
-
-    if (PQntuples(res) > 0)
-    {
-        _add_double(data, "timestamp_startup", res, 0);
-        _add_double(data, "consumption_average_startup", res, 1);
-        _add_double(data, "consumption_liters_startup", res, 2);
-        _add_double(data, "kilometers_startup", res, 3);        
-    }
-
-    PQclear(res);
+              GROUP BY setpoints.time", data) == -1)
+        ret = -1;
 
     // average since timespan
     /*
@@ -130,35 +111,15 @@ json_get_averages(PGconn *db, json_object *data)
     
 
     // overall consumption average
-    snprintf(query, sizeof(query),
-             "SELECT SUM(speed * consumption_per_100km) / SUM(speed), \
-                     SUM(liters), \
-                     SUM(kilometers) \
+    if ( json_query_and_add(db,
+             "SELECT SUM(speed * consumption_per_100km) / SUM(speed) AS consumption_average_total, \
+                     SUM(liters) AS consumption_liters_total, \
+                     SUM(kilometers) AS kilometers_total \
               FROM   data \
-              WHERE  consumption_per_100km != 'NaN'");
+              WHERE  consumption_per_100km != 'NaN'", data) == -1)
+       ret = -1;
 
-#ifdef DEBUG_DB
-    printf("sql: %s\n", query);
-#endif
-
-    res = PQexec(db, query);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
-        PQclear(res);
-        return -1;
-    }
-
-    if (PQntuples(res) > 0)
-    {
-        _add_double(data, "consumption_average_total", res, 0);
-        _add_double(data, "consumption_liters_total", res, 1);
-        _add_double(data, "kilometers_total", res, 2);
-    }
- 
-    PQclear(res);
-    return 0;
+    return ret;
 }
 
 
@@ -205,22 +166,45 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
 
     res = PQexec(db, query);
 
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
-    {
-        fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
-        PQclear(res);
-        return NULL;
+    switch(PQresultStatus(res)) {
+
+        case PGRES_TUPLES_OK:
+            if (PQntuples(res) > 0)
+            {
+                timestamp = (float *) PQgetvalue(res, 0, 0);
+                value = (float *) PQgetvalue(res, 0, 1);
+
+                add_data(data, *timestamp, *value);
+                add_int(graph, "index", index);
+            }
+
+            PQclear(res);
+            return json_object_to_json_string(graph);
+            break;
+
+        case PGRES_COMMAND_OK:
+            // all OK, no data to process
+            break;
+
+        case PGRES_EMPTY_QUERY:
+            // server had nothing to do, a bug maybe?
+            fprintf(stderr, "query '%s' failed (EMPTY_QUERY): %s\n", query, PQerrorMessage(db));
+            break;
+
+        case PGRES_NONFATAL_ERROR:
+            // can continue, possibly retry the command
+            fprintf(stderr, "query '%s' failed (NONFATAL, retrying): %s\n", query, PQerrorMessage(db));
+            PQclear(res);
+            return json_graph_data(db, key, index, timespan);
+            break;
+
+        case PGRES_BAD_RESPONSE:
+        case PGRES_FATAL_ERROR:
+        default:
+            // fatal or unknown error, cannot continue
+            fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
     }
 
-    if (PQntuples(res) > 0)
-    {
-        timestamp = (float *) PQgetvalue(res, 0, 0);
-        value = (float *) PQgetvalue(res, 0, 1);
-
-        add_data(data, *timestamp, *value);
-    }
-
-    add_int(graph, "index", index);
-
-    return json_object_to_json_string(graph);
+    PQclear(res);
+    return NULL;
 }
