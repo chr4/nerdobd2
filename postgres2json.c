@@ -104,7 +104,7 @@ json_get_averages(PGconn *db, json_object *data)
     snprintf(query, sizeof(query),
              "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
              FROM data \
-             WHERE time > DATETIME('NOW', '-%lu seconds', 'localtime') \
+             WHERE time > current_timestamp - interval '%lu seconds' \
              AND consumption_per_100km != 'NaN'",
              timespan);
     */
@@ -156,7 +156,7 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
              "SELECT date_part('epoch', time), %s \
               FROM   data \
               WHERE id > %lu \
-              AND time > DATETIME('NOW', '-%lu seconds', 'localtime') \
+              AND time > current_timestamp - interval '%lu seconds' \
               ORDER BY id",
              key, index, timespan);
 
