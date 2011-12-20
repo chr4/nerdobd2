@@ -1,7 +1,13 @@
 #include "core.h"
 
-// sqlite database handle
+// database handle
+#ifdef DB_SQLITE
 sqlite3 *db;
+#endif
+
+#ifdef DB_POSTGRES
+PGconn *db;
+#endif
 
 
 void	cleanup (int);
@@ -79,7 +85,7 @@ main (int argc, char **argv)
 
     // start http server
     puts("fireing up httpd server");
-    if ( (pid_httpd = httpd_start(db)) == -1)
+    if ( (pid_httpd = httpd_start()) == -1)
         cleanup(15);
 
     // collect gps data
@@ -93,6 +99,7 @@ main (int argc, char **argv)
 
 
 #ifdef TEST
+#ifdef DB_SQLITE
     exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
                    'startup', DATETIME('now', 'localtime'), ( \
                    SELECT CASE WHEN count(*) = 0 \
@@ -102,6 +109,10 @@ main (int argc, char **argv)
                    ORDER BY id DESC LIMIT 1 \
                    ) \
                )");
+#endif
+#ifdef DB_POSTGRES
+    exec_query(db, "SELECT set_setpoint('startup')");
+#endif
 
     // for testing purposes
     int i = 0, flag = 0;
@@ -147,6 +158,7 @@ main (int argc, char **argv)
              * it is probably due to a new ride was started, since we
              * set the startup set point to the last index we can find
              */
+#ifdef DB_SQLITE
             exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
                            'startup', DATETIME('now', 'localtime'), ( \
                            SELECT CASE WHEN count(*) = 0 \
@@ -156,6 +168,10 @@ main (int argc, char **argv)
                            ORDER BY id DESC LIMIT 1 \
                            ) \
                        )");
+#endif
+#ifdef DB_POSTGRES
+            exec_query(db, "SELECT set_setpoint('startup')");
+#endif
 
             // set the first run flags
             consumption_first_run = 1;
@@ -216,10 +232,17 @@ insert_data(obd_data_t obd)
     char query[LEN_QUERY];
     static struct gps_fix_t gps; 
 
+#ifdef DB_SQLITE
     exec_query(db, "BEGIN TRANSACTION");
+#endif
 
     strlcpy(query, 
-            "INSERT INTO data VALUES ( NULL, DATETIME('NOW', 'localtime')",
+#ifdef DB_SQLITE
+            "INSERT INTO data VALUES ( NULL, DATETIME('now', 'localtime')",
+#endif
+#ifdef DB_POSTGRES
+            "INSERT INTO data VALUES ( DEFAULT, current_timestamp",
+#endif
             sizeof(query) );
 
     // add obd data
@@ -267,7 +290,9 @@ insert_data(obd_data_t obd)
 
     exec_query(db, query);
 
+#ifdef DB_SQLITE
     exec_query(db, "END TRANSACTION");
+#endif
 }
 
 // this struct collects all engine data

@@ -32,7 +32,7 @@ json_get_data(sqlite3 *db, json_object *data)
               ORDER BY id \
               DESC LIMIT 1");
 
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
 
@@ -75,7 +75,7 @@ json_get_data(sqlite3 *db, json_object *data)
     }
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
         return -1;
@@ -101,7 +101,7 @@ json_get_averages(sqlite3 *db, json_object *data)
               WHERE  consumption_per_100km != -1 \
               AND    id > ( SELECT data FROM setpoints WHERE name = 'startup' )");
 
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
     
@@ -121,7 +121,7 @@ json_get_averages(sqlite3 *db, json_object *data)
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
         return -1;
@@ -146,7 +146,7 @@ json_get_averages(sqlite3 *db, json_object *data)
               FROM   data \
               WHERE  consumption_per_100km != -1");
 
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
     
@@ -165,7 +165,7 @@ json_get_averages(sqlite3 *db, json_object *data)
     
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
         return -1;
@@ -216,7 +216,7 @@ json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long i
               ORDER BY id",
              key, index, timespan);
 
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
     
@@ -242,7 +242,7 @@ json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long i
 
     if (sqlite3_finalize(stmt) != SQLITE_OK)
     {
-#ifdef DEBUG_SQLITE
+#ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
         return NULL;

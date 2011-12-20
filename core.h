@@ -3,6 +3,8 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <math.h>
 
 // include common defines
@@ -12,8 +14,13 @@
 // serial protocol
 #include "kw1281.h"
 
-// we need sqlite3 access
+#ifdef DB_SQLITE
 #include "sqlite.h"
+#endif
+
+#ifdef DB_POSTGRES
+#include "postgres.h"
+#endif
 
 // the http server
 #include "httpd.h"

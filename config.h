@@ -2,11 +2,12 @@
 #define DOCROOT		   "html"
 
 //#define DEBUG_SERIAL
-//#define DEBUG_SQLITE
+//#define DEBUG_DB
 //#define DEBUG_AJAX
 //#define TEST
 
-#define DB_SQLITE      "database.sqlite3"
+//#define DB_SQLITE      "database.sqlite3"
+#define DB_POSTGRES    "user=nerdobd2 dbname=nerdobd2"
 
 
 /* if the system suspends and then resumes, the kernel tries to newly

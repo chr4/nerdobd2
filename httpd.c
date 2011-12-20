@@ -14,8 +14,13 @@
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 #define HEADER_TTF      SERVER_STRING SERVER_CON "Content-Type: font/ttf\r\n\r\n"
 
-// sqlite database handle
+#ifdef DB_SQLITE
 sqlite3 *db;
+#endif
+
+#ifdef DB_POSTGRES
+PGconn *db;
+#endif
 
 int
 send_error(int fd, char *message)
@@ -318,12 +323,14 @@ httpd_stop(int signo)
 }
 
 int
-httpd_start(sqlite3 *mydb)
+httpd_start(void)
 {
     int s;
     pid_t pid;
 
-    db = mydb;
+    // open the database
+    if ( (db = open_db()) == NULL)
+        return -1;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;

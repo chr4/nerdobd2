@@ -1,73 +1,47 @@
-#include "sqlite.h"
-
-static int
-busy(void *unused __attribute__((unused)), int count)
-{
-    usleep(500000);
-
-#ifdef DEBUG_DB
-    printf("retrying query...\n");
-#endif
-
-    // give up after 30 seconds
-	return (count < 60);
-}
+#include "postgres.h"
 
 
 int
-exec_query(sqlite3 *db, char *query)
+exec_query(PGconn *db, char *query)
 {
-    char *error = NULL;
-    
-#ifdef DEBUG_DB
-    if (strstr(query, "TRANSACTION") == NULL)
-        printf("sql: %s\n", query);
-#endif
-    
-    if (sqlite3_exec(db, query, NULL, NULL, &error) != SQLITE_OK)
+    PGresult   *res;
+
+    res = PQexec(db, query);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
     {
-        printf("sql error: %s\n", error);       
-        sqlite3_free(error);
+        fprintf(stderr, "query '%s' failed: %s", query, PQerrorMessage(db));
+        PQclear(res);
         return -1;
     }
-    
+
+    PQclear(res);
     return 0;
 }
 
 
-sqlite3 * 
+PGconn *
 open_db(void)
 {
-    sqlite3 *db;
-    
-    // open database file
-    if (sqlite3_open(DB_SQLITE, &db) != SQLITE_OK)
+    PGconn *db;
+   
+    db = PQconnectdb(DB_POSTGRES);
+    if (PQstatus(db) != CONNECTION_OK)
     {
-        printf("Coudln't open database: %s", DB_SQLITE);
+        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(db));
+        close_db(db);
         return NULL;
     }
-    
-    // retry on busy errors
-    sqlite3_busy_handler(db, busy, NULL);
-        
-    // disable waiting for write to be completed
-    exec_query(db, "PRAGMA synchronous = OFF");
-    
-    // disable journal
-    exec_query(db, "PRAGMA journal_mode = OFF");
     
     return db;
 }
         
 
 void
-init_db(sqlite3 *db)
+init_db(PGconn *db)
 {
-    exec_query(db, "BEGIN TRANSACTION");
-
     // create data table
     exec_query(db, "CREATE TABLE IF NOT EXISTS data ( \
-                        id                    INTEGER PRIMARY KEY, \
+                        id                    SERIAL, \
                         time                  DATE, \
                         rpm                   FLOAT, \
                         speed                 FLOAT, \
@@ -99,19 +73,44 @@ init_db(sqlite3 *db)
 
     // create table where set point information is stored
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \
-                        name        VARCHAR PRIMARY KEY, \
+                        id          SERIAL, \
+                        name        VARCHAR, \
                         time        DATE, \
                         data        INTEGER)");
-    
-    exec_query(db, "END TRANSACTION");
 
+
+    // since postgres doesn't support replace into, we're defining our own set_setpoints function
+    exec_query(db, "CREATE OR REPLACE FUNCTION set_setpoint(text) RETURNS void AS $$ \
+               BEGIN \
+                   IF EXISTS( SELECT name FROM setpoints WHERE name = $1 ) THEN \
+                       UPDATE setpoints SET time = current_timestamp, data = ( \
+                           SELECT CASE WHEN count(*) = 0 \
+                           THEN 0 \
+                           ELSE id END \
+                           FROM data \
+                           GROUP BY id \
+                           ORDER BY id DESC LIMIT 1 ) \
+                       WHERE name = 'startup'; \
+                   ELSE \
+                       INSERT INTO setpoints VALUES( DEFAULT, $1, current_timestamp, ( \
+                           SELECT CASE WHEN count(*) = 0 \
+                           THEN 0 \
+                           ELSE id END \
+                           FROM data \
+                           GROUP BY data.id \
+                           ORDER BY data.id DESC LIMIT 1 ) ); \
+                   END IF; \
+                   RETURN; \
+               END; \
+               $$ LANGUAGE plpgsql;");
+    
     return;
 }
 
 
 
 void
-close_db(sqlite3 *db)
+close_db(PGconn *db)
 {
-    sqlite3_close(db);
+    PQfinish(db);
 }
