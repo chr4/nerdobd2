@@ -97,7 +97,7 @@ function Graph(Name, Timespan)
         series.data.splice(i, 0, [ series.data[i - 1][0], -1 ]);
       }
     }
-    
+
     this.updateOptions();
     this.updateLabel();
     this.plot();

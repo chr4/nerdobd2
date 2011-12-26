@@ -299,6 +299,8 @@ handle_client(int fd)
         send_graph_data(fd, "consumption_per_100km", buffer);
     else if (!strncmp(p, "/speed.json", 11) )
         send_graph_data(fd, "speed", buffer);
+    else if (!strncmp(p, "/gps_altitude.json", 18) )
+        send_graph_data(fd, "gps_altitude", buffer);
 
     // send file
     else

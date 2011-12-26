@@ -9,15 +9,46 @@
     
   <script language="javascript" type="text/javascript" src="js/leaflet/leaflet.js"></script>
   <script language="javascript" type="text/javascript" src="js/jquery/jquery.min.js"></script>
+  <script language="javascript" type="text/javascript" src="js/flot/jquery.flot.min.js"></script>
+  <script language="javascript" type="text/javascript" src="js/flot/jquery.flot.threshold.min.js"></script>
 
-  <script language="javascript" type="text/javascript" src="js/map.js"></script>    
+  <script language="javascript" type="text/javascript" src="js/graph.js"></script>
   <script language="javascript" type="text/javascript" src="js/value.js"></script>    
     
   <script language="javascript" type="text/javascript">
 
     $(document).ready(function() {
-      window.map = new Map();
+                      
+      // setting up consumption graph
+      var ConsumptionGraph = new Graph("consumption", 900000);
 
+      ConsumptionGraph.setSeries(  { "color": "rgb(200, 20, 30)",
+                                     "lines": { "fill": false, "steps": true },
+                                     "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } } );
+
+      ConsumptionGraph.setOptions( { "yaxis": { "min": 0, "max": "20" },
+                                     "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+
+                      
+      // and setting up speed graph
+      var SpeedGraph = new Graph("speed", 1800000);
+
+      SpeedGraph.setSeries(  { "lines": { "fill": true } } );
+
+      SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
+                               "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+                      
+                      
+      // and setting up altitude graph
+      var AltitudeGraph = new Graph("gps_altitude", 5400000);
+                      
+      AltitudeGraph.setSeries(  { "color": "rgb(0, 0, 200)",
+                                  "lines": { "fill": true } } );
+                      
+      AltitudeGraph.setOptions( { "yaxis": { "min": 0, "max": "900" },
+                                  "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+
+                      
       // setup all variables
       var Data = new Values();
 
@@ -45,7 +76,9 @@
  <body>
 
   <div class="left-container">
-   <div id="map"></div>
+   <div id="graph-consumption" class="graph"></div>
+   <div id="graph-speed" class="graph"></div>
+   <div id="graph-gps_altitude" class="graph"></div>    
   </div>
 
   <div class="right-container">

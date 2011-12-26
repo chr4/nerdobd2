@@ -29,17 +29,24 @@ body
 }
 
 .graph {
+    position:relative;
+    float:left;
     height:290px;
+    margin-bottom:9px;
 }
 
 #graph-consumption {
     margin-left:7px;
-    width:433px;
-    margin-bottom:9px;
+    width:767px;
 }
 
 #graph-speed {
-    width:440px;
+    width:383px;
+}
+
+#graph-gps_altitude {
+    margin-left:8px;
+    width:383px;
 }
 
 .left-container {
