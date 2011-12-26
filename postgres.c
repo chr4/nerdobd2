@@ -65,7 +65,7 @@ init_db(PGconn *db)
     // create data table
     exec_query(db, "CREATE TABLE IF NOT EXISTS data ( \
                         id                    SERIAL, \
-                        time                  DATE, \
+                        time                  TIMESTAMP, \
                         rpm                   FLOAT, \
                         speed                 FLOAT, \
                         injection_time        FLOAT, \
@@ -98,7 +98,7 @@ init_db(PGconn *db)
     exec_query(db, "CREATE TABLE IF NOT EXISTS setpoints ( \
                         id          SERIAL, \
                         name        VARCHAR, \
-                        time        DATE, \
+                        time        TIMESTAMP, \
                         data        INTEGER)");
 
 

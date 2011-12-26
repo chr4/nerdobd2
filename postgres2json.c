@@ -146,14 +146,15 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
 {
     char      query[LEN_QUERY];
     PGresult  *res;
-    float     *timestamp;
-    float     *value;
+    float     timestamp;
+    float     value;
+    int       i;
 
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
 
     snprintf(query, sizeof(query),
-             "SELECT date_part('epoch', time), %s \
+             "SELECT date_part('epoch', time) * 1000, %s \
               FROM   data \
               WHERE id > %lu \
               AND time > current_timestamp - interval '%lu seconds' \
@@ -169,12 +170,11 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
     switch(PQresultStatus(res)) {
 
         case PGRES_TUPLES_OK:
-            if (PQntuples(res) > 0)
+            for (i = 0; i < PQntuples(res); i++)
             {
-                timestamp = (float *) PQgetvalue(res, 0, 0);
-                value = (float *) PQgetvalue(res, 0, 1);
-
-                add_data(data, *timestamp, *value);
+                timestamp = atof(PQgetvalue(res, i, 0));
+                value = atof(PQgetvalue(res, i, 1));
+                add_data(data, timestamp, value);
                 add_int(graph, "index", index);
             }
 
