@@ -3,419 +3,66 @@
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>nerdobd2</title>
+    
   <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
   <link rel="stylesheet" href="css/leaflet.css" />
-  <script language="javascript" type="text/javascript" src="js/leaflet.js"></script>
-  <script language="javascript" type="text/javascript" src="js/jquery.min.js"></script>
-  <script language="javascript" type="text/javascript" src="js/jquery.flot.min.js"></script>
-  <script language="javascript" type="text/javascript" src="js/jquery.flot.threshold.min.js"></script>
+    
+  <script language="javascript" type="text/javascript" src="js/leaflet/leaflet.js"></script>
+  <script language="javascript" type="text/javascript" src="js/jquery/jquery.min.js"></script>
+  <script language="javascript" type="text/javascript" src="js/flot/jquery.flot.min.js"></script>
+  <script language="javascript" type="text/javascript" src="js/flot/jquery.flot.threshold.min.js"></script>
 
+  <script language="javascript" type="text/javascript" src="js/map.js"></script>    
+  <script language="javascript" type="text/javascript" src="js/graph.js"></script>
+  <script language="javascript" type="text/javascript" src="js/value.js"></script>    
+    
   <script language="javascript" type="text/javascript">
 
-    function Graph(Name, Timespan)
-    {
-        var name = "";
-        var index = 0;
-        var timespan = 0;
-        var interval = 0;
+    $(document).ready(function() {
+      map = new Map();
+                      
+    /*
+      // setting up consumption graph
+      var ConsumptionGraph = new Graph("consumption", 300000);
 
-        var options = {};
-        var series = {};
+      ConsumptionGraph.setSeries(  { "color": "rgb(200, 20, 30)",
+                                     "lines": { "fill": false, "steps": true },
+                                     "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } } );
 
-        this.setIndex = function(newIndex)
-        {
-            index = newIndex;
-        }
-
-        this.getIndex = function()
-        {
-            return index;
-        }
-
-        this.setTimespan = function(newTimespan)
-        {
-            // reset index, if new timespan is larger than the old one
-            // so we will fetch older data as well
-            if (timespan < newTimespan)
-                index = 0;
-
-            // update timespan
-            timespan = newTimespan;
-
-            // don't update more than once a second
-            if (timespan < 30000)
-                interval = 1000;
-            else
-                interval = timespan / 300;
-        }
-
-        this.getTimespan = function()
-        {
-            return timespan;
-        }
-
-        this.getLocalTime = function()
-        {
-            // get localtime
-            var t = new Date();
-            return t.getTime() - t.getTimezoneOffset() * 60000;
-        }
-
-        this.updateLabel = function()
-        {
-            // display hours if graph is more than 60min
-            if (timespan > 3600000)
-                series.label = name + " (last " + timespan / 3600000 + "h)";
-            else
-                series.label = name + " (last " + timespan / 60000 + "min)";
-        }
-
-        this.updateOptions = function()
-        {
-            var now = this.getLocalTime();
-
-            // adjust the xaxis, so graph moves forward
-            options.xaxis.min = now - timespan;
-            options.xaxis.max = now - 1000; // prevent small empty gaps at the beginning of the graph
-        }
-
-        this.appendData = function(data)
-        {
-            var i;
-
-            // append new data to series
-            series.data = $.merge(series.data, data);
-
-            // loop reverse, for better performance
-            for (i = series.data.length - 1; i > 0; i--)
-            {
-                // after we find the first element that is outdated
-                if (series.data[i][0] <= this.getLocalTime() - timespan)
-                {
-                    // remove everything up to this element
-                    series.data.splice(0, i);
-                    break;
-                }
-
-                /* display gaps of information as gaps,
-                 * don't just connect the dots
-                 * if the time between two dots is more than 20 sec
-                 * don't connect them (i.e. add a dot at -1)
-                 */
-                if (series.data[i][0] > series.data[i - 1][0] + 20000)
-                {
-                    // add two new dots with y value -1
-                    series.data.splice(i, 0, [ series.data[i][0], -1 ]);
-                    series.data.splice(i, 0, [ series.data[i - 1][0], -1 ]);
-                }
-            }
-
-            this.updateOptions();
-            this.updateLabel();
-            this.plot();
-        }
-
-        this.update = function()
-        {
-            // this is out of scope in onDataReceived
-            var that = this;
-
-            function onDataReceived(json)
-            {
-                if (typeof(json.index) !== "undefined")
-                    that.setIndex(json.index);
-
-                if (typeof(json.data) !== "undefined")
-                    that.appendData(json.data);
-            }
-
-            $.ajax({
-                url: name + ".json" +
-                     "?index=" + index +
-                     "&timespan=" + timespan / 1000,
-                method: 'GET',
-                dataType: 'json',
-                success: onDataReceived,
-                complete: setTimeout(function() { that.update(); }, interval)
-            });
-        }
-
-        this.plot = function()
-        {
-            $.plot($("#graph-" + name), [ series ], options);
-        }
-
-        this.setOptions = function(Options)
-        {
-            jQuery.extend(options, Options);
-        }
-
-        this.setSeries = function(Series)
-        {
-            jQuery.extend(series, Series);
-        }
-
-        this.construct = function()
-        {
-            name = Name;
-            this.setTimespan(Timespan);
-
-            // create data array and set label
-            series.data = [];
-
-            // disable shadows for better performance
-            options.series = {};
-            options.series.shadowSize = 0;
-
-            // configure the legend
-            options.legend = {};
-            options.legend.show = true;
-            options.legend.position = "nw";
-            options.legend.backgroundOpacity = 0;
-            options.legend.labelFormatter = function (label, series) {
-                return '<span style="font-family:helvetica;">' + label + '</span>';
-            }
-
-            this.updateLabel();
-
-            this.update();
-        }
-
-        this.construct();
-    }
+      ConsumptionGraph.setOptions( { "yaxis": { "min": 0, "max": "20" },
+                                     "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
 
 
-    function Value(Name, Unit, Accuracy)
-    {
-        var name;
-        var unit;
-        var accuracy;
+      // and setting up speed graph
+      var SpeedGraph = new Graph("speed", 1800000);
 
-        this.update = function(data)
-        {
-            // if this is gps information, don't update <div>, but set location and stuff
-            if (name == "gps_mode") {
-                // return if we don't have latlng
-                if ( isNaN(data['gps_latitude']) || isNaN(data['gps_longitude']))
-                    return;
+      SpeedGraph.setSeries(  { "lines": { "fill": true } } );
 
-                loc = new L.LatLng(data['gps_latitude'], data['gps_longitude']);
+      SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
+                               "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+    */
 
-                // 0.0 means no location, return
-                if (loc.equals(new L.LatLng(0, 0)))
-                    return;
+      // setup all variables
+      var Data = new Values();
 
-                // pan to the new location and update location circle
-                if (!loc.equals(window.last_location)) {
-                    window.map.panTo(loc);
+      Data.create("consumption_per_100km", "l/km", 2);
+      Data.create("speed",  "km/h", 1);
+      Data.create("consumption_average_startup", "l/km", 2);
+      Data.create("consumption_average_total", "l/km", 2);
+      Data.create("temp_engine", "°C", 1);
+      Data.create("temp_air_intake", "°C", 1);
+      Data.create("voltage", "°C", 1);
 
-                    // remove old location error circle
-                    if (window.radius)
-                        window.map.removeLayer(window.radius)
-
-                    // and create a new one, if a location error is detected
-                    var locationError = 0;
-                    if ( !isNaN(data['gps_err_latitude']) )
-                        locationError = data['gps_err_latitude'];
-
-                    if ( !isNaN(data['gps_err_longitude']) && data['gps_err_longitude'] > locationError)
-                        locationError = data['gps_err_longitude'];
-                          
-                    if (locationError > 0) {
-                        window.radius = new L.Circle(loc, locationError);
-                        window.map.addLayer(window.radius);
-                    }
-
-                    window.marker.setLatLng(loc);
-
-                    // rotate arrow into driving direction
-                    if ( !isNaN(data['gps_track']) ) {
-                        $(window.marker._icon).css('-webkit-transform', 'rotate(' + data['gps_track'] + 'deg)');
-                        $(window.marker._icon).css('-moz-transform', 'rotate(' + data['gps_track'] + 'deg)');
-
-                        // fix for chrome, because arrow will be placed at 0, 0 after rotating
-                        //$(window.marker._icon).css('left', '387px');
-                        //$(window.marker._icon).css('top', '290px');
-                    }
-
-                    window.last_location = loc;
-                }
-            }
-
-            // switch to l/h if consumption_per_100km is nan (means that speed == 0)
-            if (name == "consumption_per_100km" && isNaN(data[name]))
-                this.set(data['consumption_per_h'], "l/h");
-            else
-                this.set(data[name], unit);
-        }
-
-        this.set = function(value, theunit)
-        {
-            // if html field is not present, skip
-            if ( $('#' + name) == undefined || value == undefined)
-              return;
-
-            // display readable gps fix status
-            if (name == "gps_mode") {
-              var status;
-              switch(value) {
-                  case 2:
-                      $('#' + name).html('2D')
-                      break;
-                  case 3:
-                      $('#' + name).html('3D')
-                      break;
-                  default:
-                      $('#' + name).html('no')
-              }
-            }
-            else {
-                if (!isNaN(value))
-                    $('#' + name).html(value.toFixed(accuracy));
-
-                // set the unit for consumption accordingly
-                if (name == "consumption_per_100km")
-                    $('#' + name + '-unit').html(theunit);
-            }
-        }
-
-        this.construct = function()
-        {
-            name = Name;
-            unit = Unit;
-            accuracy = Accuracy;
-        }
-
-        this.construct();
-    }
-
-
-    function Values()
-    {
-        var elements;
-
-        this.create = function(name, unit, accuracy)
-        {
-            elements.push(new Value(name, unit, accuracy));
-        }
-
-        this.update = function update()
-        {
-            function onDataReceived(json)
-            {
-                if (typeof(json) !== "undefined")
-                    for (var i = elements.length - 1; i >= 0; i--)
-                        elements[i].update(json);
-            }
-            // return if we don't have any elements yet
-            if (elements.length == 0)
-            {
-                setTimeout(update, 300);
-                return;
-            }
-            else
-            {
-                $.ajax({
-                    url: "data.json",
-                    method: 'GET',
-                    dataType: 'json',
-                    success: onDataReceived,
-                    complete: setTimeout(update, 300)
-                });
-            }
-        }
-
-        this.construct = function()
-        {
-            elements = [];
-            setTimeout(this.update, 300);
-        }
-
-        this.construct();
-    }
-
-
-$(document).ready(function() {
-
-    // setup map
-    window.map = new L.Map('map');
-    var cloudmadeUrl = 'tiles/{z}/{x}/{y}.png',
-    cloudmade = new L.TileLayer(cloudmadeUrl, {minZoom: 10, maxZoom: 18});
-    window.map.addLayer(cloudmade);
-
-    // set initial map point to frankfurt
-    ffm = new L.LatLng(50.118845, 8.660713);
-    window.map.setView(ffm, 15);
-
-    // the arrow icon
-    var ArrowIcon = L.Icon.extend({
-        shadowUrl: '',
-        shadowSize: new L.Point(0, 0),
-        iconUrl: '/css/images/red.png',
-        iconSize: new L.Point(25, 50),
-        iconAnchor: new L.Point(13, 25),
-        popupAnchor: new L.Point(13, 25)
-/*
-        iconUrl: '/css/images/blue.png',
-        iconSize: new L.Point(24, 50),
-        iconAnchor: new L.Point(12, 25),
-        popupAnchor: new L.Point(12, 25)
-        iconUrl: '/css/images/black.png',
-        iconSize: new L.Point(16, 50),
-        iconAnchor: new L.Point(8, 25),
-        popupAnchor: new L.Point(8, 25)
-*/
+      Data.create("consumption_liters_startup", "l", 2);
+      Data.create("kilometers_startup", "km", 2);
+      Data.create("consumption_liters_total", "l", 2);
+      Data.create("kilometers_total", "km", 2);
+    
+      Data.create("gps_speed", "km/h", 1) 
+      Data.create("gps_altitude", "m", 1); 
+      Data.create("gps_climb", "m/min", 2) 
+      Data.create("gps_mode", "gps", 0) 
     });
-
-    // marker for the current position
-    window.marker = new L.Marker(ffm, {icon: new ArrowIcon()});
-    window.map.addLayer(window.marker);
-
-    // store last location
-    window.last_location = L.LatLng(0, 0);
-
-/*
-    // setting up consumption graph
-    var ConsumptionGraph = new Graph("consumption", 300000);
-
-    ConsumptionGraph.setSeries(  { "color": "rgb(200, 20, 30)",
-                                   "lines": { "fill": false, "steps": true },
-                                   "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } } );
-
-    ConsumptionGraph.setOptions( { "yaxis": { "min": 0, "max": "20" },
-                                   "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
-
-
-    // and setting up speed graph
-    var SpeedGraph = new Graph("speed", 1800000);
-
-    SpeedGraph.setSeries(  { "lines": { "fill": true } } );
-
-    SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
-                             "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
-*/
-
-    // setup all variables
-    var Data = new Values();
-
-    Data.create("consumption_per_100km", "l/km", 2);
-    Data.create("speed",  "km/h", 1);
-    Data.create("consumption_average_startup", "l/km", 2);
-    Data.create("consumption_average_total", "l/km", 2);
-    Data.create("temp_engine", "°C", 1);
-    Data.create("temp_air_intake", "°C", 1);
-    Data.create("voltage", "°C", 1);
-
-    Data.create("consumption_liters_startup", "l", 2);
-    Data.create("kilometers_startup", "km", 2);
-    Data.create("consumption_liters_total", "l", 2);
-    Data.create("kilometers_total", "km", 2);
-  
-    Data.create("gps_speed", "km/h", 1) 
-    Data.create("gps_altitude", "m", 1); 
-    Data.create("gps_climb", "m/min", 2) 
-    Data.create("gps_mode", "gps", 0) 
-});
   </script>
 
  </head>
@@ -430,27 +77,43 @@ $(document).ready(function() {
   </div>
 
   <div class="right-container">
-   <span id="consumption_per_100km" class="value value-big">-</span><span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
+   <span id="consumption_per_100km" class="value value-big">-</span>
+   <span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
+   
    <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
 
-   <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span><span class="unit unit-medium" style="margin-top:20px">l/km</span>
+   <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span >
+   <span class="unit unit-medium" style="margin-top:20px">l/km</span>
+    
    <span id="consumption_average_total" class="value value-medium">-</span><span class="unit unit-medium">l/km</span>
 
-   <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">l</span>
-   <span id="consumption_liters_total" class="value value-small">-</span><span class="unit unit-small">l</span>
-   <span id="kilometers_startup" class="value value-small">-</span><span class="unit unit-small">km</span>
-   <span id="kilometers_total" class="value value-small">-</span><span class="unit unit-small">km</span>       
+   <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span>
+   <span class="unit unit-small" style="margin-top:30px">l</span>
+    
+   <span id="consumption_liters_total" class="value value-small">-</span>
+   <span class="unit unit-small">l</span>
+   
+   <span id="kilometers_startup" class="value value-small">-</span>
+   <span class="unit unit-small">km</span>
+   <span id="kilometers_total" class="value value-small">-</span>
+   <span class="unit unit-small">km</span>       
          
-   <span id="temp_engine" class="value value-small">-</span><span class="unit unit-small">°C</span>
-   <span id="temp_air_intake" class="value value-small">-</span><span class="unit unit-small">°C</span>
-   <span id="voltage" class="value value-small">-</span><span class="unit unit-small">V</span>
+   <span id="temp_engine" class="value value-small">-</span>
+   <span class="unit unit-small">°C</span>
+   <span id="temp_air_intake" class="value value-small">-</span>
+   <span class="unit unit-small">°C</span>
+   <span id="voltage" class="value value-small">-</span>
+   <span class="unit unit-small">V</span>
 
-   <span id="gps_speed" class="value value-small" style="margin-top:26px">-</span><span class="unit unit-small" style="margin-top:30px">km/h</span>
-   <span id="gps_altitude" class="value value-small">-</span><span class="unit unit-small">m</span>
-   <span id="gps_climb" class="value value-small">-</span><span class="unit unit-small">m/min</span>
-   <span id="gps_mode" class="value value-small">-</span><span class="unit unit-small">gps</span>
-  </div>
-
+   <span id="gps_speed" class="value value-small" style="margin-top:26px">-</span>
+   <span class="unit unit-small" style="margin-top:30px">km/h</span>
+    
+   <span id="gps_altitude" class="value value-small">-</span>
+   <span class="unit unit-small">m</span>
+   <span id="gps_climb" class="value value-small">-</span>
+   <span class="unit unit-small">m/min</span>
+   <span id="gps_mode" class="value value-small">-</span>
+   <span class="unit unit-small">gps</span>
   </div>
 
  </body>
