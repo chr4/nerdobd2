@@ -19,25 +19,26 @@
       window.map = new Map();
 
       // setup all variables
-      var Data = new Values();
+      var Data = new Values("data.json", 300);
+      var Average = new Values("averages.json", 10000);
 
       Data.create("consumption_per_100km", "l/km", 2);
       Data.create("speed",  "km/h", 1);
-      Data.create("consumption_average_startup", "l/km", 2);
-      Data.create("consumption_average_total", "l/km", 2);
       Data.create("temp_engine", "°C", 1);
       Data.create("temp_air_intake", "°C", 1);
       Data.create("voltage", "°C", 1);
-
-      Data.create("consumption_liters_startup", "l", 2);
-      Data.create("kilometers_startup", "km", 2);
-      Data.create("consumption_liters_total", "l", 2);
-      Data.create("kilometers_total", "km", 2);
-    
-      Data.create("gps_speed", "km/h", 1) 
+                      
+      Data.create("gps_speed", "km/h", 1);
       Data.create("gps_altitude", "m", 1); 
-      Data.create("gps_climb", "m/min", 2) 
-      Data.create("gps_mode", "gps", 0) 
+      Data.create("gps_climb", "m/min", 2); 
+      Data.create("gps_mode", "gps", 0);
+                      
+      Average.create("consumption_average_startup", "l/km", 2);
+      Average.create("consumption_average_total", "l/km", 2);                      
+      Average.create("consumption_liters_startup", "l", 2);
+      Average.create("kilometers_startup", "km", 2);
+      Average.create("consumption_liters_total", "l", 2);
+      Average.create("kilometers_total", "km", 2);       
     });
   </script>
 

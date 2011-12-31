@@ -22,53 +22,66 @@
       // setting up consumption graph
       var ConsumptionGraph = new Graph("consumption", 900000);
 
-      ConsumptionGraph.setSeries(  { "color": "rgb(200, 20, 30)",
-                                     "lines": { "fill": false, "steps": true },
-                                     "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" } } );
+      ConsumptionGraph.setSeries({
+        "color": "rgb(200, 20, 30)",
+        "lines": { "fill": false, "steps": true },
+        "threshold": { "below": 6.0, "color": "rgb(30, 180, 20)" }
+      });
 
-      ConsumptionGraph.setOptions( { "yaxis": { "min": 0, "max": "20" },
-                                     "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+      ConsumptionGraph.setOptions({
+        "yaxis": { "min": 0, "max": "20" },
+        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" }
+      });
 
                       
       // and setting up speed graph
       var SpeedGraph = new Graph("speed", 1800000);
 
-      SpeedGraph.setSeries(  { "lines": { "fill": true } } );
+      SpeedGraph.setSeries({
+        "lines": { "fill": true }
+      });
 
-      SpeedGraph.setOptions( { "yaxis": { "min": 0, "max": "150" },
-                               "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+      SpeedGraph.setOptions({
+        "yaxis": { "min": 0, "max": "150" },
+        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" }
+      });
                       
                       
       // and setting up altitude graph
       var AltitudeGraph = new Graph("gps_altitude", 5400000);
                       
-      AltitudeGraph.setSeries(  { "color": "rgb(0, 0, 200)",
-                                  "lines": { "fill": true } } );
+      AltitudeGraph.setSeries({
+        "color": "rgb(0, 0, 200)",
+        "lines": { "fill": true }
+      });
                       
-      AltitudeGraph.setOptions( { "yaxis": { "min": 0, "max": "900" },
-                                  "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" } } );
+      AltitudeGraph.setOptions({
+        "yaxis": { "min": 0, "max": "900" },
+        "xaxis": { "min": 0, "max": 0, "mode": "time", "timeformat": "%H:%M" }
+      });
 
                       
       // setup all variables
-      var Data = new Values();
-
+      var Data = new Values("data.json", 300);
+      var Average = new Values("averages.json", 10000);
+                      
       Data.create("consumption_per_100km", "l/km", 2);
       Data.create("speed",  "km/h", 1);
-      Data.create("consumption_average_startup", "l/km", 2);
-      Data.create("consumption_average_total", "l/km", 2);
       Data.create("temp_engine", "°C", 1);
       Data.create("temp_air_intake", "°C", 1);
       Data.create("voltage", "°C", 1);
-
-      Data.create("consumption_liters_startup", "l", 2);
-      Data.create("kilometers_startup", "km", 2);
-      Data.create("consumption_liters_total", "l", 2);
-      Data.create("kilometers_total", "km", 2);
-    
-      Data.create("gps_speed", "km/h", 1) 
+                     
+      Data.create("gps_speed", "km/h", 1);
       Data.create("gps_altitude", "m", 1); 
-      Data.create("gps_climb", "m/min", 2) 
-      Data.create("gps_mode", "gps", 0) 
+      Data.create("gps_climb", "m/min", 2); 
+      Data.create("gps_mode", "gps", 0);
+                      
+      Average.create("consumption_average_startup", "l/km", 2);
+      Average.create("consumption_average_total", "l/km", 2);                      
+      Average.create("consumption_liters_startup", "l", 2);
+      Average.create("kilometers_startup", "km", 2);
+      Average.create("consumption_liters_total", "l", 2);
+      Average.create("kilometers_total", "km", 2);       
     });
   </script>
 

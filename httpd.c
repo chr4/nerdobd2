@@ -172,15 +172,28 @@ send_json(int fd, const char *json)
 
 
 int
-send_latest_data(int fd)
+send_data(int fd)
 {
     const char *json;
 
-    json = json_latest_data(db);
+    json = json_get_data(db);
 
     if (send_json(fd, json) == -1)
         return -1;
 
+    return 0;
+}
+
+int
+send_averages(int fd)
+{
+    const char *json;
+    
+    json = json_get_averages(db);
+    
+    if (send_json(fd, json) == -1)
+        return -1;
+    
     return 0;
 }
 
@@ -294,7 +307,9 @@ handle_client(int fd)
 
     // send json data
     if (!strncmp(p, "/data.json", 10) )
-        send_latest_data(fd);
+        send_data(fd);
+    else if (!strncmp(p, "/averages.json", 14) )
+        send_averages(fd);    
     else if (!strncmp(p, "/consumption.json", 17) )
         send_graph_data(fd, "consumption_per_100km", buffer);
     else if (!strncmp(p, "/speed.json", 11) )

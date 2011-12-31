@@ -18,7 +18,8 @@
 #ifdef DB_SQLITE
 #include "sqlite.h"
 
-const char *json_latest_data(sqlite3 *);
+const char *json_get_data(sqlite3 *);
+const char *json_get_averages(sqlite3 *);
 const char *json_graph_data(sqlite3 *, char *, unsigned long int, unsigned long int);
 #endif
 
@@ -26,7 +27,8 @@ const char *json_graph_data(sqlite3 *, char *, unsigned long int, unsigned long 
 #ifdef DB_POSTGRES
 #include "postgres.h"
 
-const char *json_latest_data(PGconn *);
+const char *json_get_data(PGconn *);
+const char *json_get_averages(PGconn *);
 const char *json_graph_data(PGconn *, char *, unsigned long int, unsigned long int);
 #endif
 

@@ -12,12 +12,16 @@ _add_double(json_object *parent, char *key, sqlite3_stmt *stmt, int column)
         add_string(parent, key, "null"); // json doesn't support NaN
 }
 
-int
-json_get_data(sqlite3 *db, json_object *data)
+const char *
+json_get_data(sqlite3 *db)
 {
+    json_object *data = json_object_new_object(); 
+  
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
 
+    exec_query(db, "BEGIN TRANSACTION");  
+  
     // query data
     snprintf(query, sizeof(query),
              "SELECT rpm, speed, injection_time, \
@@ -39,13 +43,13 @@ json_get_data(sqlite3 *db, json_object *data)
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        return -1;
+        return NULL;
     }
 
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        return -1;
+        return NULL;
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -78,19 +82,24 @@ json_get_data(sqlite3 *db, json_object *data)
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
-        return -1;
+        return NULL;
     }
 
-    return 0;
+    exec_query(db, "END TRANSACTION");
+    return json_object_to_json_string(data);  
 }
 
 
-int
-json_get_averages(sqlite3 *db, json_object *data)
+const char *
+json_get_averages(sqlite3 *db)
 {
+    json_object *data = json_object_new_object(); 
+  
     char          query[LEN_QUERY];
     sqlite3_stmt  *stmt;
 
+    exec_query(db, "BEGIN TRANSACTION");  
+  
     // average since last startup
     snprintf(query, sizeof(query),
              "SELECT strftime('%%s000', setpoints.time), \
@@ -108,7 +117,7 @@ json_get_averages(sqlite3 *db, json_object *data)
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        return -1;
+        return NULL;
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -124,7 +133,7 @@ json_get_averages(sqlite3 *db, json_object *data)
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
-        return -1;
+        return NULL;
     }
 
     // average since timespan
@@ -153,7 +162,7 @@ json_get_averages(sqlite3 *db, json_object *data)
     if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
     {
         printf("couldn't execute query: '%s'\n", query);
-        return -1;
+        return NULL;
     }
 
     while (sqlite3_step(stmt) == SQLITE_ROW)
@@ -168,27 +177,11 @@ json_get_averages(sqlite3 *db, json_object *data)
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
-        return -1;
+        return NULL;
     }
 
-    return 0;
-}
-
-
-// get latest data from database
-const char *
-json_latest_data(sqlite3 *db)
-{
-    json_object *data = json_object_new_object();
-
-    exec_query(db, "BEGIN TRANSACTION");
-
-    json_get_data(db, data);
-    json_get_averages(db, data);
-
     exec_query(db, "END TRANSACTION");
-
-    return json_object_to_json_string(data);
+    return json_object_to_json_string(data);      
 }
 
 

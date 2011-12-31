@@ -64,28 +64,33 @@ json_query_and_add(PGconn *db, char *query, json_object *data)
     return -1;
 }
 
-int
-json_get_data(PGconn *db, json_object *data)
+const char *
+json_get_data(PGconn *db)
 {
-    return json_query_and_add(db,
-             "SELECT rpm, speed, injection_time, \
-                     oil_pressure, consumption_per_100km, consumption_per_h, \
-                     temp_engine, temp_air_intake, voltage, \
-                     gps_mode, \
-                     gps_latitude, gps_longitude, gps_altitude, \
-                     gps_speed, gps_climb, gps_track, \
-                     gps_err_latitude, gps_err_longitude, gps_err_altitude, \
-                     gps_err_speed, gps_err_climb, gps_err_track \
-              FROM data \
-              ORDER BY id \
-              DESC LIMIT 1", data);
+    json_object *data = json_object_new_object(); 
+  
+    json_query_and_add(db,
+        "SELECT rpm, speed, injection_time, \
+                oil_pressure, consumption_per_100km, consumption_per_h, \
+                temp_engine, temp_air_intake, voltage, \
+                gps_mode, \
+                gps_latitude, gps_longitude, gps_altitude, \
+                gps_speed, gps_climb, gps_track, \
+                gps_err_latitude, gps_err_longitude, gps_err_altitude, \
+                gps_err_speed, gps_err_climb, gps_err_track \
+         FROM data \
+         ORDER BY id \
+         DESC LIMIT 1", data);
+  
+    return json_object_to_json_string(data);  
 }
 
 
-int
-json_get_averages(PGconn *db, json_object *data)
+// this functino is VERY ressource heavy, needs to be improved
+const char *
+json_get_averages(PGconn *db)
 {
-    int ret = 0;
+    json_object *data = json_object_new_object();  
 
     // average since last startup
     if ( json_query_and_add(db,
@@ -97,7 +102,7 @@ json_get_averages(PGconn *db, json_object *data)
               WHERE    consumption_per_100km != 'NaN' \
               AND      data.id > ( SELECT data FROM setpoints WHERE name = 'startup' ) \
               GROUP BY setpoints.time", data) == -1)
-        ret = -1;
+        return NULL;
 
     // average since timespan
     /*
@@ -117,20 +122,7 @@ json_get_averages(PGconn *db, json_object *data)
                      SUM(kilometers) AS kilometers_total \
               FROM   data \
               WHERE  consumption_per_100km != 'NaN'", data) == -1)
-       ret = -1;
-
-    return ret;
-}
-
-
-// get latest data from database
-const char *
-json_latest_data(PGconn *db)
-{
-    json_object *data = json_object_new_object();
-
-    json_get_data(db, data);
-    json_get_averages(db, data);
+       return NULL;
 
     return json_object_to_json_string(data);
 }
