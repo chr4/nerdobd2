@@ -67,8 +67,8 @@ json_query_and_add(PGconn *db, char *query, json_object *data)
 const char *
 json_get_data(PGconn *db)
 {
-    json_object *data = json_object_new_object(); 
-  
+    json_object *data = json_object_new_object();
+
     json_query_and_add(db,
         "SELECT rpm, speed, injection_time, \
                 oil_pressure, consumption_per_100km, consumption_per_h, \
@@ -81,8 +81,8 @@ json_get_data(PGconn *db)
          FROM data \
          ORDER BY id \
          DESC LIMIT 1", data);
-  
-    return json_object_to_json_string(data);  
+
+    return json_object_to_json_string(data);
 }
 
 
@@ -90,7 +90,7 @@ json_get_data(PGconn *db)
 const char *
 json_get_averages(PGconn *db)
 {
-    json_object *data = json_object_new_object();  
+    json_object *data = json_object_new_object();
 
     // average since last startup
     if ( json_query_and_add(db,
@@ -113,7 +113,7 @@ json_get_averages(PGconn *db)
              AND consumption_per_100km != 'NaN'",
              timespan);
     */
-    
+
 
     // overall consumption average
     if ( json_query_and_add(db,
