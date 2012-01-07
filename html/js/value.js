@@ -7,9 +7,11 @@ function Value(Name, Unit, Accuracy)
   this.update = function(data)
   {
     // if this is gps information, don't update <div>, but set location and stuff
-    if( typeof(map) !== 'undefined' && name == "gps_mode" )
-      map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
-    
+    if( typeof(map) !== 'undefined' && name == "gps_mode" ) {
+      if (data['gps_err_latitude'] < 50 && data['gps_err_longitude'] < 50)
+          map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
+    }
+
     // switch to l/h if consumption_per_100km is nan (means that speed == 0)
     if (name == "consumption_per_100km" && isNaN(data[name]))
       this.set(data['consumption_per_h'], "l/h");
