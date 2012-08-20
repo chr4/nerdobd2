@@ -60,9 +60,11 @@ function Value(Name, Unit, Accuracy)
 }
 
 
-function Values()
+function Values(Url, Timeout)
 {
   var elements;
+  var url;
+  var timeout;  
   
   this.create = function(name, unit, accuracy)
   {
@@ -80,25 +82,28 @@ function Values()
     // return if we don't have any elements yet
     if (elements.length == 0)
     {
-      setTimeout(update, 300);
+      setTimeout(update, timeout);
       return;
     }
     else
     {
       $.ajax({
-             url: "data.json",
-             method: 'GET',
-             dataType: 'json',
-             success: onDataReceived,
-             complete: setTimeout(update, 300)
-             });
+        url: url,
+        method: 'GET',
+        dataType: 'json',
+        success: onDataReceived,
+        complete: setTimeout(update, timeout)
+      });
     }
   }
   
   this.construct = function()
   {
+    url = Url;
+    timeout = Timeout;
+      
     elements = [];
-    setTimeout(this.update, 300);
+    setTimeout(this.update, timeout);
   }
   
   this.construct();

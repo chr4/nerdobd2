@@ -18,47 +18,47 @@ int
 exec_query(sqlite3 *db, char *query)
 {
     char *error = NULL;
-    
+
 #ifdef DEBUG_DB
     if (strstr(query, "TRANSACTION") == NULL)
         printf("sql: %s\n", query);
 #endif
-    
+
     if (sqlite3_exec(db, query, NULL, NULL, &error) != SQLITE_OK)
     {
-        printf("sql error: %s\n", error);       
+        printf("sql error: %s\n", error);
         sqlite3_free(error);
         return -1;
     }
-    
+
     return 0;
 }
 
 
-sqlite3 * 
+sqlite3 *
 open_db(void)
 {
     sqlite3 *db;
-    
+
     // open database file
     if (sqlite3_open(DB_SQLITE, &db) != SQLITE_OK)
     {
         printf("Coudln't open database: %s", DB_SQLITE);
         return NULL;
     }
-    
+
     // retry on busy errors
     sqlite3_busy_handler(db, busy, NULL);
-        
+
     // disable waiting for write to be completed
     exec_query(db, "PRAGMA synchronous = OFF");
-    
+
     // disable journal
     exec_query(db, "PRAGMA journal_mode = OFF");
-    
+
     return db;
 }
-        
+
 
 void
 init_db(sqlite3 *db)
@@ -102,7 +102,7 @@ init_db(sqlite3 *db)
                         name        VARCHAR PRIMARY KEY, \
                         time        DATE, \
                         data        INTEGER)");
-    
+
     exec_query(db, "END TRANSACTION");
 
     return;
