@@ -14,13 +14,6 @@
 #define HEADER_ICON     SERVER_STRING SERVER_CON "Content-Type: image/x-icon\r\n\r\n"
 #define HEADER_TTF      SERVER_STRING SERVER_CON "Content-Type: font/ttf\r\n\r\n"
 
-#ifdef DB_SQLITE
-sqlite3 *db;
-#endif
-
-#ifdef DB_POSTGRES
-PGconn *db;
-#endif
 
 int
 send_error(int fd, char *message)
@@ -172,7 +165,7 @@ send_json(int fd, const char *json)
 
 
 int
-send_data(int fd)
+send_data(int fd, DB_ADAPTER *db)
 {
     const char *json;
 
@@ -185,7 +178,7 @@ send_data(int fd)
 }
 
 int
-send_averages(int fd)
+send_averages(int fd, DB_ADAPTER *db)
 {
     const char *json;
     
@@ -199,7 +192,7 @@ send_averages(int fd)
 
 
 int
-send_graph_data(int fd, char *graph, char *args)
+send_graph_data(int fd, DB_ADAPTER *db, char *graph, char *args)
 {
     char       *p;
     const char *json;
@@ -237,7 +230,11 @@ handle_client(int fd)
     int i;
     char *p;
     static char buffer[LEN_BUFFER];
+    DB_ADAPTER *db;
 
+    // open the database
+    if ( (db = open_db()) == NULL)
+        return;
 
     // read socket
     if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
@@ -307,21 +304,23 @@ handle_client(int fd)
 
     // send json data
     if (!strncmp(p, "/data.json", 10) )
-        send_data(fd);
+        send_data(fd, db);
     else if (!strncmp(p, "/averages.json", 14) )
-        send_averages(fd);    
+        send_averages(fd, db);    
     else if (!strncmp(p, "/consumption.json", 17) )
-        send_graph_data(fd, "consumption_per_100km", buffer);
+        send_graph_data(fd, db, "consumption_per_100km", buffer);
     else if (!strncmp(p, "/speed.json", 11) )
-        send_graph_data(fd, "speed", buffer);
+        send_graph_data(fd, db, "speed", buffer);
     else if (!strncmp(p, "/gps_altitude.json", 18) )
-        send_graph_data(fd, "gps_altitude", buffer);
+        send_graph_data(fd, db, "gps_altitude", buffer);
 
     // send file
     else
         if (send_file(fd, p) != 0)
             send_error(fd, "could not send file.\n");
 
+
+    close_db(db);
     return;
 }
 
@@ -333,9 +332,6 @@ httpd_stop(int signo)
         wait(NULL);
     } while (errno != ECHILD);
 
-    printf(" - child (httpd): closing database...\n");
-    close_db(db);
-
     _exit(0);
 }
 
@@ -344,10 +340,6 @@ httpd_start(void)
 {
     int s;
     pid_t pid;
-
-    // open the database
-    if ( (db = open_db()) == NULL)
-        return -1;
 
     if ( (s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;
