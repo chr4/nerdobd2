@@ -10,7 +10,7 @@ get_gps_data(struct gps_fix_t *g)
 {
     if (gps_read(&gpsdata) <= 0)
     {   
-        puts("gps_read() error");
+        perror("gps_read()");
         return -1;
     }
 
