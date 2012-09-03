@@ -79,7 +79,7 @@ init_db(PGconn *db)
                         temp_engine           FLOAT, \
                         temp_air_intake       FLOAT, \
                         voltage               FLOAT, \
-                        gps_mode              INTEGER, \
+                        gps_mode              FLOAT, \
                         gps_latitude          FLOAT, \
                         gps_longitude         FLOAT, \
                         gps_altitude          FLOAT, \
