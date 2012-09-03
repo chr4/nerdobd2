@@ -1,4 +1,5 @@
 #include "json.h"
+#include <math.h>
 
 json_object *
 add_string(json_object *parent, char *key, char *value)
@@ -62,9 +63,14 @@ json_object *
 add_data(json_object *parent, double label, double value)
 {
     json_object *array     = json_object_new_array();
-
     json_object *obj_label = json_object_new_double(label);
-    json_object *obj_value = json_object_new_double(value);
+    json_object *obj_value;
+
+    // json doesn't support NaN
+    if (isnan(value))
+        obj_value = json_object_new_string("null");
+    else
+        obj_value = json_object_new_double(value);
 
     json_object_array_add(array, obj_label);
     json_object_array_add(array, obj_value);
