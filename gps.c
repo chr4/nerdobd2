@@ -35,7 +35,8 @@ int
 gps_start(void)
 {
     // open the stream to gpsd
-    if (gps_open(GPSD_SHARED_MEMORY, NULL, &gpsdata) != 0) {
+    // if (gps_open(GPSD_SHARED_MEMORY, NULL, &gpsdata) != 0) {
+    if (gps_open("localhost", "2947", &gpsdata) != 0) {
         printf("couldn't connect to gpsd: %s\n", gps_errstr(errno));
         return -1;
     }
