@@ -116,20 +116,24 @@ function Graph(Name, Timespan)
       if (typeof(json.data) !== "undefined")
         that.appendData(json.data);
     }
-    
+
     $.ajax({
       url: name + ".json" +
-      "?index=" + index +
-      "&timespan=" + timespan / 1000,
+           "?index=" + index +
+           "&timespan=" + timespan / 1000,
       method: 'GET',
       dataType: 'json',
       success: onDataReceived,
+      error: function(jqXHR, textStatus, errorThrown) {
+        console.info("error graph '" + name + "': " + textStatus + " : " + errorThrown);
+      },
       complete: setTimeout(function() { that.update(); }, interval)
     });
   }
   
   this.plot = function()
   {
+    console.info("plotting graph '" + name + "'");
     $.plot($("#graph-" + name), [ series ], options);
   }
   
@@ -148,7 +152,9 @@ function Graph(Name, Timespan)
     name = Name;
     this.setTimespan(Timespan);
     
-    // create data array and set label
+    console.info("creating graph '" + name + "'");
+
+    // create data array
     series.data = [];
     
     // disable shadows for better performance
@@ -163,9 +169,8 @@ function Graph(Name, Timespan)
     options.legend.labelFormatter = function (label, series) {
       return '<span style="font-family:helvetica;">' + label + '</span>';
     }
-    
+
     this.updateLabel();
-    
     this.update();
   }
   
