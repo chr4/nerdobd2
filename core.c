@@ -279,7 +279,6 @@ insert_data(obd_data_t obd)
     }
     else
     {
-        puts("couldn't get gps data");
         // fill in empty column fields for gps data
         strlcat(query,
                 ", 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN'",
