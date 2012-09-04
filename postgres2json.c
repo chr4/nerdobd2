@@ -166,6 +166,9 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
             {
                 timestamp = atof(PQgetvalue(res, i, 0));
                 value = atof(PQgetvalue(res, i, 1));
+                if (isnan(value))
+                    continue;
+
                 add_data(data, timestamp, value);
                 add_int(graph, "index", index);
             }
