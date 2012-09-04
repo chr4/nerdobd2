@@ -89,9 +89,10 @@ main (int argc, char **argv)
         cleanup(15);
 
     // collect gps data
-    puts("connecting to gpsd, collecting gps data");
-    if (gps_start() == -1)
-        cleanup(15); 
+    if (gps_start() == 0)
+      puts("gpsd connection esthablished, collecting gps data");
+    else
+      puts("gps data not available");
 
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
