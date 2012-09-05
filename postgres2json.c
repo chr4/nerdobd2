@@ -138,7 +138,7 @@ json_graph_data(PGconn *db, char *key, unsigned long int index, unsigned long in
 {
     char      query[LEN_QUERY];
     PGresult  *res;
-    float     timestamp;
+    double     timestamp;
     float     value;
     int       i;
 
