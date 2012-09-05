@@ -695,7 +695,7 @@ kw1281_open(char *device)
     // open the serial device
     if ((fd = open (device, O_SYNC | O_RDWR | O_NOCTTY)) < 0)
     {
-        printf ("couldn't open serial device\n");
+        perror("couldn't open serial device");
         sleep(1);
         return -1;
     }
