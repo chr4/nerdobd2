@@ -1,26 +1,9 @@
-function Value(Name, Unit, Accuracy)
-{
-  var name;
-  var unit;
-  var accuracy;
+ var Value = function(Name, Unit, Accuracy) {
+  var name = Name;
+  var unit = Unit;
+  var accuracy = Accuracy;
   
-  this.update = function(data)
-  {
-    // if this is gps information, don't update <div>, but set location and stuff
-    if( typeof(map) !== 'undefined' && name == "gps_mode" ) {
-      if (data['gps_err_latitude'] < 50 && data['gps_err_longitude'] < 50)
-          map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
-    }
-
-    // switch to l/h if consumption_per_100km is nan (means that speed == 0)
-    if (name == "consumption_per_100km" && isNaN(data[name]))
-      this.set(data['consumption_per_h'], "l/h");
-    else
-      this.set(data[name], unit);
-  }
-  
-  this.set = function(value, theunit)
-  {
+  var set = function(value, theunit) {
     // if html field is not present, skip
     if ( $('#' + name) == undefined || value == undefined)
       return;
@@ -48,45 +31,46 @@ function Value(Name, Unit, Accuracy)
         $('#' + name + '-unit').html(theunit);
     }
   }
-  
-  this.construct = function()
-  {
-    name = Name;
-    unit = Unit;
-    accuracy = Accuracy;
+
+  return {
+    update: function(data) {
+      // if this is gps information, don't update <div>, but set location and stuff
+      if( typeof(map) !== 'undefined' && name == "gps_mode" ) {
+        if (data['gps_err_latitude'] < 50 && data['gps_err_longitude'] < 50)
+          map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
+      }
+
+      // switch to l/h if consumption_per_100km is nan (means that speed == 0)
+      if (name == "consumption_per_100km" && isNaN(data[name]))
+        set(data['consumption_per_h'], "l/h");
+      else
+        set(data[name], unit);
+    }
   }
-  
-  this.construct();
 }
 
 
-function Values(Url, Timeout)
-{
-  var elements;
-  var url;
-  var timeout;  
-  
-  this.create = function(name, unit, accuracy)
-  {
-    elements.push(new Value(name, unit, accuracy));
+var Values = function(Url, Timeout) {
+  var elements = [];
+  var url = Url;
+  var timeout = Timeout;
+ 
+  var _init = function() { 
+    setTimeout(update, timeout);
   }
-  
-  this.update = function update()
-  {
-    function onDataReceived(json)
-    {
+
+  var update = function update() {
+    var onDataReceived = function(json) {
       if (typeof(json) !== "undefined")
         for (var i = elements.length - 1; i >= 0; i--)
           elements[i].update(json);
     }
     // return if we don't have any elements yet
-    if (elements.length == 0)
-    {
+    if (elements.length == 0) {
       setTimeout(update, timeout);
       return;
     }
-    else
-    {
+    else {
       $.ajax({
         url: url,
         method: 'GET',
@@ -96,15 +80,12 @@ function Values(Url, Timeout)
       });
     }
   }
-  
-  this.construct = function()
-  {
-    url = Url;
-    timeout = Timeout;
-      
-    elements = [];
-    setTimeout(this.update, timeout);
+
+  _init();
+
+  return {
+    create: function(name, unit, accuracy) {
+      elements.push(new Value(name, unit, accuracy));
+    }
   }
-  
-  this.construct();
 }
