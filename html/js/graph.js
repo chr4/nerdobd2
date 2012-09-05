@@ -74,6 +74,11 @@ var Graph = function(Name, Timespan)
 
   var appendData = function(data) {
     var i;
+    var t = new Date();
+
+    // add timezone difference to each dataset
+    for (i = data.length - 1; i > 0; i--)
+      data[i][0] -= t.getTimezoneOffset() * 60000;
 
     // append new data to series
     series.data = $.merge(series.data, data);
