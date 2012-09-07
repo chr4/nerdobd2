@@ -7,6 +7,6 @@
 #include "common.h"
 #include "config.h"
 
-int gps_start(void);
-void gps_stop(void);
-int get_gps_data(struct gps_fix_t *);
+int     gps_start(void);
+void    gps_stop(void);
+int     get_gps_data(struct gps_fix_t *);

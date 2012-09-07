@@ -3,28 +3,25 @@
 
 // calls add_double, but checks if value actually is a number.
 void
-_add_double(json_object *parent, char *key, sqlite3_stmt *stmt, int column)
-{
+_add_double(json_object * parent, char *key, sqlite3_stmt * stmt, int column) {
     if (sqlite3_column_type(stmt, column) == SQLITE_FLOAT ||
         sqlite3_column_type(stmt, column) == SQLITE_INTEGER)
         add_double(parent, key, sqlite3_column_double(stmt, column));
     else
-        add_string(parent, key, "null"); // json doesn't support NaN
+        add_string(parent, key, "null");        // json doesn't support NaN
 }
 
 const char *
-json_get_data(sqlite3 *db)
-{
-    json_object *data = json_object_new_object(); 
-  
-    char          query[LEN_QUERY];
-    sqlite3_stmt  *stmt;
+json_get_data(sqlite3 * db) {
+    json_object *data = json_object_new_object();
 
-    exec_query(db, "BEGIN TRANSACTION");  
-  
+    char    query[LEN_QUERY];
+    sqlite3_stmt *stmt;
+
+    exec_query(db, "BEGIN TRANSACTION");
+
     // query data
-    snprintf(query, sizeof(query),
-             "SELECT rpm, speed, injection_time, \
+    snprintf(query, sizeof(query), "SELECT rpm, speed, injection_time, \
                      oil_pressure, consumption_per_100km, consumption_per_h, \
                      temp_engine, temp_air_intake, voltage, \
                      gps_mode, \
@@ -40,20 +37,19 @@ json_get_data(sqlite3 *db)
     printf("sql: %s\n", query);
 #endif
 
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         _add_double(data, "rpm", stmt, 0);
         _add_double(data, "speed", stmt, 1);
         _add_double(data, "injection_time", stmt, 2);
@@ -77,8 +73,7 @@ json_get_data(sqlite3 *db)
         _add_double(data, "gps_err_climb", stmt, 20);
         _add_double(data, "gps_err_track", stmt, 21);
     }
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
@@ -86,20 +81,19 @@ json_get_data(sqlite3 *db)
     }
 
     exec_query(db, "END TRANSACTION");
-    return json_object_to_json_string(data);  
+    return json_object_to_json_string(data);
 }
 
 
 const char *
-json_get_averages(sqlite3 *db)
-{
-    json_object *data = json_object_new_object(); 
-  
-    char          query[LEN_QUERY];
-    sqlite3_stmt  *stmt;
+json_get_averages(sqlite3 * db) {
+    json_object *data = json_object_new_object();
 
-    exec_query(db, "BEGIN TRANSACTION");  
-  
+    char    query[LEN_QUERY];
+    sqlite3_stmt *stmt;
+
+    exec_query(db, "BEGIN TRANSACTION");
+
     // average since last startup
     snprintf(query, sizeof(query),
              "SELECT strftime('%%s000', setpoints.time), \
@@ -113,23 +107,21 @@ json_get_averages(sqlite3 *db)
 #ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
-    
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         _add_double(data, "timestamp_startup", stmt, 0);
         _add_double(data, "consumption_average_startup", stmt, 1);
         _add_double(data, "consumption_liters_startup", stmt, 2);
-        _add_double(data, "kilometers_startup", stmt, 3);        
+        _add_double(data, "kilometers_startup", stmt, 3);
     }
-    
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
@@ -138,14 +130,14 @@ json_get_averages(sqlite3 *db)
 
     // average since timespan
     /*
-    snprintf(query, sizeof(query),
-             "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
-             FROM data \
-             WHERE time > DATETIME('NOW', '-%lu seconds', 'localtime') \
-             AND consumption_per_100km != -1",
-             timespan);
-    */
-    
+     * snprintf(query, sizeof(query),
+     * "SELECT SUM(speed*consumption_per_100km)/SUM(speed) \
+     * FROM data \
+     * WHERE time > DATETIME('NOW', '-%lu seconds', 'localtime') \
+     * AND consumption_per_100km != -1",
+     * timespan);
+     */
+
 
     // overall consumption average
     snprintf(query, sizeof(query),
@@ -158,22 +150,20 @@ json_get_averages(sqlite3 *db)
 #ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
-    
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         _add_double(data, "consumption_average_total", stmt, 0);
         _add_double(data, "consumption_liters_total", stmt, 1);
         _add_double(data, "kilometers_total", stmt, 2);
     }
-    
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
+
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif
@@ -181,7 +171,7 @@ json_get_averages(sqlite3 *db)
     }
 
     exec_query(db, "END TRANSACTION");
-    return json_object_to_json_string(data);      
+    return json_object_to_json_string(data);
 }
 
 
@@ -191,50 +181,46 @@ json_get_averages(sqlite3 *db)
  * but not older than timepsan seconds
  */
 const char *
-json_graph_data(sqlite3 *db, char *key, unsigned long int index, unsigned long int timespan)
-{
-    char          query[LEN_QUERY];
-    sqlite3_stmt  *stmt;
+json_graph_data(sqlite3 * db, char *key, unsigned long int index,
+                unsigned long int timespan) {
+    char    query[LEN_QUERY];
+    sqlite3_stmt *stmt;
 
     json_object *graph = json_object_new_object();
     json_object *data = add_array(graph, "data");
 
     exec_query(db, "BEGIN TRANSACTION");
 
-    snprintf(query, sizeof(query),
-             "SELECT id, strftime('%%s000', time), %s \
+    snprintf(query, sizeof(query), "SELECT id, strftime('%%s000', time), %s \
               FROM   data \
               WHERE id > %lu \
               AND time > DATETIME('NOW', '-%lu seconds', 'localtime') \
-              ORDER BY id",
-             key, index, timespan);
+              ORDER BY id", key, index, timespan);
 
 #ifdef DEBUG_DB
     printf("sql: %s\n", query);
 #endif
-    
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) != SQLITE_OK)
-    {
+    if (sqlite3_prepare_v2(db, query, strlen(query), &stmt, NULL) !=
+        SQLITE_OK) {
         printf("couldn't execute query: '%s'\n", query);
         return NULL;
     }
 
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
         add_data(data, sqlite3_column_double(stmt, 1),
-                       sqlite3_column_double(stmt, 2));
+                 sqlite3_column_double(stmt, 2));
 
         index = sqlite3_column_int(stmt, 0);
     }
 
-    if (sqlite3_finalize(stmt) != SQLITE_OK)
-    {
+    if (sqlite3_finalize(stmt) != SQLITE_OK) {
 #ifdef DEBUG_DB
         printf("sqlite3_finalize() error\n");
 #endif

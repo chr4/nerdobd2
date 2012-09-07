@@ -10,14 +10,13 @@ PGconn *db;
 #endif
 
 
-void	cleanup (int);
-char	cleaning_up = 0;
+void    cleanup(int);
+char    cleaning_up = 0;
 
 pid_t   pid_httpd = -1;
 
 void
-wait4childs(void)
-{
+wait4childs(void) {
     do {
         wait(NULL);
     } while (errno != ECHILD);
@@ -27,12 +26,11 @@ wait4childs(void)
 
 
 void
-cleanup (int signo)
-{
+cleanup(int signo) {
     // if we're already cleaning up, do nothing
     if (cleaning_up)
         return;
-	
+
     cleaning_up = 1;
 
     // shutdown httpd
@@ -52,32 +50,30 @@ cleanup (int signo)
     printf("waiting for child processes to finish...\n");
     wait4childs();
 
-    printf("exiting\n");    
+    printf("exiting\n");
     exit(0);
 }
 
 
 void
-sig_chld(int signo)
-{
-        pid_t pid;
-        int   stat;
+sig_chld(int signo) {
+    pid_t   pid;
+    int     stat;
 
-        while ( (pid = waitpid(-1, &stat, WNOHANG)) > 0);
-        return;
+    while ((pid = waitpid(-1, &stat, WNOHANG)) > 0);
+    return;
 }
 
 
 int
-main (int argc, char **argv)
-{
+main(int argc, char **argv) {
     int     ret;
 
     // catch orphans
     signal(SIGCHLD, sig_chld);
 
     // open the database
-    if ( (db = open_db()) == NULL)
+    if ((db = open_db()) == NULL)
         return -1;
 
     // and initialize
@@ -85,22 +81,22 @@ main (int argc, char **argv)
 
     // start http server
     puts("fireing up httpd server");
-    if ( (pid_httpd = httpd_start()) == -1)
+    if ((pid_httpd = httpd_start()) == -1)
         cleanup(15);
 
     // collect gps data
     if (gps_start() == 0)
-      puts("gpsd connection esthablished, collecting gps data");
+        puts("gpsd connection esthablished, collecting gps data");
     else
-      puts("gps data not available");
+        puts("gps data not available");
 
     // add signal handler for cleanup function
     signal(SIGINT, cleanup);
-    signal(SIGTERM, cleanup);	
+    signal(SIGTERM, cleanup);
 
 
 #ifdef TEST
-#ifdef DB_SQLITE
+#   ifdef DB_SQLITE
     exec_query(db, "INSERT OR REPLACE INTO setpoints VALUES ( \
                    'startup', DATETIME('now', 'localtime'), ( \
                    SELECT CASE WHEN count(*) = 0 \
@@ -110,15 +106,14 @@ main (int argc, char **argv)
                    ORDER BY id DESC LIMIT 1 \
                    ) \
                )");
-#endif
-#ifdef DB_POSTGRES
+#   endif
+#   ifdef DB_POSTGRES
     exec_query(db, "SELECT set_setpoint('startup')");
-#endif
+#   endif
 
     // for testing purposes
-    int i = 0, flag = 0;
-    for (; ;)
-    {
+    int     i = 0, flag = 0;
+    for (;;) {
         handle_data("rpm", 1000 + i * 100, 0);
         handle_data("injection_time", 0.15 * i, 1);
         handle_data("oil_pressure", i, 0);
@@ -146,15 +141,13 @@ main (int argc, char **argv)
     }
 #endif
 
-    ret = SERIAL_HARD_ERROR; 
-    
-    for (; ;)
-    {
-        if (ret == SERIAL_HARD_ERROR)
-        {
-            while (kw1281_open (DEVICE) == -1)
+    ret = SERIAL_HARD_ERROR;
+
+    for (;;) {
+        if (ret == SERIAL_HARD_ERROR) {
+            while (kw1281_open(DEVICE) == -1)
                 usleep(500000);
-         
+
             /* since this restarts the serial connection,
              * it is probably due to a new ride was started, since we
              * set the startup set point to the last index we can find
@@ -178,23 +171,21 @@ main (int argc, char **argv)
             consumption_first_run = 1;
             speed_first_run = 1;
         }
-        
-        printf ("init\n");
+
+        printf("init\n");
 
         // ECU: 0x01, INSTR: 0x17
         // send 5baud address, read sync byte + key word
         ret = kw1281_init(0x01, ret);
 
         // soft error, e.g. communication error
-        if (ret == SERIAL_SOFT_ERROR)
-        {
+        if (ret == SERIAL_SOFT_ERROR) {
             printf("init failed, retrying...\n");
             continue;
         }
 
         // hard error (e.g. serial cable unplugged)
-        else if (ret == SERIAL_HARD_ERROR)
-        {
+        else if (ret == SERIAL_HARD_ERROR) {
             printf("serial port error, trying to recover...\n");
             kw1281_close();
             continue;
@@ -202,8 +193,7 @@ main (int argc, char **argv)
 
 
         // start main loop, restart on errors
-        if (kw1281_mainloop() == SERIAL_SOFT_ERROR)
-        {
+        if (kw1281_mainloop() == SERIAL_SOFT_ERROR) {
             printf("errors. restarting...\n");
             continue;
         }
@@ -215,9 +205,8 @@ main (int argc, char **argv)
 }
 
 void
-add_value(char *s, double value)
-{
-    char buffer[LEN_QUERY];
+add_value(char *s, double value) {
+    char    buffer[LEN_QUERY];
 
     strncpy(buffer, s, LEN_QUERY);
 
@@ -228,23 +217,22 @@ add_value(char *s, double value)
 }
 
 void
-insert_data(obd_data_t obd)
-{
-    char query[LEN_QUERY];
-    static struct gps_fix_t gps; 
+insert_data(obd_data_t obd) {
+    char    query[LEN_QUERY];
+    static struct gps_fix_t gps;
 
 #ifdef DB_SQLITE
     exec_query(db, "BEGIN TRANSACTION");
 #endif
 
-    strlcpy(query, 
+    strlcpy(query,
 #ifdef DB_SQLITE
             "INSERT INTO data VALUES ( NULL, DATETIME('now', 'localtime')",
 #endif
 #ifdef DB_POSTGRES
             "INSERT INTO data VALUES ( DEFAULT, current_timestamp",
 #endif
-            sizeof(query) );
+            sizeof(query));
 
     // add obd data
     add_value(query, obd.rpm);
@@ -262,8 +250,7 @@ insert_data(obd_data_t obd)
     add_value(query, obd.voltage);
 
     // add gps data, if available
-    if ( get_gps_data(&gps) == 0)
-    {
+    if (get_gps_data(&gps) == 0) {
         add_value(query, (double) gps.mode);
         add_value(query, gps.latitude);
         add_value(query, gps.longitude);
@@ -278,8 +265,7 @@ insert_data(obd_data_t obd)
         add_value(query, gps.epc);
         add_value(query, gps.epd);
     }
-    else
-    {
+    else {
         // fill in empty column fields for gps data
         strlcat(query,
                 ", 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN', 'NaN'",
@@ -300,8 +286,7 @@ insert_data(obd_data_t obd)
 obd_data_t obd_data;
 
 void
-handle_data(char *name, float value, float duration)
-{
+handle_data(char *name, float value, float duration) {
     /* first block gets rpm, injection time, oil pressure
      * second block gets speed
      * third block gehts voltage and temperatures (not as often requested)
@@ -316,30 +301,30 @@ handle_data(char *name, float value, float duration)
 
     else if (!strcmp(name, "rpm"))
         obd_data.rpm = value;
-    else if (!strcmp(name, "injection_time"))
-    {
+    else if (!strcmp(name, "injection_time")) {
         obd_data.injection_time = value;
         obd_data.duration_consumption = duration;
     }
     else if (!strcmp(name, "oil_pressure"))
-       obd_data.oil_pressure = value;
+        obd_data.oil_pressure = value;
 
     // everytime we get speed, calculate consumption
     // end send data to database
-    else if (!strcmp(name, "speed"))
-    {
+    else if (!strcmp(name, "speed")) {
         obd_data.speed = value;
 
         // calculate consumption per hour
-        obd_data.consumption_per_h = MULTIPLIER * obd_data.rpm * obd_data.injection_time;
+        obd_data.consumption_per_h =
+            MULTIPLIER * obd_data.rpm * obd_data.injection_time;
 
         // calculate consumption per 100km
-        if ( obd_data.speed > 0)
-            obd_data.consumption_per_100km = obd_data.consumption_per_h / obd_data.speed * 100;
+        if (obd_data.speed > 0)
+            obd_data.consumption_per_100km =
+                obd_data.consumption_per_h / obd_data.speed * 100;
         else
             obd_data.consumption_per_100km = NAN;
 
-        
+
         obd_data.duration_speed = duration;
 
         insert_data(obd_data);

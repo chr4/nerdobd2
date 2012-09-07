@@ -1,8 +1,7 @@
 #include "sqlite.h"
 
 static int
-busy(void *unused __attribute__((unused)), int count)
-{
+busy(void *unused __attribute__ ((unused)), int count) {
     usleep(500000);
 
 #ifdef DEBUG_DB
@@ -10,22 +9,20 @@ busy(void *unused __attribute__((unused)), int count)
 #endif
 
     // give up after 30 seconds
-	return (count < 60);
+    return (count < 60);
 }
 
 
 int
-exec_query(sqlite3 *db, char *query)
-{
-    char *error = NULL;
+exec_query(sqlite3 * db, char *query) {
+    char   *error = NULL;
 
 #ifdef DEBUG_DB
     if (strstr(query, "TRANSACTION") == NULL)
         printf("sql: %s\n", query);
 #endif
 
-    if (sqlite3_exec(db, query, NULL, NULL, &error) != SQLITE_OK)
-    {
+    if (sqlite3_exec(db, query, NULL, NULL, &error) != SQLITE_OK) {
         printf("sql error: %s\n", error);
         sqlite3_free(error);
         return -1;
@@ -36,13 +33,11 @@ exec_query(sqlite3 *db, char *query)
 
 
 sqlite3 *
-open_db(void)
-{
+open_db(void) {
     sqlite3 *db;
 
     // open database file
-    if (sqlite3_open(DB_SQLITE, &db) != SQLITE_OK)
-    {
+    if (sqlite3_open(DB_SQLITE, &db) != SQLITE_OK) {
         printf("Coudln't open database: %s", DB_SQLITE);
         return NULL;
     }
@@ -61,8 +56,7 @@ open_db(void)
 
 
 void
-init_db(sqlite3 *db)
-{
+init_db(sqlite3 * db) {
     exec_query(db, "BEGIN TRANSACTION");
 
     // create data table
@@ -111,7 +105,6 @@ init_db(sqlite3 *db)
 
 
 void
-close_db(sqlite3 *db)
-{
+close_db(sqlite3 * db) {
     sqlite3_close(db);
 }

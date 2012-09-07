@@ -16,9 +16,8 @@
 
 
 int
-send_error(int fd, char *message)
-{
-    char out[LEN_BUFFER];
+send_error(int fd, char *message) {
+    char    out[LEN_BUFFER];
 
     snprintf(out, sizeof(out), HTTP_ERROR
              "Content-Length: %d\r\n", strlen(message));
@@ -37,23 +36,21 @@ send_error(int fd, char *message)
 
 
 int
-send_file(int fd, char *filename)
-{
-    int file_fd;
-    int r;
-    char *p;
-    char out[LEN_BUFFER];
+send_file(int fd, char *filename) {
+    int     file_fd;
+    int     r;
+    char   *p;
+    char    out[LEN_BUFFER];
     struct stat stats;
-    char path[LEN];
+    char    path[LEN];
 
 
     // terminate arguments after ?
-    if ( (p = strchr(filename, '?')) != NULL)
+    if ((p = strchr(filename, '?')) != NULL)
         *p = '\0';
 
     // search for last dot in filename
-    if ( (p = strrchr(filename, '.')) == NULL)
-    {
+    if ((p = strrchr(filename, '.')) == NULL) {
         printf("no . found in filename!\n");
         return -1;
     }
@@ -61,8 +58,7 @@ send_file(int fd, char *filename)
     // merge filename with docroot path
     snprintf(path, sizeof(path), "%s%s", DOCROOT, filename);
 
-    if (stat(path, &stats) == -1)
-    {
+    if (stat(path, &stats) == -1) {
 #ifdef DEBUG_AJAX
         printf("file with 0bytes: %s\n", path);
 #endif
@@ -78,59 +74,51 @@ send_file(int fd, char *filename)
 
 
 #ifdef DEBUG_AJAX
-    printf("sending file: %s with %9jd length\n", path, (intmax_t) stats.st_size);
+    printf("sending file: %s with %9jd length\n", path,
+           (intmax_t) stats.st_size);
 #endif
 
     // is file type known?
-    if ( !strcmp(p, ".html") ||  !strcmp(p, ".htm") )
-    {
+    if (!strcmp(p, ".html") || !strcmp(p, ".htm")) {
         if (write(fd, HEADER_HTML, strlen(HEADER_HTML)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".png") )
-    {
+    else if (!strcmp(p, ".png")) {
         if (write(fd, HEADER_PNG, strlen(HEADER_PNG)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".txt") )
-    {
+    else if (!strcmp(p, ".txt")) {
         if (write(fd, HEADER_PLAIN, strlen(HEADER_PLAIN)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".js") )
-    {
+    else if (!strcmp(p, ".js")) {
         if (write(fd, HEADER_JS, strlen(HEADER_JS)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".css") )
-    {
+    else if (!strcmp(p, ".css")) {
         if (write(fd, HEADER_CSS, strlen(HEADER_CSS)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".ico") )
-    {
+    else if (!strcmp(p, ".ico")) {
         if (write(fd, HEADER_ICON, strlen(HEADER_ICON)) <= 0)
             return -1;
     }
-    else if (!strcmp(p, ".ttf") )
-    {
+    else if (!strcmp(p, ".ttf")) {
         if (write(fd, HEADER_TTF, strlen(HEADER_TTF)) <= 0)
             return -1;
     }
-    else
-    {
+    else {
         printf("extention not found\n");
         return -1;
     }
 
     // open and send file
-    if(( file_fd = open(path, O_RDONLY)) == -1)
-    {
+    if ((file_fd = open(path, O_RDONLY)) == -1) {
         perror("open()");
         return -1;
     }
 
-    while ( (r = read(file_fd, out, sizeof(out))) > 0 )
+    while ((r = read(file_fd, out, sizeof(out))) > 0)
         if (write(fd, out, r) <= 0)
             return -1;
 
@@ -139,9 +127,8 @@ send_file(int fd, char *filename)
 }
 
 int
-send_json(int fd, const char *json)
-{
-    char out[LEN_BUFFER];
+send_json(int fd, const char *json) {
+    char    out[LEN_BUFFER];
 
     // send content length
     snprintf(out, sizeof(out), HTTP_OK
@@ -165,8 +152,7 @@ send_json(int fd, const char *json)
 
 
 int
-send_data(int fd, DB_ADAPTER *db)
-{
+send_data(int fd, DB_ADAPTER * db) {
     const char *json;
 
     json = json_get_data(db);
@@ -178,33 +164,29 @@ send_data(int fd, DB_ADAPTER *db)
 }
 
 int
-send_averages(int fd, DB_ADAPTER *db)
-{
+send_averages(int fd, DB_ADAPTER * db) {
     const char *json;
-    
+
     json = json_get_averages(db);
-    
+
     if (send_json(fd, json) == -1)
         return -1;
-    
+
     return 0;
 }
 
 
 int
-send_graph_data(int fd, DB_ADAPTER *db, char *graph, char *args)
-{
-    char       *p;
+send_graph_data(int fd, DB_ADAPTER * db, char *graph, char *args) {
+    char   *p;
     const char *json;
-    long        index = 0;
-    long        timespan = 300;
+    long    index = 0;
+    long    timespan = 300;
 
     // parse arguments
-    if (strtok(args, "?") != NULL)
-    {
+    if (strtok(args, "?") != NULL) {
         p = strtok(NULL, "=");
-        while (p != NULL)
-        {
+        while (p != NULL) {
             if (!strcmp(p, "index"))
                 index = atoi(strtok(NULL, "&"));
             else if (!strcmp(p, "timespan"))
@@ -224,54 +206,47 @@ send_graph_data(int fd, DB_ADAPTER *db, char *graph, char *args)
 
 
 void
-handle_client(int fd)
-{
-    int r;
-    int i;
-    char *p;
+handle_client(int fd) {
+    int     r;
+    int     i;
+    char   *p;
     static char buffer[LEN_BUFFER];
     DB_ADAPTER *db;
 
     // open the database
-    if ( (db = open_db()) == NULL)
+    if ((db = open_db()) == NULL)
         return;
 
     // read socket
-    if ( (r = read (fd, buffer, sizeof(buffer))) < 0)
-    {
+    if ((r = read(fd, buffer, sizeof(buffer))) < 0) {
         printf("read() failed\n");
         return;
     }
 
     // terminate received string
-    if ( r > 0 && r < sizeof(buffer))
+    if (r > 0 && r < sizeof(buffer))
         buffer[r] = '\0';
     else
         buffer[0] = '\0';
 
 
     // filter requests we don't support
-    if (strncmp(buffer,"GET ", 4) && strncmp(buffer,"POST ", 5) )
-    {
+    if (strncmp(buffer, "GET ", 4) && strncmp(buffer, "POST ", 5)) {
         send_error(fd, "not supported (only GET and POST)");
         return;
     }
 
     // look for second space (or newline) and terminate string (skip headers)
-    if ( (p = strchr(buffer, ' ')) != NULL)
-    {
-        for ( ; ; )
-        {
+    if ((p = strchr(buffer, ' ')) != NULL) {
+        for (;;) {
             p++;
-            if(*p == '\r' || *p == '\n' || *p == ' ')
-            {
+            if (*p == '\r' || *p == '\n' || *p == ' ') {
                 *p = '\0';
                 break;
             }
         }
     }
-    else
-    {
+    else {
         send_error(fd, "invalid request.\n");
         return;
     }
@@ -282,20 +257,18 @@ handle_client(int fd)
 
 
     // check for illegal parent directory requests
-    for (i = 0; ; i++)
-    {
+    for (i = 0;; i++) {
         if (buffer[i] == '\0' || buffer[i + 1] == '\0')
             break;
 
-        if(buffer[i] == '.' && buffer[i + 1] == '.')
-        {
+        if (buffer[i] == '.' && buffer[i + 1] == '.') {
             send_error(fd, ".. detected.\n");
             return;
         }
     }
 
     // point p to filename
-    if ( (p = strchr(buffer, '/')) == NULL)
+    if ((p = strchr(buffer, '/')) == NULL)
         return;
 
 #ifdef DEBUG_AJAX
@@ -303,21 +276,20 @@ handle_client(int fd)
 #endif
 
     // send json data
-    if (!strncmp(p, "/data.json", 10) )
+    if (!strncmp(p, "/data.json", 10))
         send_data(fd, db);
-    else if (!strncmp(p, "/averages.json", 14) )
-        send_averages(fd, db);    
-    else if (!strncmp(p, "/consumption.json", 17) )
+    else if (!strncmp(p, "/averages.json", 14))
+        send_averages(fd, db);
+    else if (!strncmp(p, "/consumption.json", 17))
         send_graph_data(fd, db, "consumption_per_100km", buffer);
-    else if (!strncmp(p, "/speed.json", 11) )
+    else if (!strncmp(p, "/speed.json", 11))
         send_graph_data(fd, db, "speed", buffer);
-    else if (!strncmp(p, "/gps_altitude.json", 18) )
+    else if (!strncmp(p, "/gps_altitude.json", 18))
         send_graph_data(fd, db, "gps_altitude", buffer);
 
     // send file
-    else
-        if (send_file(fd, p) != 0)
-            send_error(fd, "could not send file.\n");
+    else if (send_file(fd, p) != 0)
+        send_error(fd, "could not send file.\n");
 
 
     close_db(db);
@@ -325,8 +297,7 @@ handle_client(int fd)
 }
 
 void
-httpd_stop(int signo)
-{
+httpd_stop(int signo) {
     printf(" - child (httpd): closing connections...\n");
     do {
         wait(NULL);
@@ -336,16 +307,14 @@ httpd_stop(int signo)
 }
 
 int
-httpd_start(void)
-{
-    int s;
-    pid_t pid;
+httpd_start(void) {
+    int     s;
+    pid_t   pid;
 
-    if ( (s = tcp_listen(HTTPD_PORT)) == -1)
+    if ((s = tcp_listen(HTTPD_PORT)) == -1)
         return -1;
 
-    if ( (pid = fork()) == 0)
-    {
+    if ((pid = fork()) == 0) {
         // add signal handler for cleanup function
         signal(SIGINT, httpd_stop);
         signal(SIGTERM, httpd_stop);
@@ -360,4 +329,3 @@ httpd_start(void)
     close(s);
     return pid;
 }
-

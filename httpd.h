@@ -16,17 +16,18 @@
 #include "json.h"
 
 #ifdef DB_SQLITE
-#include "sqlite.h"
-#define DB_ADAPTER sqlite3
+#   include "sqlite.h"
+#   define DB_ADAPTER sqlite3
 #endif
 
 #ifdef DB_POSTGRES
-#include "postgres.h"
-#define DB_ADAPTER PGconn
+#   include "postgres.h"
+#   define DB_ADAPTER PGconn
 #endif
 
 const char *json_get_data(DB_ADAPTER *);
 const char *json_get_averages(DB_ADAPTER *);
-const char *json_graph_data(DB_ADAPTER *, char *, unsigned long int, unsigned long int);
+const char *json_graph_data(DB_ADAPTER *, char *, unsigned long int,
+                            unsigned long int);
 
-int httpd_start(void);
+int     httpd_start(void);

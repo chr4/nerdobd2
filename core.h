@@ -15,11 +15,11 @@
 #include "kw1281.h"
 
 #ifdef DB_SQLITE
-#include "sqlite.h"
+#   include "sqlite.h"
 #endif
 
 #ifdef DB_POSTGRES
-#include "postgres.h"
+#   include "postgres.h"
 #endif
 
 // the http server
@@ -29,23 +29,22 @@
 #include "gps.h"
 
 // the engine data struct
-typedef struct obd_data_t
-{
-    float rpm;
-    float injection_time;
-    float oil_pressure;
-    float speed;
+typedef struct obd_data_t {
+    float   rpm;
+    float   injection_time;
+    float   oil_pressure;
+    float   speed;
 
     // consumption (will be calculated)
-    float consumption_per_h;
-    float consumption_per_100km;
-    
-    float duration_consumption;
-    float duration_speed;
-    
-    float temp_engine;
-    float temp_air_intake;
-    float voltage;
+    float   consumption_per_h;
+    float   consumption_per_100km;
+
+    float   duration_consumption;
+    float   duration_speed;
+
+    float   temp_engine;
+    float   temp_air_intake;
+    float   voltage;
 } obd_data_t;
 
-void handle_data(char *, float, float);
+void    handle_data(char *, float, float);

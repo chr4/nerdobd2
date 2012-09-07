@@ -4,7 +4,7 @@
 #include "gps.h"
 
 static struct gps_data_t gpsdata;
-char gps_available = 0;
+char    gps_available = 0;
 
 
 int
@@ -30,7 +30,7 @@ get_gps_data(struct gps_fix_t *g) {
     g->speed = g->speed * 3.6;
     g->eps = g->eps * 3.6;
 
-    return 0; 
+    return 0;
 }
 
 void
@@ -39,8 +39,8 @@ gps_stop(void) {
     if (!gps_available)
         return;
 
-    gps_stream( (struct gps_data_t *) &gpsdata, WATCH_DISABLE, NULL);
-    gps_close( (struct gps_data_t *) &gpsdata);
+    gps_stream((struct gps_data_t *) &gpsdata, WATCH_DISABLE, NULL);
+    gps_close((struct gps_data_t *) &gpsdata);
 }
 
 
@@ -58,10 +58,9 @@ gps_start(void) {
     }
 
     // watching is not available (and not needed) when using shared memory segment
-    if (gps_stream( (struct gps_data_t *) &gpsdata, WATCH_ENABLE, NULL) == -1)
+    if (gps_stream((struct gps_data_t *) &gpsdata, WATCH_ENABLE, NULL) == -1)
         perror("gps_stream()");
 
     gps_available = 1;
     return 0;
 }
-

@@ -10,7 +10,7 @@
 #include "config.h"
 
 // postgres functions
-int    exec_query(PGconn *, char *);
+int     exec_query(PGconn *, char *);
 PGconn *open_db(void);
-void   init_db(PGconn *);
-void   close_db(PGconn *);
+void    init_db(PGconn *);
+void    close_db(PGconn *);

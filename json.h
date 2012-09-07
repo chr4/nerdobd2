@@ -8,4 +8,3 @@ json_object *add_boolean(json_object *, char *, char);
 json_object *add_array(json_object *, char *);
 json_object *add_object(json_object *, char *);
 json_object *add_data(json_object *, double, double);
-

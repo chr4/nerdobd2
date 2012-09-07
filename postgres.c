@@ -2,13 +2,12 @@
 
 
 int
-exec_query(PGconn *db, char *query)
-{
-    PGresult   *res;
+exec_query(PGconn * db, char *query) {
+    PGresult *res;
 
     res = PQexec(db, query);
 
-    switch(PQresultStatus(res)) {
+    switch (PQresultStatus(res)) {
 
         case PGRES_TUPLES_OK:
         case PGRES_COMMAND_OK:
@@ -19,14 +18,16 @@ exec_query(PGconn *db, char *query)
 
         case PGRES_EMPTY_QUERY:
             // server had nothing to do, a bug maybe?
-            fprintf(stderr, "query '%s' failed (EMPTY_QUERY): %s\n", query, PQerrorMessage(db));
+            fprintf(stderr, "query '%s' failed (EMPTY_QUERY): %s\n", query,
+                    PQerrorMessage(db));
             PQclear(res);
             return -1;
             break;
 
         case PGRES_NONFATAL_ERROR:
             // can continue, possibly retry the command
-            fprintf(stderr, "query '%s' failed (NONFATAL, retrying): %s\n", query, PQerrorMessage(db));
+            fprintf(stderr, "query '%s' failed (NONFATAL, retrying): %s\n",
+                    query, PQerrorMessage(db));
             PQclear(res);
             return exec_query(db, query);
             break;
@@ -35,7 +36,8 @@ exec_query(PGconn *db, char *query)
         case PGRES_FATAL_ERROR:
         default:
             // fatal or unknown error, cannot continue
-            fprintf(stderr, "query '%s' failed: %s\n", query, PQerrorMessage(db));
+            fprintf(stderr, "query '%s' failed: %s\n", query,
+                    PQerrorMessage(db));
     }
 
     return -1;
@@ -43,25 +45,23 @@ exec_query(PGconn *db, char *query)
 
 
 PGconn *
-open_db(void)
-{
+open_db(void) {
     PGconn *db;
-   
+
     db = PQconnectdb(DB_POSTGRES);
-    if (PQstatus(db) != CONNECTION_OK)
-    {
-        fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(db));
+    if (PQstatus(db) != CONNECTION_OK) {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(db));
         close_db(db);
         return NULL;
     }
-    
+
     return db;
 }
-        
+
 
 void
-init_db(PGconn *db)
-{
+init_db(PGconn * db) {
     // create data table
     exec_query(db, "CREATE TABLE IF NOT EXISTS data ( \
                         id                    SERIAL, \
@@ -103,7 +103,8 @@ init_db(PGconn *db)
 
 
     // since postgres doesn't support replace into, we're defining our own set_setpoints function
-    exec_query(db, "CREATE OR REPLACE FUNCTION set_setpoint(text) RETURNS void AS $$ \
+    exec_query(db,
+               "CREATE OR REPLACE FUNCTION set_setpoint(text) RETURNS void AS $$ \
                BEGIN \
                    IF EXISTS( SELECT name FROM setpoints WHERE name = $1 ) THEN \
                        UPDATE setpoints SET time = current_timestamp, data = ( \
@@ -126,14 +127,13 @@ init_db(PGconn *db)
                    RETURN; \
                END; \
                $$ LANGUAGE plpgsql;");
-    
+
     return;
 }
 
 
 
 void
-close_db(PGconn *db)
-{
+close_db(PGconn * db) {
     PQfinish(db);
 }

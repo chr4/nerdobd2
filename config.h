@@ -9,7 +9,6 @@
 //#define DB_SQLITE      "database.sqlite3"
 #define DB_POSTGRES    "user=nerdobd2 dbname=nerdobd2"
 
-
 /* if the system suspends and then resumes, the kernel tries to newly
  * assign /dev/ttyUSB0 to the USB to serial adapter. this fails, because
  * we still have ttyUSB0 open, so it dynamically creates ttyUSB1 instead,
@@ -39,4 +38,4 @@
  * 
  * select SUM((YOUR_MULTIPLIER_HERE * rpm * injection_time) / speed * 100 * speed) / SUM(speed) from data where speed > 0;
  */
-#define MULTIPLIER      0.000213405  // for my 1.0l seat arosa 2004
+#define MULTIPLIER      0.000213405     // for my 1.0l seat arosa 2004
