@@ -7,7 +7,7 @@ var Map =function() {
   var tilesUrl = 'tiles/{z}/{x}/{y}.png',
       tiles = new L.TileLayer(tilesUrl, {minZoom: 10, maxZoom: 18});
 
-  var init = function() {    
+  var _init = function() {    
     map = new L.Map('map');
     map.addLayer(tiles);
     
