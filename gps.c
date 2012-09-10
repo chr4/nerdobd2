@@ -7,32 +7,6 @@ static struct gps_data_t gpsdata;
 char    gps_available = 0;
 
 
-int
-get_gps_data(struct gps_fix_t *g) {
-
-    if (!gps_available)
-        return -1;
-
-    if (!gps_waiting(&gpsdata, 10)) {
-        fprintf(stderr, "no gps data available (timeout)\n");
-        return -1;
-    }
-
-    errno = 0;
-    if (gps_read(&gpsdata) == -1) {
-        perror("gps_read()");
-        return -1;
-    }
-
-    memcpy(g, &gpsdata.fix, sizeof(struct gps_fix_t));
-
-    // convert speed to km/h
-    g->speed = g->speed * 3.6;
-    g->eps = g->eps * 3.6;
-
-    return 0;
-}
-
 void
 gps_stop(void) {
 
@@ -41,6 +15,8 @@ gps_stop(void) {
 
     gps_stream((struct gps_data_t *) &gpsdata, WATCH_DISABLE, NULL);
     gps_close((struct gps_data_t *) &gpsdata);
+
+    gps_available = 0;
 }
 
 
@@ -62,5 +38,42 @@ gps_start(void) {
         perror("gps_stream()");
 
     gps_available = 1;
+    return 0;
+}
+
+void
+gps_reconnect(void) {
+    fprintf(stderr, "reconnecting to gpsd...\n");
+    gps_stop();
+    gps_start();
+}
+
+int
+get_gps_data(struct gps_fix_t *g) {
+
+    if (!gps_available)
+        return -1;
+
+    // minimum timeout for a typical gps interface: 2s (cgps uses 5s)
+    // see http://gpsd.berlios.de/client-howto.html
+    if (!gps_waiting(&gpsdata, 2000000)) {
+        fprintf(stderr, "no gps data available (timeout)\n");
+        gps_reconnect();
+        return -1;
+    }
+
+    errno = 0;
+    if (gps_read(&gpsdata) == -1) {
+        perror("gps_read()");
+        gps_reconnect();
+        return -1;
+    }
+
+    memcpy(g, &gpsdata.fix, sizeof(struct gps_fix_t));
+
+    // convert speed to km/h
+    g->speed = g->speed * 3.6;
+    g->eps = g->eps * 3.6;
+
     return 0;
 }
