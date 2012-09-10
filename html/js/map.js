@@ -31,31 +31,33 @@ var Map =function() {
     lastLocation = new L.LatLng(0, 0);
   }
 
-  var setLocation = function(lat, lng, track) {
-    // return if we don't have latlng
-    if ( isNaN(lat) || isNaN(lng))
-      return;
+  _init();
 
-    currentLocation = new L.LatLng(lat, lng);
-    
-    // 0.0 means no location, return
-    if (currentLocation.equals(new L.LatLng(0, 0)))
-      return;
-    
-    // pan to the new location and update location circle
-    if (!currentLocation.equals(lastLocation)) {
-      map.panTo(currentLocation);
-      marker.setLatLng(currentLocation);
+  return {
+    setLocation: function(lat, lng, track) {
+      // return if we don't have latlng
+      if ( isNaN(lat) || isNaN(lng))
+        return;
 
-      // rotate arrow into driving direction
-      if ( !isNaN(track) ) {
-        $(marker._icon).css('-webkit-transform', 'rotate(' + track + 'deg)');
-        $(marker._icon).css('-moz-transform', 'rotate(' + track + 'deg)');
+      currentLocation = new L.LatLng(lat, lng);
+    
+      // 0.0 means no location, return
+      if (currentLocation.equals(new L.LatLng(0, 0)))
+        return;
+    
+      // pan to the new location and update location circle
+      if (!currentLocation.equals(lastLocation)) {
+        map.panTo(currentLocation);
+        marker.setLatLng(currentLocation);
+
+        // rotate arrow into driving direction
+        if ( !isNaN(track) ) {
+          $(marker._icon).css('-webkit-transform', 'rotate(' + track + 'deg)');
+          $(marker._icon).css('-moz-transform', 'rotate(' + track + 'deg)');
+        }
+
+        lastLocation = currentLocation;
       }
-
-      lastLocation = currentLocation;
     }
   }
-
-  _init();
 }
