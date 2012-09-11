@@ -3,16 +3,16 @@
  <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>nerdobd2</title>
-    
+
   <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
   <link rel="stylesheet" href="css/leaflet.css" />
-    
-  <script language="javascript" type="text/javascript" src="js/leaflet/leaflet.js"></script>
+
+  <script language="javascript" type="text/javascript" src="js/leaflet.js"></script>
   <script language="javascript" type="text/javascript" src="js/flot/jquery.min.js"></script>
 
-  <script language="javascript" type="text/javascript" src="js/map.js"></script>    
-  <script language="javascript" type="text/javascript" src="js/value.js"></script>    
-    
+  <script language="javascript" type="text/javascript" src="js/map.js"></script>
+  <script language="javascript" type="text/javascript" src="js/value.js"></script>
+
   <script language="javascript" type="text/javascript">
 
     $(document).ready(function() {
@@ -27,17 +27,17 @@
       Data.create("temp_engine", "°C", 1);
       Data.create("temp_air_intake", "°C", 1);
       Data.create("voltage", "°C", 1);
-                      
+
       Data.create("gps_speed", "km/h", 1);
-      Data.create("gps_altitude", "m", 1); 
+      Data.create("gps_altitude", "m", 1);
       Data.create("gps_mode", "gps", 0);
-                      
+
       Average.create("consumption_average_startup", "l/km", 2);
-      Average.create("consumption_average_total", "l/km", 2);                      
+      Average.create("consumption_average_total", "l/km", 2);
       Average.create("consumption_liters_startup", "l", 2);
       Average.create("kilometers_startup", "km", 2);
       Average.create("consumption_liters_total", "l", 2);
-      Average.create("kilometers_total", "km", 2);       
+      Average.create("kilometers_total", "km", 2);
     });
   </script>
 
@@ -51,26 +51,26 @@
   <div class="right-container">
    <span id="consumption_per_100km" class="value value-big">-</span>
    <span id="consumption_per_100km-unit" class="unit unit-big">l/km</span>
-   
+
    <span id="speed" class="value value-big">-</span><span class="unit unit-big">km/h</span>
 
    <span id="consumption_average_startup" class="value value-medium" style="margin-top:10px">-</span >
    <span class="unit unit-medium" style="margin-top:20px">l/km</span>
-    
+
    <span id="consumption_average_total" class="value value-medium">-</span>
    <span class="unit unit-medium">l/km</span>
 
    <span id="consumption_liters_startup" class="value value-small" style="margin-top:26px">-</span>
    <span class="unit unit-small" style="margin-top:30px">l</span>
-    
+
    <span id="consumption_liters_total" class="value value-small">-</span>
    <span class="unit unit-small">l</span>
-   
+
    <span id="kilometers_startup" class="value value-small">-</span>
    <span class="unit unit-small">km</span>
    <span id="kilometers_total" class="value value-small">-</span>
-   <span class="unit unit-small">km</span>       
-         
+   <span class="unit unit-small">km</span>
+
    <span id="temp_engine" class="value value-small">-</span>
    <span class="unit unit-small">°C</span>
    <span id="temp_air_intake" class="value value-small">-</span>
@@ -80,7 +80,7 @@
 
    <span id="gps_speed" class="value value-small" style="margin-top:26px">-</span>
    <span class="unit unit-small" style="margin-top:30px">km/h</span>
-    
+
    <span id="gps_altitude" class="value value-small">-</span>
    <span class="unit unit-small">m</span>
    <span id="gps_mode" class="value value-small">-</span>
