@@ -3,12 +3,11 @@ var Map =function() {
   var lastLocation;
   var currentLocation;
   var marker;
-
-  var tilesUrl = 'tiles/{z}/{x}/{y}.png',
-      tiles = new L.TileLayer(tilesUrl, {minZoom: 10, maxZoom: 18});
+  var tiles;
 
   var _init = function() {
     map = new L.Map('map');
+    tiles = new L.TileLayer('tiles/{z}/{x}/{y}.png', {minZoom: 10, maxZoom: 18});
     map.addLayer(tiles);
 
     // set initial map point to frankfurt
@@ -16,7 +15,7 @@ var Map =function() {
     map.setView(ffm, 15);
 
     // setup icon for current position
-    var CarIcon = L.Icon.extend({
+    var carIcon = L.Icon.extend({
                     shadowUrl: '',
                     shadowSize: new L.Point(0, 0),
                     iconUrl: '/css/images/red.png',
@@ -25,7 +24,7 @@ var Map =function() {
                     popupAnchor: new L.Point(13, 25)
                   });
 
-    marker = new L.Marker(ffm, {icon: new CarIcon()});
+    marker = new L.Marker(ffm, {icon: new carIcon()});
     map.addLayer(marker);
 
     lastLocation = new L.LatLng(0, 0);
