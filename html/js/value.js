@@ -2,12 +2,12 @@
   var name = Name;
   var unit = Unit;
   var accuracy = Accuracy;
-  
+
   var set = function(value, theunit) {
     // if html field is not present, skip
     if ( $('#' + name) == undefined || value == undefined)
       return;
-    
+
     // display readable gps fix status
     if (name == "gps_mode") {
       var status;
@@ -25,7 +25,7 @@
     else {
       if (!isNaN(value))
         $('#' + name).html(value.toFixed(accuracy));
-      
+
       // set the unit for consumption accordingly
       if (name == "consumption_per_100km")
         $('#' + name + '-unit').html(theunit);
@@ -54,8 +54,8 @@ var Values = function(Url, Timeout) {
   var elements = [];
   var url = Url;
   var timeout = Timeout;
- 
-  var _init = function() { 
+
+  var _init = function() {
     setTimeout(update, timeout);
   }
 

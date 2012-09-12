@@ -9,7 +9,7 @@ core : core.o kw1281.o sqlite.o httpd.o sqlite2json.o json.o tcp.o gps.o
 
 core.o : core.c
 	$(CC) $(CC_OPTIONS) -c core.c -o core.o
-	
+
 kw1281.o : kw1281.c
 	$(CC) $(CC_OPTIONS) -c kw1281.c -o kw1281.o
 
@@ -17,7 +17,7 @@ kw1281.o : kw1281.c
 # http server
 httpd.o : httpd.c
 	$(CC) $(CC_OPTIONS) -c httpd.c -o httpd.o
-	
+
 db2json.o : sqlite2json.c
 	$(CC) $(CC_OPTIONS) -c sqlite2json.c -o sqlite2json.o
 
@@ -39,7 +39,7 @@ gps.o : gps.c
 	$(CC) $(CC_OPTIONS) -c gps.c -o gps.o
 
 
-# cleaning	
+# cleaning
 clean :
 	rm -f *.o nerdobd2
 

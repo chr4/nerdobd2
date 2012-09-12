@@ -13,7 +13,7 @@
  * assign /dev/ttyUSB0 to the USB to serial adapter. this fails, because
  * we still have ttyUSB0 open, so it dynamically creates ttyUSB1 instead,
  * so we cannot reopen ttyUSB0. As a workaround (so you don't have to replug
- * your cable), I setup this udev rule in 
+ * your cable), I setup this udev rule in
  * /etc/udev/rules.d/70-persisent-usb-serial.rule
  *
  * SUBSYSTEMS=="usb", ATTRS{serial}=="A600bj0A", KERNEL=="ttyUSB*", SYMLINK+="obd2"
@@ -31,11 +31,11 @@
  *
  * consumption per hour =
  *    MULTIPLIER * rpm * injection time
- * 
+ *
  * you need to adjust this multiplier to (roughly) match your car
  * some help in finding it out might be this (after recording some data
  * and refuling the car, knowing exactly what it actually consumed):
- * 
+ *
  * select SUM((YOUR_MULTIPLIER_HERE * rpm * injection_time) / speed * 100 * speed) / SUM(speed) from data where speed > 0;
  */
 #define MULTIPLIER      0.000213405     // for my 1.0l seat arosa 2004

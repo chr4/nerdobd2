@@ -3,18 +3,18 @@ var Map =function() {
   var lastLocation;
   var currentLocation;
   var marker;
-  
+
   var tilesUrl = 'tiles/{z}/{x}/{y}.png',
       tiles = new L.TileLayer(tilesUrl, {minZoom: 10, maxZoom: 18});
 
-  var _init = function() {    
+  var _init = function() {
     map = new L.Map('map');
     map.addLayer(tiles);
-    
+
     // set initial map point to frankfurt
     var ffm = new L.LatLng(50.118845, 8.660713);
     map.setView(ffm, 15);
-    
+
     // setup icon for current position
     var CarIcon = L.Icon.extend({
                     shadowUrl: '',
@@ -24,10 +24,10 @@ var Map =function() {
                     iconAnchor: new L.Point(13, 25),
                     popupAnchor: new L.Point(13, 25)
                   });
-    
+
     marker = new L.Marker(ffm, {icon: new CarIcon()});
     map.addLayer(marker);
-    
+
     lastLocation = new L.LatLng(0, 0);
   }
 
@@ -40,11 +40,11 @@ var Map =function() {
         return;
 
       currentLocation = new L.LatLng(lat, lng);
-    
+
       // 0.0 means no location, return
       if (currentLocation.equals(new L.LatLng(0, 0)))
         return;
-    
+
       // pan to the new location and update location circle
       if (!currentLocation.equals(lastLocation)) {
         map.panTo(currentLocation);
