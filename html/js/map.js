@@ -18,7 +18,7 @@ var Map =function() {
     var carIcon = L.Icon.extend({
                     shadowUrl: '',
                     shadowSize: new L.Point(0, 0),
-                    iconUrl: '/css/images/red.png',
+                    iconUrl: '/css/images/car-grey.png',
                     iconSize: new L.Point(25, 50),
                     iconAnchor: new L.Point(13, 25),
                     popupAnchor: new L.Point(13, 25)
