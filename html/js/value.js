@@ -32,20 +32,23 @@
     }
   }
 
-  return {
-    update: function(data) {
-      // if this is gps information, don't update <div>, but set location and stuff
-      if( typeof(map) !== 'undefined' && name == "gps_mode" ) {
-        if (data['gps_err_latitude'] < 50 && data['gps_err_longitude'] < 50)
-          map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
-      }
-
-      // switch to l/h if consumption_per_100km is nan (means that speed == 0)
-      if (name == "consumption_per_100km" && isNaN(data[name]))
-        set(data['consumption_per_h'], "l/h");
-      else
-        set(data[name], unit);
+  var update = function(data) {
+    // if this is gps information, don't update <div>, but set location and stuff
+    if( typeof(map) !== 'undefined' && name == "gps_mode" ) {
+      if (data['gps_err_latitude'] < 50 && data['gps_err_longitude'] < 50)
+        map.setLocation(data['gps_latitude'], data['gps_longitude'], data['gps_track']);
     }
+
+    // switch to l/h if consumption_per_100km is nan (means that speed == 0)
+    if (name == "consumption_per_100km" && isNaN(data[name]))
+      set(data['consumption_per_h'], "l/h");
+    else
+      set(data[name], unit);
+  }
+
+
+  return {
+    update: update
   }
 }
 
@@ -81,11 +84,13 @@ var Values = function(Url, Timeout) {
     }
   }
 
+  var create = function(name, unit, accuracy) {
+    elements.push(new Value(name, unit, accuracy));
+  }
+
   _init();
 
   return {
-    create: function(name, unit, accuracy) {
-      elements.push(new Value(name, unit, accuracy));
-    }
+    create: create
   }
 }

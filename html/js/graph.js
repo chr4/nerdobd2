@@ -137,15 +137,19 @@ var Graph = function(Name, Timespan)
     $.plot($("#graph-" + name), [ series ], options);
   }
 
+  var setOptions = function(Options) {
+    jQuery.extend(options, Options);
+  }
+
+  var setSeries = function(Series) {
+    jQuery.extend(series, Series);
+  }
+
   _init();
 
   return {
-    setOptions: function(Options) {
-      jQuery.extend(options, Options);
-    },
-
-    setSeries: function(Series) {
-      jQuery.extend(series, Series);
-    }
+    setOptions: setOptions,
+    setSeries: setSeries,
+    setTimespan: setTimespan
   }
 }
