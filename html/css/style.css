@@ -49,6 +49,10 @@ body
     width:383px;
 }
 
+.graph_modifier {
+    cursor:pointer;
+}
+
 .left-container {
     width:774px;
     height:580px;

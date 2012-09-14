@@ -15,7 +15,9 @@ var Graph = function(Name, Timespan)
       position: 'nw',
       backgroundOpacity: 0,
       labelFormatter: function (label, series) {
-        return '<span style="font-family:helvetica;">' + label + '</span>';
+        return '<span style="font-family:helvetica;">' + label + '</span> ' +
+               '<span id="graph_' + name + '_increase" class="graph_modifier">[+]</span> ' +
+               '<span id="graph_' + name + '_decrease" class="graph_modifier">[-]</span>';
       }
     }
   };
@@ -25,6 +27,8 @@ var Graph = function(Name, Timespan)
   };
 
   var setTimespan = function(newTimespan) {
+    console.info('setting timespan for graph "' + name + '" to ' + newTimespan);
+
     // reset index, if new timespan is larger than the old one
     // so we will fetch older data as well
     if (timespan < newTimespan)
@@ -38,6 +42,8 @@ var Graph = function(Name, Timespan)
       interval = 1000;
     else
       interval = timespan / 300;
+
+    updateLabel();
   }
 
   var getLocalTime = function() {
@@ -127,6 +133,17 @@ var Graph = function(Name, Timespan)
   var plot = function() {
     console.info("plotting graph '" + name + "'");
     $.plot($("#graph-" + name), [ series ], options);
+
+    // add onclick handlers for modifing timespan
+    $('#graph_' + name + '_increase').click(function() {
+      setTimespan(timespan * 2);
+      plot();
+    });
+
+    $('#graph_' + name + '_decrease').click(function() {
+      setTimespan(timespan / 2);
+      plot();
+    });
   }
 
   var setOptions = function(Options) {
@@ -141,7 +158,6 @@ var Graph = function(Name, Timespan)
     console.info("creating graph '" + name + "'");
 
     setTimespan(Timespan);
-    updateLabel();
     update();
   }
 
