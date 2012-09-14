@@ -24,14 +24,6 @@ var Graph = function(Name, Timespan)
     data: []
   };
 
-  var _init = function() {
-    console.info("creating graph '" + name + "'");
-
-    setTimespan(Timespan);
-    updateLabel();
-    update();
-  }
-
   var setTimespan = function(newTimespan) {
     // reset index, if new timespan is larger than the old one
     // so we will fetch older data as well
@@ -143,6 +135,14 @@ var Graph = function(Name, Timespan)
 
   var setSeries = function(Series) {
     jQuery.extend(series, Series);
+  }
+
+  var _init = function() {
+    console.info("creating graph '" + name + "'");
+
+    setTimespan(Timespan);
+    updateLabel();
+    update();
   }
 
   _init();

@@ -4,30 +4,6 @@ var Map =function() {
   var currentLocation;
   var marker;
 
-  var _init = function() {
-    map = new L.Map('map');
-    L.tileLayer('tiles/{z}/{x}/{y}.png', { minZoom: 10, maxZoom: 18 } ).addTo(map);
-
-    // set initial map point to frankfurt
-    var ffm = [ 50.118845, 8.660713 ];
-    map.setView(ffm, 15);
-
-    // setup icon for current position
-    var carIcon = L.icon({
-                    iconUrl: '/css/images/car-grey.png',
-                    iconSize: [ 25, 50 ],
-                    iconAnchor: [ 13, 25 ],
-                    shadowUrl: '',
-                    shadowSize: [ 0, 0 ],
-                    popupAnchor: [ 13, 25 ]
-                  });
-
-    marker = L.marker(ffm, { icon: carIcon });
-    marker.addTo(map);
-
-    lastLocation = [ 0, 0 ];
-  }
-
   var = setLocation = function(lat, lng, track) {
     // return if we don't have latlng
     if ( isNaN(lat) || isNaN(lng))
@@ -57,6 +33,30 @@ var Map =function() {
 
       lastLocation = currentLocation;
     }
+  }
+
+  var _init = function() {
+    map = new L.Map('map');
+    L.tileLayer('tiles/{z}/{x}/{y}.png', { minZoom: 10, maxZoom: 18 } ).addTo(map);
+
+    // set initial map point to frankfurt
+    var ffm = [ 50.118845, 8.660713 ];
+    map.setView(ffm, 15);
+
+    // setup icon for current position
+    var carIcon = L.icon({
+                    iconUrl: '/css/images/car-grey.png',
+                    iconSize: [ 25, 50 ],
+                    iconAnchor: [ 13, 25 ],
+                    shadowUrl: '',
+                    shadowSize: [ 0, 0 ],
+                    popupAnchor: [ 13, 25 ]
+                  });
+
+    marker = L.marker(ffm, { icon: carIcon });
+    marker.addTo(map);
+
+    lastLocation = [ 0, 0 ];
   }
 
   _init();

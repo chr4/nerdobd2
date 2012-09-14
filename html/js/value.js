@@ -58,10 +58,6 @@ var Values = function(Url, Timeout) {
   var url = Url;
   var timeout = Timeout;
 
-  var _init = function() {
-    setTimeout(update, timeout);
-  }
-
   var update = function update() {
     var onDataReceived = function(json) {
       if (typeof(json) !== "undefined")
@@ -86,6 +82,10 @@ var Values = function(Url, Timeout) {
 
   var create = function(name, unit, accuracy) {
     elements.push(new Value(name, unit, accuracy));
+  }
+
+  var _init = function() {
+    setTimeout(update, timeout);
   }
 
   _init();
