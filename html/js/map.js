@@ -4,7 +4,7 @@ var Map =function() {
   var currentLocation;
   var marker;
 
-  var = setLocation = function(lat, lng, track) {
+  var setLocation = function(lat, lng, track) {
     // return if we don't have latlng
     if ( isNaN(lat) || isNaN(lng))
       return;
