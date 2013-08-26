@@ -23,12 +23,8 @@ gps_stop(void) {
 int
 gps_start(void) {
 
-    /* open the stream to gpsd
-     * shared memory segment kinda isn't available anymore?
-     *
-     * if (gps_open(GPSD_SHARED_MEMORY, NULL, &gpsdata) != 0) {
-     */
-    if (gps_open("localhost", DEFAULT_GPSD_PORT, &gpsdata) != 0) {
+    // open the stream to gpsd
+    if (gps_open(GPSD_SHARED_MEMORY, NULL, &gpsdata) != 0) {
         printf("couldn't connect to gpsd: %s\n", gps_errstr(errno));
         return -1;
     }
