@@ -78,8 +78,8 @@ var Graph = function(Name, Timespan)
     for (i = data.length - 1; i > 0; i--)
       data[i][0] -= t.getTimezoneOffset() * 60000;
 
-    // append new data to series
-    $.merge(series.data, data);
+    // update series data
+    series.data = data;
 
     // loop reverse, for better performance
     for (i = series.data.length - 1; i > 0; i--) {
