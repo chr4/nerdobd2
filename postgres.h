@@ -3,7 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
-#include <postgresql/libpq-fe.h>
+#include <libpq-fe.h>
 
 // include common defines
 #include "common.h"
